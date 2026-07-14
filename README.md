@@ -76,6 +76,17 @@ This will compile your project and store the build artifacts in the `dist/` dire
 npm test
 ```
 
+## Linting and formatting
+
+```bash
+npm run lint        # ESLint (@angular-eslint) — errors only, no auto-fix
+npm run lint:fix     # ESLint with --fix
+npm run format       # Prettier --write across the repo
+npm run format:check # Prettier --check (used to verify formatting is clean)
+```
+
+`eslint-config-prettier` disables ESLint rules that would conflict with Prettier's formatting, so the two never fight over the same concern. `.claude/skills/` is excluded from Prettier (`.prettierignore`) — it's community-synced content, not ours to reformat. No git hooks (husky/lint-staged) — running these commands is left as a manual/CI convention for now.
+
 ## Running end-to-end tests
 
 Angular CLI does not come with an end-to-end testing framework by default. Not set up yet — a choice of tool is a separate task.

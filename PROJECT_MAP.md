@@ -10,6 +10,7 @@
 - Папки: `src/app/core/`, `src/app/shared/`, `src/app/features/`, `src/environments/` — назначение и путь-алиасы (`@core/*`, `@shared/*`, `@features/*`, `@env/*`) см. `README.md`.
 - `src/environments/environment.ts` (dev) / `environment.prod.ts` — конфиги под алиас `@env/*`, `fileReplacements` в `angular.json` подставляет prod-версию при production-сборке.
 - `ApiService` (`stream.Front#3`) проверен юнит-тестом на `HttpTestingController`, а не реальным вызовом к живому backend — на момент реализации у бэка не было ни `/health` (`streamer.API#7`), ни CORS (`streamer.API#5`). Реальная end-to-end проверка — когда обе появятся.
+- ESLint (`@angular-eslint`) + Prettier настроены (`eslint.config.js`, `.prettierrc`, `.prettierignore`); `eslint-config-prettier` отключает конфликтующие с Prettier правила форматирования. Команды — см. `README.md`. Git-хуки сознательно не подключены.
 
 ## Компоненты
 
