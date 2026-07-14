@@ -4,6 +4,12 @@
 
 **Правило:** создал компонент/сервис/interceptor/роут/включил опцию окружения — добавь строку сюда в том же коммите/PR, где это появилось. Не оставляй это только в коде.
 
+## Структура / конвенции
+
+- Скелет создан `ng new` (Angular 22, standalone, без `NgModule`); тест-раннер — встроенный Vitest-based `@angular/build:unit-test` (дефолт Angular 22, Karma/Jasmine сознательно не используются).
+- Папки: `src/app/core/`, `src/app/shared/`, `src/app/features/`, `src/environments/` — назначение и путь-алиасы (`@core/*`, `@shared/*`, `@features/*`, `@env/*`) см. `README.md`.
+- `src/environments/environment.ts` — пока пустой плейсхолдер под алиас `@env/*`; наполнение (dev/prod-конфиги) — задача stream.Front#2.
+
 ## Компоненты
 
 <!-- - `ComponentName` — `src/app/<путь>/` — краткое назначение -->
