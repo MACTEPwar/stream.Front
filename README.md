@@ -32,6 +32,10 @@ This layout is produced by scaffolding the project with `ng new` and then manual
 
 `src/environments/environment.ts` (dev) and `environment.prod.ts` hold `apiUrl`, swapped via `fileReplacements` in the `production` build configuration (`angular.json`). No `environment.local.ts` — the only value is `apiUrl`, and the local backend always runs on the same port (`http://localhost:3000`), so there's nothing to override per-developer.
 
+## HTTP client
+
+`ApiService` (`src/app/core/services/api.service.ts`) is the single entry point for backend calls — it builds the full URL from `environment.apiUrl` plus the given path and centralizes generic network-error handling (e.g. connection loss). Covered by a unit test against `HttpTestingController` rather than a live backend call, since neither a `/health` endpoint nor CORS existed on the backend yet when this was built.
+
 ## Development server
 
 To start a local development server, run:
