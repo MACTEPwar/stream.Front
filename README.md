@@ -28,6 +28,10 @@ Path aliases (configured in `tsconfig.json`): `@core/*`, `@shared/*`, `@features
 
 This layout is produced by scaffolding the project with `ng new` and then manually creating the `core/`, `shared/`, `features/` and `environments/` folders plus the `paths` block in `tsconfig.json` — see git history of this commit for the exact reproducible steps rather than a custom schematic.
 
+## Environments
+
+`src/environments/environment.ts` (dev) and `environment.prod.ts` hold `apiUrl`, swapped via `fileReplacements` in the `production` build configuration (`angular.json`). No `environment.local.ts` — the only value is `apiUrl`, and the local backend always runs on the same port (`http://localhost:3000`), so there's nothing to override per-developer.
+
 ## Development server
 
 To start a local development server, run:

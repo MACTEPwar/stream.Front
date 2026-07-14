@@ -8,7 +8,7 @@
 
 - Скелет создан `ng new` (Angular 22, standalone, без `NgModule`); тест-раннер — встроенный Vitest-based `@angular/build:unit-test` (дефолт Angular 22, Karma/Jasmine сознательно не используются).
 - Папки: `src/app/core/`, `src/app/shared/`, `src/app/features/`, `src/environments/` — назначение и путь-алиасы (`@core/*`, `@shared/*`, `@features/*`, `@env/*`) см. `README.md`.
-- `src/environments/environment.ts` — пока пустой плейсхолдер под алиас `@env/*`; наполнение (dev/prod-конфиги) — задача stream.Front#2.
+- `src/environments/environment.ts` (dev) / `environment.prod.ts` — конфиги под алиас `@env/*`, `fileReplacements` в `angular.json` подставляет prod-версию при production-сборке.
 
 ## Компоненты
 
@@ -32,4 +32,4 @@
 
 ## Опции окружения
 
-<!-- - `environment.<key>` — назначение -->
+- `environment.apiUrl` — базовый URL backend API (dev: `http://localhost:3000`, prod: плейсхолдер, требует реального значения перед деплоем)
