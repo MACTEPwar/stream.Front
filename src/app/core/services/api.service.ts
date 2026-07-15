@@ -5,37 +5,41 @@ import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '@env/environment';
 
 type ApiParams = Record<string, string | number | boolean>;
+interface ApiOptions {
+  withCredentials?: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
 
-  get<T>(path: string, params?: ApiParams): Observable<T> {
-    return this.request<T>('GET', path, { params });
+  get<T>(path: string, params?: ApiParams, options?: ApiOptions): Observable<T> {
+    return this.request<T>('GET', path, { params, ...options });
   }
 
-  post<T>(path: string, body?: unknown): Observable<T> {
-    return this.request<T>('POST', path, { body });
+  post<T>(path: string, body?: unknown, options?: ApiOptions): Observable<T> {
+    return this.request<T>('POST', path, { body, ...options });
   }
 
-  put<T>(path: string, body?: unknown): Observable<T> {
-    return this.request<T>('PUT', path, { body });
+  put<T>(path: string, body?: unknown, options?: ApiOptions): Observable<T> {
+    return this.request<T>('PUT', path, { body, ...options });
   }
 
-  delete<T>(path: string, params?: ApiParams): Observable<T> {
-    return this.request<T>('DELETE', path, { params });
+  delete<T>(path: string, params?: ApiParams, options?: ApiOptions): Observable<T> {
+    return this.request<T>('DELETE', path, { params, ...options });
   }
 
   private request<T>(
     method: string,
     path: string,
-    options: { body?: unknown; params?: ApiParams },
+    options: { body?: unknown; params?: ApiParams; withCredentials?: boolean },
   ): Observable<T> {
     const url = `${environment.apiUrl}${path}`;
     return this.http
       .request<T>(method, url, {
         body: options.body,
         params: options.params && new HttpParams({ fromObject: options.params }),
+        withCredentials: options.withCredentials,
       })
       .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
   }

@@ -21,8 +21,9 @@
 
 ## Сервисы
 
-- `ApiService` — `src/app/core/services/` — методы: `get()`, `post()`, `put()`, `delete()`; собирает URL из `environment.apiUrl` + путь, единая точка `catchError` для generic сетевых ошибок (без завязки на доменные ошибки — см. `stream.Front#5` для auth-заголовков/401)
+- `ApiService` — `src/app/core/services/` — методы: `get()`, `post()`, `put()`, `delete()` (принимают опциональный `{ withCredentials }`); собирает URL из `environment.apiUrl` + путь, единая точка `catchError` для generic сетевых ошибок (без завязки на доменные ошибки)
 - `NotificationService` — `src/app/core/services/` — методы: `show(message, type, durationMs?)` (типы `success`/`error`/`info`; `durationMs: null` — persistent-уведомление, не скрывается само), `dismiss(id)`, `dismissAll()` — очередь на `signal`, поддерживает несколько одновременных уведомлений
+- `AuthService` (`stream.Front#4`) — `src/app/core/services/` — `currentUser` (readonly signal `CurrentUser | null`), `isAuthenticated` (computed); методы `login(login, password)`, `loginWithGoogle(googleIdToken)`, `fetchCurrentUser()` — `POST/GET` через `ApiService` с `withCredentials: true` (JWT в `httpOnly`-cookie, фронт токен не хранит); `logout()` — `POST /auth/logout`, сбрасывает `currentUser` в `null` через `finalize()` независимо от результата запроса. Backend-эндпоинты (`streamer.API#16-18`) и CORS credentials-режим (`#19`) ещё не реализованы — проверено юнит-тестами на `HttpTestingController`, реальная e2e-проверка отложена.
 
 ## Interceptors / Guards
 
