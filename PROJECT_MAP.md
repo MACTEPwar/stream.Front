@@ -18,6 +18,7 @@
 - `NotificationList` — `src/app/shared/components/notification-list/` — toast-компонент, рендерит очередь `NotificationService.notifications`, крестик → `dismiss()`; подключён один раз в `app.html` (корневой layout)
 - `Skeleton` — `src/app/shared/components/skeleton/` — loading-плейсхолдер с shimmer-анимацией, форма/размер под конкретный элемент через inputs `width`/`height`/`radius` (дефолты `100%`/`16px`/`4px`)
 - `ErrorMessage` — `src/app/shared/components/error-message/` — единый текст ошибки уровня элемента, дефолт «Ошибка загрузки» (`message` input для редких переопределений)
+- `Shell` (`stream.Front#19`) — `src/app/shared/components/shell/` — header/nav по мокапу `main-nav`, контент через `<ng-content>`; подключён один раз в `app.html` вокруг `<router-outlet>`, поэтому переиспользуется на всех страницах автоматически. Nav-пункты (Главная/Новости/Турниры) и кнопка входа (статичный гостевой вид, без `AuthService`) — временные: реальное содержимое `main-nav` (лого, точные пункты меню) не выгружено из Figma API из-за rate limit (см. `figma.md`), требует доуточнения повторным `get_figma_data`, когда лимит снимется.
 
 ## Сервисы
 
