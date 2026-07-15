@@ -14,11 +14,12 @@
 
 ## Компоненты
 
-<!-- - `ComponentName` — `src/app/<путь>/` — краткое назначение -->
+- `NotificationList` — `src/app/shared/components/notification-list/` — toast-компонент, рендерит очередь `NotificationService.notifications`, крестик → `dismiss()`; подключён один раз в `app.html` (корневой layout)
 
 ## Сервисы
 
 - `ApiService` — `src/app/core/services/` — методы: `get()`, `post()`, `put()`, `delete()`; собирает URL из `environment.apiUrl` + путь, единая точка `catchError` для generic сетевых ошибок (без завязки на доменные ошибки — см. `stream.Front#5` для auth-заголовков/401)
+- `NotificationService` — `src/app/core/services/` — методы: `show(message, type, durationMs?)` (типы `success`/`error`/`info`; `durationMs: null` — persistent-уведомление, не скрывается само), `dismiss(id)`, `dismissAll()` — очередь на `signal`, поддерживает несколько одновременных уведомлений
 
 ## Interceptors / Guards
 
