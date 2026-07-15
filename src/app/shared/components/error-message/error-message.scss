@@ -1,0 +1,9 @@
+@use 'variables' as vars;
+
+.error-message {
+  margin: 0;
+  color: vars.$color-cf1717;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  text-align: center;
+}

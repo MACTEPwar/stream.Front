@@ -43,6 +43,12 @@ This layout is produced by scaffolding the project with `ng new` and then manual
 
 `stylePreprocessorOptions.includePaths` (`angular.json`) points at `src/styles`, so any component can do `@use 'variables' as vars;` without a relative path.
 
+## Loading / error / empty state convention
+
+- **Loading** — `<app-skeleton>` (`src/app/shared/components/skeleton/`), a shimmer placeholder whose shape adapts to the element it replaces via `width`/`height`/`radius` inputs.
+- **Error** — `<app-error-message>` (`src/app/shared/components/error-message/`), a single shared "Ошибка загрузки" text at the element level (overridable via `message` input for edge cases, but the point is one consistent default).
+- **Empty** — deliberately **not** a shared component. Each feature decides its own empty-state presentation when it's built (e.g. "no news yet" looks nothing like "no scheduled streams") — see `stream.Front#9`.
+
 ## Development server
 
 To start a local development server, run:

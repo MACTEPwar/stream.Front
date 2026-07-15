@@ -1,0 +1,23 @@
+@use 'variables' as vars;
+
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    vars.$color-e4e4e4 25%,
+    vars.$color-f9f9f9 50%,
+    vars.$color-e4e4e4 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
