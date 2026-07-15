@@ -22,6 +22,7 @@ src/
     shared/     # reusable components/pipes/directives with no feature ownership
     features/   # one folder per feature area (routed screens)
   environments/  # environment.ts and friends (see @env/* alias)
+  styles/       # SCSS partials — variables, reset (see "Styles" below)
 ```
 
 Path aliases (configured in `tsconfig.json`): `@core/*`, `@shared/*`, `@features/*`, `@env/*`.
@@ -35,6 +36,12 @@ This layout is produced by scaffolding the project with `ng new` and then manual
 ## HTTP client
 
 `ApiService` (`src/app/core/services/api.service.ts`) is the single entry point for backend calls — it builds the full URL from `environment.apiUrl` plus the given path and centralizes generic network-error handling (e.g. connection loss). Covered by a unit test against `HttpTestingController` rather than a live backend call, since neither a `/health` endpoint nor CORS existed on the backend yet when this was built.
+
+## Styles
+
+`src/styles/_variables.scss` holds the SCSS color/typography variables sourced from `docs/figma/*.json` (umbrella repo, `designTokens`) — literal names by value (`$color-19a2e6`, `$font-size-16`, ...), not invented semantic roles like `$primary`; component tasks assign meaning as they consume these. `src/styles/_reset.scss` is the global reset (box-sizing, margin/list/link resets), applied once via `@use 'reset';` in `src/styles.scss`.
+
+`stylePreprocessorOptions.includePaths` (`angular.json`) points at `src/styles`, so any component can do `@use 'variables' as vars;` without a relative path.
 
 ## Development server
 
