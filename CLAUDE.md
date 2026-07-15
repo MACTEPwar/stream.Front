@@ -16,7 +16,7 @@ UI is driven from Figma exports in the umbrella repo (`steramer.io/docs/figma/*.
 
 `.claude/skills/` in this repo carries the official Angular team skills (from [github.com/angular/skills](https://github.com/angular/skills), synced manually — not auto-updating):
 
-- `angular-developer` — architectural guidance and idiomatic code for components, services, reactivity (signals, linkedSignal, resource), forms, DI, routing, SSR, accessibility (ARIA), animations, styling, testing, CLI tooling. Prefer this over ad-hoc Angular patterns.
+- `angular-developer` — architectural guidance and idiomatic code for components, services, reactivity (signals, linkedSignal, resource), forms, DI, routing, SSR, accessibility (ARIA), animations, styling, testing, CLI tooling. **Invoke this skill before writing or editing any Angular code in this repo** (components, services, routes, tests, styles) — don't rely on training-data patterns alone. Its reference docs can drift from the actually-installed Angular version (e.g. it may describe APIs not yet released) — if a referenced API looks unfamiliar or surprising, cross-check it against `node_modules/@angular/core` before applying it.
 - `angular-new-app` — guidelines for scaffolding a new Angular app via the Angular CLI. Use when initializing the project (see the "подготовка к разработке" task list in the umbrella repo's memory).
 
 ## Параллельная работа (git worktree)
