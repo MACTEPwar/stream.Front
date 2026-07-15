@@ -11,10 +11,13 @@
 - `src/environments/environment.ts` (dev) / `environment.prod.ts` — конфиги под алиас `@env/*`, `fileReplacements` в `angular.json` подставляет prod-версию при production-сборке.
 - `ApiService` (`stream.Front#3`) проверен юнит-тестом на `HttpTestingController`, а не реальным вызовом к живому backend — на момент реализации у бэка не было ни `/health` (`streamer.API#7`), ни CORS (`streamer.API#5`). Реальная end-to-end проверка — когда обе появятся.
 - ESLint (`@angular-eslint`) + Prettier настроены (`eslint.config.js`, `.prettierrc`, `.prettierignore`); `eslint-config-prettier` отключает конфликтующие с Prettier правила форматирования. Команды — см. `README.md`. Git-хуки сознательно не подключены.
+- Конвенция loading/error/empty (`stream.Front#9`): loading — `Skeleton`, error — `ErrorMessage` (см. «Компоненты»). Empty-состояние **не** унифицировано намеренно — решается индивидуально по фиче.
 
 ## Компоненты
 
 - `NotificationList` — `src/app/shared/components/notification-list/` — toast-компонент, рендерит очередь `NotificationService.notifications`, крестик → `dismiss()`; подключён один раз в `app.html` (корневой layout)
+- `Skeleton` — `src/app/shared/components/skeleton/` — loading-плейсхолдер с shimmer-анимацией, форма/размер под конкретный элемент через inputs `width`/`height`/`radius` (дефолты `100%`/`16px`/`4px`)
+- `ErrorMessage` — `src/app/shared/components/error-message/` — единый текст ошибки уровня элемента, дефолт «Ошибка загрузки» (`message` input для редких переопределений)
 
 ## Сервисы
 
