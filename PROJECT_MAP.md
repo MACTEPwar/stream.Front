@@ -30,7 +30,8 @@
 
 ## Design tokens / переменные
 
-<!-- - `$variable-name` — назначение, файл -->
+- `src/styles/_variables.scss` — 18 цветовых переменных (`$color-<hex>`, литеральные имена, без выдуманных ролей типа `$primary`) и типографика (`$font-family-montserrat`/`$font-family-nunito-sans`, `$font-size-14..28`, `$font-weight-400..700`), выведены из `docs/figma/*.json` (`designTokens`, умбрелла-репо). Подключаются через `@use 'variables' as vars;` — `includePaths` настроен в `angular.json`.
+- `src/styles/_reset.scss` — global reset (box-sizing, обнуление margin/list/link-стилей), применяется один раз через `src/styles.scss`.
 
 ## Опции окружения
 
