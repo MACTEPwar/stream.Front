@@ -12,6 +12,7 @@
 - `ApiService` (`stream.Front#3`) проверен юнит-тестом на `HttpTestingController`, а не реальным вызовом к живому backend — на момент реализации у бэка не было ни `/health` (`streamer.API#7`), ни CORS (`streamer.API#5`). Реальная end-to-end проверка — когда обе появятся.
 - ESLint (`@angular-eslint`) + Prettier настроены (`eslint.config.js`, `.prettierrc`, `.prettierignore`); `eslint-config-prettier` отключает конфликтующие с Prettier правила форматирования. Команды — см. `README.md`. Git-хуки сознательно не подключены.
 - Конвенция loading/error/empty (`stream.Front#9`): loading — `Skeleton`, error — `ErrorMessage` (см. «Компоненты»). Empty-состояние **не** унифицировано намеренно — решается индивидуально по фиче.
+- `initializeAuth` (`stream.Front#14`, `src/app/core/initializers/auth.initializer.ts`) — `provideAppInitializer` в `app.config.ts`: вызывает `AuthService.fetchCurrentUser()` до рендера маршрутов, любую ошибку (`401`/сеть) гасит, бутстрап не блокирует. Backend `/auth/me` (`streamer.API#16`) и CORS credentials-режим (`#19`) ещё не реализованы — проверено юнит-тестами на `HttpTestingController`, реальная e2e-проверка отложена (та же ситуация, что у `ApiService`/`AuthService`).
 
 ## Компоненты
 
@@ -28,7 +29,7 @@
 
 ## Interceptors / Guards
 
-<!-- - `InterceptorName` — `src/app/<путь>/` — назначение -->
+- `withCredentialsInterceptor` (`stream.Front#14`) — `src/app/core/interceptors/` — форсит `withCredentials: true` на всех HTTP-запросах приложения (не только через `AuthService`/`ApiService`), чтобы httpOnly auth-cookie уходила глобально; подключён в `app.config.ts` через `provideHttpClient(withInterceptors([...]))`
 
 ## Роуты
 
