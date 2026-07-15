@@ -1,0 +1,20 @@
+@if (notifications().length) {
+  <div class="notification-list">
+    @for (notification of notifications(); track notification.id) {
+      <div
+        class="notification-list__item"
+        [class]="'notification-list__item--' + notification.type"
+      >
+        <span class="notification-list__message">{{ notification.message }}</span>
+        <button
+          type="button"
+          class="notification-list__close"
+          aria-label="Закрыть уведомление"
+          (click)="dismiss(notification.id)"
+        >
+          &times;
+        </button>
+      </div>
+    }
+  </div>
+}
