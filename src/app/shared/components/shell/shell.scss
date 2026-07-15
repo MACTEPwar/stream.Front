@@ -1,0 +1,50 @@
+@use 'variables' as vars;
+
+// Минимальная базовая стилизация — точный вид main-nav подгонят,
+// когда Figma-контент компонента станет доступен (см. shell.ts).
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.shell__header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background: vars.$color-1e1e1e;
+  color: vars.$color-ffffff;
+}
+
+.shell__logo {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-22;
+  font-weight: vars.$font-weight-700;
+}
+
+.shell__nav {
+  display: flex;
+  gap: 16px;
+  margin-right: auto;
+}
+
+.shell__nav-link {
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-16;
+}
+
+.shell__auth-button {
+  background: transparent;
+  border: 1px solid vars.$color-ffffff;
+  border-radius: 4px;
+  padding: 8px 16px;
+  color: inherit;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  cursor: pointer;
+}
+
+.shell__content {
+  flex: 1;
+}
