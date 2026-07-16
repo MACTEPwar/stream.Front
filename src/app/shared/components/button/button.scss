@@ -1,112 +1,78 @@
 @use 'variables' as vars;
 
-$height: 48px;
-$cap: 40px; // ширина фиксированного «колпачка»-маски (со скруглённым остриём и углами)
-$border: 2px; // толщина пейл-рамки
-
-// Силуэт-шестиугольник со СКРУГЛЁННЫМИ углами через CSS-маску из 3 слоёв:
-// левый/правый колпачок (фикс. SVG со скруглением) + растягивающийся центр.
-// Тянется только середина, скруглённые углы не искажаются. Маска бесцветная,
-// поэтому цветовая тематизация тела (--btn-*) остаётся.
-@mixin hex {
-  -webkit-mask-image:
-    url('/icons/button-mask-left.svg'), url('/icons/button-mask-right.svg'),
-    linear-gradient(#fff, #fff);
-  mask-image:
-    url('/icons/button-mask-left.svg'), url('/icons/button-mask-right.svg'),
-    linear-gradient(#fff, #fff);
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position:
-    left center,
-    right center,
-    center;
-  mask-position:
-    left center,
-    right center,
-    center;
-  -webkit-mask-size:
-    #{$cap} 100%,
-    #{$cap} 100%,
-    calc(100% - #{$cap + 8px}) 100%;
-  mask-size:
-    #{$cap} 100%,
-    #{$cap} 100%,
-    calc(100% - #{$cap + 8px}) 100%;
-}
-
 .button {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: $height;
+  height: 48px;
   border: none;
   background: transparent;
   padding: 0;
   cursor: pointer;
-  // Мягкое внешнее свечение по всему силуэту.
+  // Мягкое внешнее свечение по силуэту.
   filter: drop-shadow(0 0 4px var(--btn-halo));
 }
 
-// Пейл-рамка (нижний слой) — видна как бордер по всему периметру одинаковой
-// толщины, т.к. тело инсетнуто на $border поверх неё. Один элемент → бордер
-// однороден и на краях, и в центре.
-.button__frame {
+// SVG заполняет кнопку; viewBox всегда равен фактическому размеру (см.
+// button.ts), поэтому 1:1 без искажения.
+.button__svg {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--btn-stroke);
-  @include hex;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-// Тело — ОДИН элемент: база + вертикальная верхняя тень (top-shade). Никаких
-// стыков → фон однороден по всей ширине.
-.button__body {
-  position: absolute;
-  inset: $border;
-  z-index: 1;
-  overflow: hidden;
-  background:
-    linear-gradient(to bottom, var(--btn-top-shade) 0%, var(--btn-top-shade-fade) 100%),
-    var(--btn-body);
-  @include hex;
+.button__fill {
+  fill: var(--btn-body);
 }
 
-// Радар-кольца: единый узор по всему телу (маска тела обрезает его по
-// силуэту), редкие и еле заметные — как на макете (немного колец, не частые).
+.button__shade-top {
+  stop-color: var(--btn-top-shade);
+}
+
+.button__shade-bottom {
+  stop-color: var(--btn-top-shade-fade);
+}
+
+// Кольца — концентрические окружности, обрезаны clipPath по телу; редкие и
+// еле заметные, как на макете.
 .button__rings {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-radial-gradient(
-    circle at 50% 112%,
-    transparent 0 26px,
-    var(--btn-rings) 26px 27px
-  );
+  fill: none;
+  stroke: var(--btn-rings);
+  stroke-width: 1;
   mix-blend-mode: overlay;
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
-// Бледный диамант по центру снизу (по макету), фиксирован по центру кнопки.
+// Рамка — «двойная линия»: широкая мягкая (glow) + тонкая чёткая, обе по
+// одному пути → одинаковая толщина по всему периметру, включая скруглённые
+// углы.
+.button__glow-line {
+  fill: none;
+  stroke: var(--btn-glow);
+  stroke-width: 4;
+  opacity: 0.5;
+}
+
+.button__frame-line {
+  fill: none;
+  stroke: var(--btn-stroke);
+  stroke-width: 1.5;
+}
+
 .button__diamond {
-  position: absolute;
-  z-index: 2;
-  bottom: 0;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  transform: translate(-50%, 50%) rotate(45deg);
-  background: var(--btn-tip);
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+  fill: var(--btn-tip);
 }
 
-// Контент задаёт ширину кнопки (растёт/сужается с текстом); паддинги уводят
-// текст от острых концов. При форсированной родителем ширине flex-grow
-// растягивает, текст остаётся по центру.
+// Контент (иконка+текст) задаёт ширину кнопки; паддинги уводят текст от
+// острых концов; при форсированной родителем ширине flex-grow растягивает,
+// текст по центру.
 .button__content {
   position: relative;
-  z-index: 3;
+  z-index: 1;
   flex: 1 1 auto;
   min-width: 0;
   display: flex;

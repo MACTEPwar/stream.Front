@@ -1,10 +1,11 @@
 <!--
-  Кнопка (stream.Front#39) по макету «Поддержать»/«Сетка». Тело — ОДИН
-  элемент с clip-path-шестиугольником (фиксированный вынос углов $corner,
-  поэтому при любой ширине тянется только середина, а угол не искажается).
-  Фон и бордер однородны по построению — тело цельное, шва колпачок↔середина
-  не существует. Бордер = пейл-рамка (.button__frame) под телом,
-  инсетнутым на толщину бордера. Кольца-узор, диамант — поверх.
+  Кнопка целиком на чистом SVG (stream.Front#39). Путь шестиугольника
+  вычисляется под фактическую ширину (см. button.ts) — тянется только
+  середина, скруглённые углы не искажаются. Все визуальные слои (заливка,
+  верхняя тень, кольца, свечение, рамка, диамант) рисуются по ОДНОМУ пути,
+  поэтому шва по цвету/узору не существует. Текст/иконка — HTML-оверлей.
+  id градиента/клипа уникальны на инстанс (uid) — чтобы не конфликтовали
+  при нескольких кнопках на странице.
 -->
 <button
   type="button"
@@ -12,11 +13,40 @@
   [class.button--primary]="variant() === 'primary'"
   [class.button--secondary]="variant() === 'secondary'"
 >
-  <span class="button__frame"></span>
-  <span class="button__body">
-    <span class="button__rings"></span>
-  </span>
-  <span class="button__diamond"></span>
+  <svg class="button__svg" [attr.viewBox]="viewBox()" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient [attr.id]="uid + '-shade'" x1="0" y1="0" x2="0" y2="1">
+        <stop class="button__shade-top" offset="0" />
+        <stop class="button__shade-bottom" offset="1" />
+      </linearGradient>
+      <clipPath [attr.id]="uid + '-clip'">
+        <path [attr.d]="bodyPath()" />
+      </clipPath>
+    </defs>
+
+    <path class="button__fill" [attr.d]="bodyPath()" />
+    <path [attr.d]="bodyPath()" [attr.fill]="'url(#' + uid + '-shade)'" />
+
+    <g class="button__rings" [attr.clip-path]="'url(#' + uid + '-clip)'">
+      <circle [attr.cx]="centerX()" cy="60" r="20" />
+      <circle [attr.cx]="centerX()" cy="60" r="34" />
+      <circle [attr.cx]="centerX()" cy="60" r="48" />
+    </g>
+
+    <path class="button__glow-line" [attr.d]="bodyPath()" />
+    <path class="button__frame-line" [attr.d]="bodyPath()" />
+
+    <rect
+      class="button__diamond"
+      [attr.x]="centerX() - 3.5"
+      [attr.y]="height - 3 - 3.5"
+      width="7"
+      height="7"
+      rx="1"
+      [attr.transform]="'rotate(45 ' + centerX() + ' ' + (height - 3) + ')'"
+    />
+  </svg>
+
   <span class="button__content">
     <ng-content select="[icon]" />
     <span class="button__text">{{ text() }}</span>
