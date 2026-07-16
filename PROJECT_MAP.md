@@ -23,9 +23,11 @@
 
 ## Сервисы
 
-- `ApiService` — `src/app/core/services/` — методы: `get()`, `post()`, `put()`, `delete()` (принимают опциональный `{ withCredentials }`); собирает URL из `environment.apiUrl` + путь, единая точка `catchError` для generic сетевых ошибок (без завязки на доменные ошибки)
+- `ApiService` — `src/app/core/services/` — методы: `get()`, `post()`, `put()`, `patch()`, `delete()` (принимают опциональный `{ withCredentials }`); собирает URL из `environment.apiUrl` + путь, единая точка `catchError` для generic сетевых ошибок (без завязки на доменные ошибки)
 - `NotificationService` — `src/app/core/services/` — методы: `show(message, type, durationMs?)` (типы `success`/`error`/`info`; `durationMs: null` — persistent-уведомление, не скрывается само), `dismiss(id)`, `dismissAll()` — очередь на `signal`, поддерживает несколько одновременных уведомлений
 - `AuthService` (`stream.Front#4`) — `src/app/core/services/` — `currentUser` (readonly signal `CurrentUser | null`), `isAuthenticated` (computed); методы `login(login, password)`, `loginWithGoogle(googleIdToken)`, `fetchCurrentUser()` — `POST/GET` через `ApiService` с `withCredentials: true` (JWT в `httpOnly`-cookie, фронт токен не хранит); `logout()` — `POST /auth/logout`, сбрасывает `currentUser` в `null` через `finalize()` независимо от результата запроса. Backend-эндпоинты (`streamer.API#16-18`) и CORS credentials-режим (`#19`) ещё не реализованы — проверено юнит-тестами на `HttpTestingController`, реальная e2e-проверка отложена.
+
+- `ProfileService`/`SettingsService` (`stream.Front#21`) — `src/app/core/services/` — `getProfile()`/`updateProfile(dto)` (`GET`/`PATCH /profile`), `getSettings()`/`updateSettings(dto)` (`GET`/`PATCH /settings`), через `ApiService`. Модели (`Profile`, `Settings`, `UpdateProfileDto`, `UpdateSettingsDto`) списаны с реального контракта backend (`streamer.API#21`/`#23`, оба уже реализованы и закрыты — DTO/контроллеры прочитаны напрямую из `backend/src/profile/`, `backend/src/settings/`, не угаданы). Несмотря на готовый backend, реальная e2e-проверка не сделана — локально не поднята MySQL/`.env` для полного стека (это уже за рамками frontend-задачи); проверено юнит-тестами на `HttpTestingController` с точными путями/методами/телами по факту прочитанного кода.
 
 ## Interceptors / Guards
 
