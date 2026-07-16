@@ -1,0 +1,29 @@
+.kit-page {
+  padding: 32px;
+  background: #1e1e1e;
+  min-height: 100%;
+  color: white;
+  font-family: sans-serif;
+}
+
+.kit-page__title {
+  margin-bottom: 24px;
+}
+
+.kit-page__section {
+  margin-bottom: 32px;
+}
+
+.kit-page__section-title {
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-bottom: 12px;
+}
+
+.kit-page__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}

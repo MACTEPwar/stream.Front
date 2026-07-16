@@ -1,0 +1,191 @@
+@use 'variables' as vars;
+
+// Колпачок: viewBox 108×51, preserveAspectRatio="none", ширина выведена из
+// высоты в пропорции viewBox (108/51). Тело по вертикали y=4..44 из 51 —
+// отсюда доли для выравнивания середины со стыком (совпадают с диапазоном
+// линейного top-shade y1=4..y2=44 в SVG, чтобы тон на стыке был идентичен).
+$cap-height: 48px;
+$cap-width: 101.65px; // 108 / 51 * 48
+$body-top: 7.8431%; // 4 / 51
+$body-bottom: 13.7255%; // 7 / 51 (тело кончается на y=44)
+$corner: 22px; // горизонтальный вынос диагонального среза угла (для clip-path колец)
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  height: $cap-height;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  // Мягкое свечение вокруг всего силуэта (внешний halo). Кромку рисует
+  // stroke колпачков + border середины, halo даёт свечение вокруг них
+  // одинаково для колпачков и середины → верхняя/нижняя кромка не «рвётся».
+  filter: drop-shadow(0 0 4px var(--btn-halo));
+}
+
+.button__cap {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+  width: $cap-width;
+  height: 100%;
+}
+
+.button__cap--right {
+  transform: scaleX(-1);
+}
+
+.button__cap-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// Слои тела колпачка = слои SVG.
+.button__glow {
+  fill: var(--btn-glow);
+  fill-opacity: 0.6;
+}
+
+.button__base {
+  fill: var(--btn-body);
+}
+
+.button__tip {
+  fill: var(--btn-tip);
+}
+
+.button__stroke {
+  stroke: var(--btn-stroke);
+}
+
+// Середина — те же слои, что тело колпачков: база + top-shade. top-shade —
+// линейный градиент по тому же диапазону (0%..100% = y4..y44 в px после
+// скейла), с теми же стопами (rgba того же цвета/непрозрачности), что и SVG
+// `#btnTop*`. Поэтому в любой точке стыка цвет по всей высоте совпадает —
+// шва по цвету нет. Краевого затемнения тут нет (tip-shade живёт только у
+// остриёв и полностью гаснет к внутреннему краю колпачка).
+.button__middle {
+  position: absolute;
+  z-index: 0;
+  top: $body-top;
+  bottom: $body-bottom;
+  left: $cap-width;
+  right: $cap-width;
+  border-top: 1.5px solid var(--btn-stroke);
+  border-bottom: 1.5px solid var(--btn-stroke);
+  background:
+    linear-gradient(to bottom, var(--btn-top-shade) 0%, var(--btn-top-shade-fade) 100%),
+    var(--btn-body);
+}
+
+// Радар-кольца (filter2) — единый оверлей на ВСЮ кнопку (не только середина),
+// обрезан по силуэту через clip-path-шестиугольник с фиксированными углами,
+// поэтому узор непрерывен через колпачки и середину и не залезает в
+// прозрачные уголки. mix-blend overlay + низкая непрозрачность — еле заметно.
+.button__rings {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  clip-path: polygon(
+    0 50%,
+    #{$corner} 0,
+    calc(100% - #{$corner}) 0,
+    100% 50%,
+    calc(100% - #{$corner}) 100%,
+    #{$corner} 100%
+  );
+  background: repeating-radial-gradient(
+    circle at 50% 108%,
+    transparent 0 13px,
+    var(--btn-rings) 13px 14px
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.35;
+}
+
+// Бледный диамант по центру снизу (filter3, #F8ECB2), фиксирован строго по
+// центру всей кнопки — не двигается при любой ширине.
+.button__diamond {
+  position: absolute;
+  z-index: 4;
+  bottom: 0;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, 50%) rotate(45deg);
+  background: var(--btn-tip);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
+// Контент — flex-элемент между колпачками: задаёт ширину кнопки (растёт/
+// сужается вместе с текстом), при форсированной родителем ширине flex-grow
+// растягивает, текст по центру.
+.button__content {
+  position: relative;
+  z-index: 3;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  white-space: nowrap;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-700;
+  letter-spacing: 0.02em;
+}
+
+// Primary — цвета сняты с точного приложенного SVG «Поддержать». top-shade
+// смягчён (0.6 вместо плотного 1.0) — тело светлее/люминесцентнее, как на
+// макете.
+.button--primary {
+  --btn-glow: #f4e9ae;
+  --btn-body: #eec68c;
+  --btn-tip: #f8ecb2;
+  --btn-stroke: #f7ecb2;
+  --btn-top-shade: rgba(155, 132, 116, 0.6);
+  --btn-top-shade-fade: rgba(155, 132, 116, 0);
+  --btn-rings: rgba(255, 255, 255, 0.55);
+  --btn-halo: rgba(247, 236, 178, 0.6);
+}
+
+.button--primary .button__content {
+  color: #4a3418;
+}
+
+// Secondary («Сетка»): рамка/обводка/остриё/диамант — ЗОЛОТЫЕ, как у primary
+// (по макету), синий только у заливки тела (тёмный navy) и верхней тени.
+// Точного SVG нет — оттенки navy приближены со скриншота, требуют сверки.
+.button--secondary {
+  --btn-glow: #f4e9ae;
+  --btn-body: #2a2f6b;
+  --btn-tip: #f8ecb2;
+  --btn-stroke: #f7ecb2;
+  --btn-top-shade: rgba(59, 68, 136, 0.6);
+  --btn-top-shade-fade: rgba(59, 68, 136, 0);
+  --btn-rings: rgba(200, 210, 255, 0.4);
+  --btn-halo: rgba(247, 236, 178, 0.5);
+}
+
+.button--secondary .button__content {
+  color: #d3d9ff;
+}
+
+// Стоп-цвета SVG-градиентов колпачков для secondary (по умолчанию в разметке
+// заданы значения primary). top-shade → navy (та же непрозрачность 0.6, что в
+// CSS-середине), tip-shade → мягкий тёмный navy.
+.button--secondary .button__topshade-0,
+.button--secondary .button__topshade-1 {
+  stop-color: #3b4488;
+}
+
+.button--secondary .button__tipshade-0,
+.button--secondary .button__tipshade-1 {
+  stop-color: #1e2352;
+}
