@@ -1,0 +1,64 @@
+<div class="main-carousel">
+  <div class="main-carousel__slide" [class.main-carousel__slide--active]="activeIndex() === 0">
+    <div
+      class="main-carousel__image-slot"
+      [class]="'main-carousel__image-slot main-carousel__image-slot--' + imagePosition0()"
+    >
+      @if (imageUrl0()) {
+        <img class="main-carousel__image" [src]="imageUrl0()" alt="" />
+      }
+    </div>
+    <div class="main-carousel__content main-carousel__content--bottom-right">
+      <ng-content select="[mainCarouselSlide0BottomRight]" />
+    </div>
+    <div class="main-carousel__content main-carousel__content--bottom-left">
+      <ng-content select="[mainCarouselSlide0BottomLeft]" />
+    </div>
+  </div>
+
+  <div class="main-carousel__slide" [class.main-carousel__slide--active]="activeIndex() === 1">
+    <div
+      class="main-carousel__image-slot"
+      [class]="'main-carousel__image-slot main-carousel__image-slot--' + imagePosition1()"
+    >
+      @if (imageUrl1()) {
+        <img class="main-carousel__image" [src]="imageUrl1()" alt="" />
+      }
+    </div>
+    <div class="main-carousel__content main-carousel__content--bottom-left">
+      <ng-content select="[mainCarouselSlide1BottomLeft]" />
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="main-carousel__arrow main-carousel__arrow--prev"
+    (click)="prev()"
+    aria-label="Предыдущий слайд"
+  >
+    <img src="/icons/main-carousel-arrow.svg" alt="" />
+  </button>
+  <button
+    type="button"
+    class="main-carousel__arrow main-carousel__arrow--next"
+    (click)="next()"
+    aria-label="Следующий слайд"
+  >
+    <img src="/icons/main-carousel-arrow.svg" alt="" />
+  </button>
+
+  <div class="main-carousel__timeline">
+    <div class="main-carousel__segment">
+      <div
+        class="main-carousel__segment-fill"
+        [style.width.%]="activeIndex() > 0 ? 100 : progress() * 100"
+      ></div>
+    </div>
+    <div class="main-carousel__segment">
+      <div
+        class="main-carousel__segment-fill"
+        [style.width.%]="activeIndex() === 1 ? progress() * 100 : 0"
+      ></div>
+    </div>
+  </div>
+</div>

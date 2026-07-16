@@ -13,8 +13,13 @@
   align-items: center;
   gap: 24px;
   padding: 12px 24px;
-  background: vars.$color-1e1e1e;
+  // Прозрачный фон — по макету главной страницы (stream.Front#28) меню лежит
+  // поверх полноэкранной карусели, а не на сплошной подложке; применяется
+  // глобально, т.к. Shell подключён один раз на все страницы.
+  background: transparent;
   color: vars.$color-ffffff;
+  position: relative;
+  z-index: 1;
 }
 
 .shell__logo {
