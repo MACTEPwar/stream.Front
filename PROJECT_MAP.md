@@ -30,6 +30,7 @@
 ## Interceptors / Guards
 
 - `withCredentialsInterceptor` (`stream.Front#14`) — `src/app/core/interceptors/` — форсит `withCredentials: true` на всех HTTP-запросах приложения (не только через `AuthService`/`ApiService`), чтобы httpOnly auth-cookie уходила глобально; подключён в `app.config.ts` через `provideHttpClient(withInterceptors([...]))`
+- `authInterceptor` (`stream.Front#5`) — `src/app/core/interceptors/` — на `401` вызывает `AuthService.logout()` и показывает уведомление через `NotificationService` (без редиректа — окно логина/регистрации реализовано как модалка, без отдельного роута). Исключение — запросы к `/auth/*`: `401` от `/auth/me` (гость, см. `#14`) и `/auth/login`/`/auth/google` (неверные креды) не триггерят logout, а `/auth/logout` явно исключён из собственной же логики, иначе получился бы бесконечный цикл. Ошибка не глотается — пробрасывается дальше вызывающему коду. Backend-эндпоинты и CORS credentials-режим (`streamer.API#16-19`) ещё не реализованы — проверено юнит-тестами на `HttpTestingController`.
 
 ## Роуты
 
