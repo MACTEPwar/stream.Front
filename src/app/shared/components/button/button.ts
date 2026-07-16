@@ -88,6 +88,7 @@ export class Button implements AfterViewInit, OnDestroy {
   private resizeObserver?: ResizeObserver;
 
   readonly height = HEIGHT;
+  readonly margin = MARGIN;
   readonly width = signal(0);
   readonly uid = `btn-${uidSeq++}`;
 

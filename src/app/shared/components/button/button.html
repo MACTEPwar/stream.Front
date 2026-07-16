@@ -22,6 +22,9 @@
       <clipPath [attr.id]="uid + '-clip'">
         <path [attr.d]="bodyPath()" />
       </clipPath>
+      <filter [attr.id]="uid + '-blur'" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="1.6" />
+      </filter>
     </defs>
 
     <path class="button__fill" [attr.d]="bodyPath()" />
@@ -33,17 +36,34 @@
       <circle [attr.cx]="centerX()" cy="60" r="48" />
     </g>
 
+    <!--
+      Тень рамки: размытый тёмный контур по тому же пути, под рамкой —
+      её внешняя половина перекрывается glow/frame-линиями сверху, а
+      внутренняя даёт мягкую тень на заливке рядом с границей (эффект
+      «приподнятой» рамки, отдельный от внешнего halo).
+    -->
+    <path
+      class="button__inner-shadow"
+      [attr.d]="bodyPath()"
+      [attr.clip-path]="'url(#' + uid + '-clip)'"
+      [attr.filter]="'url(#' + uid + '-blur)'"
+    />
+
     <path class="button__glow-line" [attr.d]="bodyPath()" />
     <path class="button__frame-line" [attr.d]="bodyPath()" />
 
+    <!--
+      Ромбик по центру снизу — сидит ВЫШЕ линии рамки (перекрывает её),
+      с обводкой в цвет рамки (как на макете — не плоская заливка).
+    -->
     <rect
       class="button__diamond"
       [attr.x]="centerX() - 3.5"
-      [attr.y]="height - 3 - 3.5"
+      [attr.y]="height - margin - 4 - 3.5"
       width="7"
       height="7"
       rx="1"
-      [attr.transform]="'rotate(45 ' + centerX() + ' ' + (height - 3) + ')'"
+      [attr.transform]="'rotate(45 ' + centerX() + ' ' + (height - margin - 4) + ')'"
     />
   </svg>
 
