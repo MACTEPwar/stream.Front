@@ -28,6 +28,7 @@
 - `AuthService` (`stream.Front#4`) — `src/app/core/services/` — `currentUser` (readonly signal `CurrentUser | null`), `isAuthenticated` (computed); методы `login(login, password)`, `loginWithGoogle(googleIdToken)`, `fetchCurrentUser()` — `POST/GET` через `ApiService` с `withCredentials: true` (JWT в `httpOnly`-cookie, фронт токен не хранит); `logout()` — `POST /auth/logout`, сбрасывает `currentUser` в `null` через `finalize()` независимо от результата запроса. Backend-эндпоинты (`streamer.API#16-18`) и CORS credentials-режим (`#19`) ещё не реализованы — проверено юнит-тестами на `HttpTestingController`, реальная e2e-проверка отложена.
 
 - `ProfileService`/`SettingsService` (`stream.Front#21`) — `src/app/core/services/` — `getProfile()`/`updateProfile(dto)` (`GET`/`PATCH /profile`), `getSettings()`/`updateSettings(dto)` (`GET`/`PATCH /settings`), через `ApiService`. Модели (`Profile`, `Settings`, `UpdateProfileDto`, `UpdateSettingsDto`) списаны с реального контракта backend (`streamer.API#21`/`#23`, оба уже реализованы и закрыты — DTO/контроллеры прочитаны напрямую из `backend/src/profile/`, `backend/src/settings/`, не угаданы). Несмотря на готовый backend, реальная e2e-проверка не сделана — локально не поднята MySQL/`.env` для полного стека (это уже за рамками frontend-задачи); проверено юнит-тестами на `HttpTestingController` с точными путями/методами/телами по факту прочитанного кода.
+- `GoogleAuthService` (`stream.Front#15`) — `src/app/core/services/` — грузит Google Identity Services JS SDK (`https://accounts.google.com/gsi/client`) динамическим `<script>`-тегом (не инлайновый скрипт в `index.html`), кэширует промис загрузки. `signIn()` инициализирует SDK с `environment.googleClientId`, дожидается ID-токена через `google.accounts.id.prompt()` и передаёт его в `AuthService.loginWithGoogle()`. Отмена/закрытие попапа и недоступность SDK не роняют приложение — отдаются как ошибка Observable вызывающему коду. Без UI — кнопка/попап входа появятся вместе с auth-модалкой (макапы ещё не пришли); проверено юнит-тестами с замоканным `window.google` и `loadScript()`.
 
 ## Interceptors / Guards
 
@@ -47,3 +48,4 @@
 ## Опции окружения
 
 - `environment.apiUrl` — базовый URL backend API (dev: `http://localhost:3000`, prod: плейсхолдер, требует реального значения перед деплоем)
+- `environment.googleClientId` (`stream.Front#15`) — Google OAuth Client ID для `GoogleAuthService`; сейчас плейсхолдер в обоих окружениях, требует реального значения из `MACTEPwar/steramer.io#2` перед реальным использованием
