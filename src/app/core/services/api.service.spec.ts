@@ -29,6 +29,15 @@ describe('ApiService', () => {
     req.flush({ status: 'ok' });
   });
 
+  it('patch() отправляет PATCH-запрос с телом', () => {
+    service.patch('/profile', { email: 'new@example.com' }).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/profile`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ email: 'new@example.com' });
+    req.flush({});
+  });
+
   it('пробрасывает generic-ошибку сети дальше подписчику', () => {
     let receivedError: unknown;
 
