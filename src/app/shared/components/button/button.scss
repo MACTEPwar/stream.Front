@@ -1,20 +1,38 @@
 @use 'variables' as vars;
 
 $height: 48px;
-$corner: 20px; // горизонтальный вынос диагонального среза угла (фикс. px → угол не искажается при растягивании)
+$cap: 40px; // ширина фиксированного «колпачка»-маски (со скруглённым остриём и углами)
 $border: 2px; // толщина пейл-рамки
 
-// Единый шестиугольник с фиксированными углами: тянется только средняя
-// (горизонтальная) часть, диагонали углов неизменны.
+// Силуэт-шестиугольник со СКРУГЛЁННЫМИ углами через CSS-маску из 3 слоёв:
+// левый/правый колпачок (фикс. SVG со скруглением) + растягивающийся центр.
+// Тянется только середина, скруглённые углы не искажаются. Маска бесцветная,
+// поэтому цветовая тематизация тела (--btn-*) остаётся.
 @mixin hex {
-  clip-path: polygon(
-    0 50%,
-    #{$corner} 0,
-    calc(100% - #{$corner}) 0,
-    100% 50%,
-    calc(100% - #{$corner}) 100%,
-    #{$corner} 100%
-  );
+  -webkit-mask-image:
+    url('/icons/button-mask-left.svg'), url('/icons/button-mask-right.svg'),
+    linear-gradient(#fff, #fff);
+  mask-image:
+    url('/icons/button-mask-left.svg'), url('/icons/button-mask-right.svg'),
+    linear-gradient(#fff, #fff);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position:
+    left center,
+    right center,
+    center;
+  mask-position:
+    left center,
+    right center,
+    center;
+  -webkit-mask-size:
+    #{$cap} 100%,
+    #{$cap} 100%,
+    calc(100% - #{$cap + 8px}) 100%;
+  mask-size:
+    #{$cap} 100%,
+    #{$cap} 100%,
+    calc(100% - #{$cap + 8px}) 100%;
 }
 
 .button {
@@ -55,8 +73,8 @@ $border: 2px; // толщина пейл-рамки
   @include hex;
 }
 
-// Радар-кольца: единый узор по всему телу (обрезан clip-path тела), редкие и
-// еле заметные — как на макете (немного колец, не частые).
+// Радар-кольца: единый узор по всему телу (маска тела обрезает его по
+// силуэту), редкие и еле заметные — как на макете (немного колец, не частые).
 .button__rings {
   position: absolute;
   inset: 0;
