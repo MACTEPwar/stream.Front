@@ -1,0 +1,179 @@
+@use 'variables' as vars;
+
+// Оценочно по скриншотам реального макета — точных значений отступов
+// в Figma-экспорте нет (абсолютные координаты экспортером не отдаются).
+$content-offset: 64px;
+$transition-duration: 0.4s;
+
+.main-carousel {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: radial-gradient(circle, vars.$color-1e00b2 0%, vars.$color-0d004d 100%);
+}
+
+.main-carousel__slide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.main-carousel__slide--active {
+  pointer-events: auto;
+}
+
+// Изображение: слот отвечает за статичное позиционирование (лево/центр/
+// право, на всю высоту), сама картинка внутри — за анимацию появления/
+// ухода (уезжает в сторону своего позиционирования).
+.main-carousel__image-slot {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.main-carousel__image-slot--left {
+  left: 0;
+}
+
+.main-carousel__image-slot--right {
+  right: 0;
+}
+
+.main-carousel__image-slot--center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.main-carousel__image {
+  height: 100%;
+  width: auto;
+  // Глобальный reset (src/styles/_reset.scss) ставит max-width: 100% на все
+  // img — при широких/панорамных картинках это заставляет браузер уменьшать
+  // высоту, чтобы вписаться в ширину контейнера. Здесь высота на весь экран
+  // важнее — лишняя ширина обрезается overflow: hidden родителя (слот/сама
+  // карусель), а не сжатием картинки.
+  max-width: none;
+  object-fit: contain;
+  opacity: 0;
+  transform: translateX(0);
+  transition:
+    opacity $transition-duration ease,
+    transform $transition-duration ease;
+}
+
+.main-carousel__slide--active .main-carousel__image {
+  opacity: 1;
+}
+
+.main-carousel__slide:not(.main-carousel__slide--active)
+  .main-carousel__image-slot--left
+  .main-carousel__image {
+  transform: translateX(-100%);
+}
+
+.main-carousel__slide:not(.main-carousel__slide--active)
+  .main-carousel__image-slot--right
+  .main-carousel__image {
+  transform: translateX(100%);
+}
+
+// Центр не привязан к стороне — при уходе просто гаснет (opacity уже 0 по умолчанию).
+
+// Контент: уезжает в сторону своего же угла (закреплён справа — уезжает
+// вправо, закреплён слева — уезжает влево).
+.main-carousel__content {
+  position: absolute;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity $transition-duration ease,
+    transform $transition-duration ease;
+}
+
+.main-carousel__content--top-left {
+  top: $content-offset;
+  left: $content-offset;
+}
+
+.main-carousel__content--top-right {
+  top: $content-offset;
+  right: $content-offset;
+}
+
+.main-carousel__content--bottom-left {
+  bottom: $content-offset;
+  left: $content-offset;
+}
+
+.main-carousel__content--bottom-right {
+  bottom: $content-offset;
+  right: $content-offset;
+}
+
+.main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--bottom-right,
+.main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--top-right {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--bottom-left,
+.main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--top-left {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.main-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.main-carousel__arrow--prev {
+  left: $content-offset;
+}
+
+.main-carousel__arrow--next {
+  right: $content-offset;
+}
+
+.main-carousel__arrow--next img {
+  transform: scaleX(-1);
+}
+
+.main-carousel__timeline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  z-index: 1;
+}
+
+// Трек сегмента прозрачнее с ростом индекса слайда (белая заливка
+// поверх фона карусели, alpha убывает); фон/индикатор — см. ниже.
+.main-carousel__segment {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+}
+
+.main-carousel__segment:nth-child(2) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+// Индикатор текущего положения — едва отличается от фона карусели,
+// не яркий белый (по образцу реального макета).
+.main-carousel__segment-fill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.55);
+}
