@@ -184,6 +184,18 @@ describe('Button', () => {
     expect(glowMidLeft?.getAttribute('transform')).not.toBe(frameMidLeft?.getAttribute('transform'));
   });
 
+  it('рамка использует свой собственный clip-frame-mid-center (не общий с glow) — нужен под точечный фикс шва', () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
+    const frameGap = svg.querySelector('path[clip-path="url(#clip-frame-mid-center_2821_998)"]');
+    const glowGap = svg.querySelector('path[clip-path="url(#clip-mid-center_2821_998)"]');
+    expect(frameGap).not.toBeNull();
+    expect(glowGap).not.toBeNull();
+    expect(frameGap).not.toBe(glowGap);
+  });
+
   it('width() — гем (filter3_d) сдвигается вместе с новым центром кнопки', () => {
     const fixture = TestBed.createComponent(ButtonHost);
     fixture.componentInstance.width.set(500);
