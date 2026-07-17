@@ -6,6 +6,7 @@ $svg-height: 48px;
 $svg-width: 301px; // 320 * 48 / 51
 
 .button {
+  position: relative;
   display: inline-block;
   width: $svg-width;
   height: $svg-height;
@@ -20,4 +21,23 @@ $svg-width: 301px; // 320 * 48 / 51
   width: 100%;
   height: 100%;
   overflow: visible;
+}
+
+// Слот под иконку (content projection, [icon]) — позиция/размер соответствуют
+// зоне x:57–101 / y:5–43 из исходного viewBox 320×51 (ромбовидная подложка +
+// монетка, вынесенные в public/icons/button-support-icon.svg). Если ничего
+// не спроецировано, слот пустой.
+.button__icon {
+  position: absolute;
+  left: 17.8125%; // 57 / 320
+  top: 9.8039%; // 5 / 51
+  width: 13.75%; // 44 / 320
+  height: 74.5098%; // 38 / 51
+  pointer-events: none;
+}
+
+.button__icon > * {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
