@@ -1,13 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { Button } from './button';
+import { Button, ButtonType, ButtonWidthMode } from './button';
 
 @Component({
   selector: 'app-button-host',
   imports: [Button],
   template: `
-    <app-button [text]="text()" [width]="width()">
+    <app-button [text]="text()" [width]="width()" [type]="type()">
       @if (withIcon()) {
         <svg icon viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" /></svg>
       }
@@ -17,7 +17,8 @@ import { Button } from './button';
 class ButtonHost {
   readonly text = signal('Поддержать');
   readonly withIcon = signal(false);
-  readonly width = signal<number | undefined>(undefined);
+  readonly width = signal<number | ButtonWidthMode | undefined>(undefined);
+  readonly type = signal<ButtonType>('primary');
 }
 
 describe('Button', () => {
@@ -74,7 +75,9 @@ describe('Button', () => {
     const cs = getComputedStyle(content);
     expect(cs.display).toBe('flex');
     expect(cs.justifyContent).toBe('center');
-    expect(cs.gap).toBe('8px');
+
+    const inner = el.querySelector('.button__content-inner') as HTMLElement;
+    expect(getComputedStyle(inner).gap).toBe('8px');
     expect(getComputedStyle(el.querySelector('.button__icon') as HTMLElement).display).not.toBe('none');
   });
 
@@ -216,5 +219,77 @@ describe('Button', () => {
       const filter = svg.querySelector(`#${id}`);
       expect(Number(filter?.getAttribute('width'))).toBeGreaterThan(1000);
     });
+  });
+
+  it("width()='parent' — ширина кнопки задаётся через CSS 100%, не инлайновым px", () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.componentInstance.width.set('parent');
+    fixture.detectChanges();
+
+    const button: HTMLElement = fixture.nativeElement.querySelector('button.button');
+    expect(button.style.width).toBe('100%');
+  });
+
+  it("width()='content' — без ResizeObserver (jsdom) падает на CONTENT_PADDING_PX*2 = 100px, не на дефолтную ширину", () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.componentInstance.width.set('content');
+    fixture.detectChanges();
+
+    const button: HTMLElement = fixture.nativeElement.querySelector('button.button');
+    expect(button.style.width).toBe('100px');
+  });
+
+  it("type()='primary' (дефолт) — glow/тело/текст цвета primary из исходного макета", () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
+    expect(svg.querySelector('path[clip-path="url(#clip-left_2821_998)"]')?.getAttribute('fill')).toBe('#F4E9AE');
+    expect(svg.querySelector('path[clip-path="url(#clip-body-left_2821_998)"]')?.getAttribute('fill')).toBe(
+      '#EEC68C',
+    );
+    const text: HTMLElement = fixture.nativeElement.querySelector('.button__text');
+    // jsdom нормализует hex в rgb() при чтении обратно из style
+    expect(text.style.background).toContain('rgb(119, 83, 28)');
+  });
+
+  it("type()='secondary' — меняет цвета из Frame 68_2 (glow/база тела/тон тела/текст) + подобранные рамка/блики/гем, геометрия та же", () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.componentInstance.type.set('secondary');
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
+    expect(svg.querySelector('path[clip-path="url(#clip-left_2821_998)"]')?.getAttribute('fill')).toBe('#8383F3');
+    expect(svg.querySelector('path[clip-path="url(#clip-body-left_2821_998)"]')?.getAttribute('fill')).toBe(
+      '#3F3FAF',
+    );
+    const bodyTintStops = svg.querySelectorAll('#paint1_radial_2821_998 stop');
+    expect(bodyTintStops[0].getAttribute('stop-color')).toBe('#26267B');
+    expect(bodyTintStops[1].getAttribute('stop-color')).toBe('#7171D5');
+    const text: HTMLElement = fixture.nativeElement.querySelector('.button__text');
+    expect(text.style.background).toContain('rgb(124, 124, 250)');
+
+    // рамка/блики/гем — в исходнике Frame 68_2 буквально те же F7ECB2/FFF9DB/F8ECB2,
+    // что и у primary, но по прямому запросу пользователя перекрашены и они тоже
+    // (подобранный, не из исходника, лавандовый тон — см. комментарий в button.ts).
+    // Рамка — НЕ мутация stop-color (Chromium не перерисовывал закешированный
+    // filter5_d, см. комментарий у paint4_radial_2821_998_secondary в
+    // button.html), а переключение stroke на отдельный статичный градиент.
+    const frameTip = svg.querySelector('path[clip-path="url(#clip-frame-left_2821_998)"]');
+    expect(frameTip?.getAttribute('stroke')).toBe('url(#paint4_radial_2821_998_secondary)');
+    const secondaryFrameStops = svg.querySelectorAll('#paint4_radial_2821_998_secondary stop');
+    expect(secondaryFrameStops[0].getAttribute('stop-color')).toBe('#DCDCFC');
+    expect(secondaryFrameStops[1].getAttribute('stop-color')).toBe('#F0F0FF');
+    const primaryFrameStops = svg.querySelectorAll('#paint4_radial_2821_998 stop');
+    expect(primaryFrameStops[0].getAttribute('stop-color')).toBe('#F7ECB2');
+    const sparkles = svg.querySelectorAll('path[fill="#F0F0FF"]');
+    expect(sparkles).toHaveLength(2);
+    const gem = svg.querySelector('g[filter="url(#filter3_d_2821_998)"] rect');
+    expect(gem?.getAttribute('fill')).toBe('#DCDCFC');
+
+    // серый оверлей (paint0_radial) и кольца (paint2_linear) — не меняются между
+    // типами (проверено по исходнику Frame 68_2 — цвета там идентичны primary)
+    const grayStops = svg.querySelectorAll('#paint0_radial_2821_998 stop');
+    expect(grayStops[0].getAttribute('stop-color')).toBe('#738898');
   });
 });

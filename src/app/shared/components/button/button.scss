@@ -27,17 +27,24 @@ $svg-height: 48px;
 }
 
 // Иконка+текст — единая группа, отцентрованная относительно ВСЕЙ кнопки
-// (не привязана к исходным координатам иконки/текста из макета), с зазором
-// 8px между ними. Вертикаль — по центру высоты кнопки (align-items: center),
-// не зависит от width().
+// (не привязана к исходным координатам иконки/текста из макета). Вертикаль —
+// по центру высоты кнопки (align-items: center), не зависит от width().
 .button__content {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   pointer-events: none;
+}
+
+// НЕ растянут inset:0 (в отличие от родителя выше) — его собственная ширина
+// естественная (shrink-to-fit), с зазором 8px между иконкой и текстом. Это
+// то, что измеряет ResizeObserver под width()="content" в button.ts.
+.button__content-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 // Слот под иконку (content projection, [icon]) — size задаётся инлайново
@@ -61,8 +68,9 @@ $svg-height: 48px;
 
 // Текст — живой оверлей поверх SVG (раньше был зашит как path с градиентной
 // заливкой). Typography — Figma-компонент "Button": Montserrat Bold 18/24,
-// letter-spacing 8%. Цвет — тот же вертикальный градиент #77531C→#653908,
-// что был у path, через background-clip: text.
+// letter-spacing 8%. Сам градиент (зависит от type()) — [style.background]
+// в button.html/textGradient() в button.ts, здесь только механика затекания
+// фона в текст.
 .button__text {
   flex: 0 0 auto;
   white-space: nowrap;
@@ -73,7 +81,6 @@ $svg-height: 48px;
   line-height: 24px;
   letter-spacing: 0.08em;
 
-  background: linear-gradient(180deg, #77531c 0%, #653908 100%);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
