@@ -1,11 +1,12 @@
 <!--
-  Кнопка целиком на чистом SVG (stream.Front#39). Путь шестиугольника
-  вычисляется под фактическую ширину (см. button.ts) — тянется только
-  середина, скруглённые углы не искажаются. Все визуальные слои (заливка,
-  верхняя тень, кольца, свечение, рамка, диамант) рисуются по ОДНОМУ пути,
-  поэтому шва по цвету/узору не существует. Текст/иконка — HTML-оверлей.
-  id градиента/клипа уникальны на инстанс (uid) — чтобы не конфликтовали
-  при нескольких кнопках на странице.
+  Точный перенос приложенного SVG «Поддержать» (Frame 68, 320×51) — реальные
+  фильтры/градиенты/маски, не приближение. Единственное отличие от
+  оригинала: зашитый путь-текст "ПОДДЕРЖАТЬ" удалён и заменён на живой
+  HTML-текст (.button__text, привязан к text()) поверх SVG — сам текст
+  должен вводиться, а не быть картинкой. Все id внутри параметризованы
+  через {{ uid }}, чтобы несколько кнопок на странице не конфликтовали.
+  Цвет тела/теней — CSS custom properties (--btn-*), рамка/гем/glow
+  остаются золотыми для обоих вариантов (secondary «Сетка» по макету).
 -->
 <button
   type="button"
@@ -13,61 +14,331 @@
   [class.button--primary]="variant() === 'primary'"
   [class.button--secondary]="variant() === 'secondary'"
 >
-  <svg class="button__svg" [attr.viewBox]="viewBox()" preserveAspectRatio="none" aria-hidden="true">
-    <defs>
-      <linearGradient [attr.id]="uid + '-shade'" x1="0" y1="0" x2="0" y2="1">
-        <stop class="button__shade-top" offset="0" />
-        <stop class="button__shade-bottom" offset="1" />
-      </linearGradient>
-      <clipPath [attr.id]="uid + '-clip'">
-        <path [attr.d]="bodyPath()" />
-      </clipPath>
-      <filter [attr.id]="uid + '-blur'" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="1.6" />
-      </filter>
-    </defs>
-
-    <!--
-      Внешняя тень рамки (как filter5_d в оригинале): размытый тёмный контур
-      по тому же пути, БЕЗ clip — рисуется первым, до заливки, поэтому
-      заливка сверху перекрывает его внутреннюю половину, а наружная
-      остаётся видна вокруг границы мягким тёмным ореолом (не внутрь тела).
-    -->
-    <path
-      class="button__outer-shadow"
-      [attr.d]="bodyPath()"
-      [attr.filter]="'url(#' + uid + '-blur)'"
-    />
-
-    <path class="button__fill" [attr.d]="bodyPath()" />
-    <path [attr.d]="bodyPath()" [attr.fill]="'url(#' + uid + '-shade)'" />
-
-    <g class="button__rings" [attr.clip-path]="'url(#' + uid + '-clip)'">
-      <circle [attr.cx]="centerX()" cy="60" r="20" />
-      <circle [attr.cx]="centerX()" cy="60" r="34" />
-      <circle [attr.cx]="centerX()" cy="60" r="48" />
+  <svg
+    class="button__svg"
+    width="320"
+    height="51"
+    viewBox="0 0 320 51"
+    fill="none"
+    aria-hidden="true"
+  >
+    <g [attr.filter]="'url(#' + uid + '-f0)'">
+      <path
+        class="button__glow"
+        d="M21.0711 2.92893C22.9464 1.05357 25.49 0 28.1421 0H291.858C294.51 0 297.054 1.05357 298.929 2.92893L316.464 20.4645C318.417 22.4171 318.417 25.5829 316.464 27.5355L298.929 45.0711C297.054 46.9464 294.51 48 291.858 48H28.1422C25.49 48 22.9464 46.9464 21.0711 45.0711L3.53553 27.5355C1.58291 25.5829 1.58291 22.4171 3.53553 20.4645L21.0711 2.92893Z"
+        fill-opacity="0.5"
+      />
     </g>
 
-    <path class="button__glow-line" [attr.d]="bodyPath()" />
-    <path class="button__frame-line" [attr.d]="bodyPath()" />
+    <g [attr.filter]="'url(#' + uid + '-f1)'">
+      <path
+        class="button__body"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+      />
+      <path
+        [attr.fill]="'url(#' + uid + '-edge)'"
+        fill-opacity="0.65"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+      />
+      <path
+        [attr.fill]="'url(#' + uid + '-top)'"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+      />
+    </g>
 
-    <!--
-      Ромбик по центру снизу — сидит ВЫШЕ линии рамки (перекрывает её),
-      с обводкой в цвет рамки (как на макете — не плоская заливка).
-    -->
-    <rect
-      class="button__diamond"
-      [attr.x]="centerX() - 3.5"
-      [attr.y]="height - margin - 4 - 3.5"
-      width="7"
-      height="7"
-      rx="1"
-      [attr.transform]="'rotate(45 ' + centerX() + ' ' + (height - margin - 4) + ')'"
-    />
+    <mask
+      [attr.id]="uid + '-m0'"
+      style="mask-type: alpha"
+      maskUnits="userSpaceOnUse"
+      x="8"
+      y="4"
+      width="304"
+      height="40"
+    >
+      <path
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        fill="white"
+      />
+    </mask>
+    <g [attr.mask]="'url(#' + uid + '-m0)'">
+      <g [attr.filter]="'url(#' + uid + '-f2)'" style="mix-blend-mode: overlay">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          [attr.fill]="'url(#' + uid + '-rings)'"
+          fill-opacity="0.17"
+          shape-rendering="crispEdges"
+          d="M279 54C279 119.722 225.722 173 160 173C94.2781 173 41 119.722 41 54C41 -11.7219 94.2781 -65 160 -65C225.722 -65 279 -11.7219 279 54ZM280 54C280 120.274 226.274 174 160 174C93.7258 174 40 120.274 40 54C40 -12.2742 93.7258 -66 160 -66C226.274 -66 280 -12.2742 280 54ZM160 97C183.748 97 203 77.7482 203 54C203 30.2518 183.748 11 160 11C136.252 11 117 30.2518 117 54C117 77.7482 136.252 97 160 97ZM160 98C184.301 98 204 78.3005 204 54C204 29.6995 184.301 10 160 10C135.699 10 116 29.6995 116 54C116 78.3005 135.699 98 160 98ZM160 75C171.598 75 181 65.598 181 54C181 42.402 171.598 33 160 33C148.402 33 139 42.402 139 54C139 65.598 148.402 75 160 75ZM160 89C179.33 89 195 73.33 195 54C195 34.67 179.33 19 160 19C140.67 19 125 34.67 125 54C125 73.33 140.67 89 160 89Z"
+        />
+      </g>
+      <path
+        class="button__tip"
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M10.4138 17.4142C9.63279 16.6332 8.36646 16.6332 7.58541 17.4142L2.41391 22.5857C1.63286 23.3668 1.63286 24.6331 2.41391 25.4141L7.58541 30.5856C8.36646 31.3667 9.63279 31.3667 10.4138 30.5856L15.5853 25.4141C16.3664 24.6331 16.3664 23.3668 15.5853 22.5857L10.4138 17.4142ZM312.414 17.4142C311.633 16.6332 310.367 16.6332 309.586 17.4142L304.414 22.5857C303.633 23.3668 303.633 24.6331 304.414 25.4141L309.586 30.5856C310.367 31.3667 311.633 31.3667 312.414 30.5856L317.586 25.4141C318.367 24.6331 318.367 23.3668 317.586 22.5857L312.414 17.4142Z"
+      />
+    </g>
+
+    <g [attr.filter]="'url(#' + uid + '-f3)'">
+      <rect
+        class="button__gem"
+        x="160"
+        y="37"
+        width="4.94975"
+        height="4.94975"
+        rx="1"
+        transform="rotate(45 160 37)"
+      />
+    </g>
+
+    <mask
+      [attr.id]="uid + '-m1'"
+      style="mask-type: alpha"
+      maskUnits="userSpaceOnUse"
+      x="57"
+      y="5"
+      width="44"
+      height="38"
+    >
+      <rect x="57" y="5" width="44" height="38" fill="#d9d9d9" />
+    </mask>
+    <g [attr.mask]="'url(#' + uid + '-m1)'">
+      <g opacity="0.4">
+        <rect
+          x="79"
+          y="0.707107"
+          width="32.9411"
+          height="32.9411"
+          rx="4.5"
+          transform="rotate(45 79 0.707107)"
+          stroke="#d6bfa0"
+        />
+        <g [attr.filter]="'url(#' + uid + '-f4)'">
+          <rect
+            x="79"
+            y="6"
+            width="25.4558"
+            height="25.4558"
+            rx="3"
+            transform="rotate(45 79 6)"
+            fill="#d6bfa0"
+            fill-opacity="0.5"
+          />
+        </g>
+        <rect
+          x="79"
+          y="6"
+          width="25.4558"
+          height="25.4558"
+          rx="3"
+          transform="rotate(45 79 6)"
+          stroke="#d6bfa0"
+          stroke-width="2"
+        />
+      </g>
+    </g>
+
+    <g [attr.filter]="'url(#' + uid + '-f5)'">
+      <path
+        class="button__frame-line"
+        [attr.stroke]="'url(#' + uid + '-stroke)'"
+        stroke-width="1.5"
+        shape-rendering="crispEdges"
+        d="M30.0527 4.75H289.947C292.409 4.75 294.77 5.73128 296.506 7.47656L309.961 21.0029C311.61 22.6608 311.61 25.3392 309.961 26.9971L296.506 40.5234C294.77 42.2687 292.409 43.25 289.947 43.25H164.333C163.955 43.2501 163.586 43.3725 163.283 43.5996L160.75 45.5C160.333 45.8125 159.77 45.8321 159.335 45.5586L159.25 45.5L156.717 43.5996C156.414 43.3725 156.045 43.2501 155.667 43.25H30.0527C27.591 43.25 25.2302 42.2687 23.4941 40.5234L10.0391 26.9971C8.39022 25.3392 8.39022 22.6608 10.0391 21.0029L23.4941 7.47656C25.2302 5.73128 27.591 4.75 30.0527 4.75Z"
+      />
+    </g>
+
+    <defs>
+      <filter
+        [attr.id]="uid + '-f0'"
+        x="2.07129"
+        y="0"
+        width="315.857"
+        height="48"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="1" />
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="shape" result="effect1_innerShadow" />
+      </filter>
+      <filter
+        [attr.id]="uid + '-f1'"
+        x="8.05225"
+        y="4"
+        width="303.895"
+        height="41.5858"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.65 0" />
+        <feBlend mode="normal" in2="shape" result="effect1_innerShadow" />
+      </filter>
+      <filter
+        [attr.id]="uid + '-f2'"
+        x="10"
+        y="-96"
+        width="300"
+        height="300"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="15" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+      <filter
+        [attr.id]="uid + '-f3'"
+        x="152.914"
+        y="33.4142"
+        width="14.1719"
+        height="14.1716"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+      <filter
+        [attr.id]="uid + '-f4'"
+        x="61.2427"
+        y="4.24264"
+        width="35.5146"
+        height="37.5147"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset dy="-2" />
+        <feGaussianBlur stdDeviation="3" />
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="shape" result="effect1_innerShadow" />
+      </filter>
+      <filter
+        [attr.id]="uid + '-f5'"
+        x="4.05225"
+        y="0"
+        width="311.895"
+        height="50.5"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+
+      <radialGradient
+        [attr.id]="uid + '-edge'"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(160 25.0001) rotate(-180) scale(154 1129.33)"
+      >
+        <stop class="button__edge-stop-0" stop-opacity="0" />
+        <stop class="button__edge-stop-1" offset="1" />
+      </radialGradient>
+      <radialGradient
+        [attr.id]="uid + '-top'"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(160 4) rotate(90) scale(42 520.249)"
+      >
+        <stop class="button__top-stop-0" />
+        <stop class="button__top-stop-1" offset="1" stop-opacity="0" />
+      </radialGradient>
+      <linearGradient
+        [attr.id]="uid + '-rings'"
+        x1="160"
+        y1="5"
+        x2="160"
+        y2="45"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stop-color="white" stop-opacity="0" />
+        <stop offset="1" stop-color="white" />
+      </linearGradient>
+      <radialGradient
+        [attr.id]="uid + '-stroke'"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(160 24.9998) rotate(180) scale(154 2196.25)"
+      >
+        <stop stop-color="#f7ecb2" />
+        <stop offset="1" stop-color="#fff9db" />
+      </radialGradient>
+    </defs>
   </svg>
 
   <span class="button__content">
-    <ng-content select="[icon]" />
+    <span class="button__icon">
+      <ng-content select="[icon]" />
+    </span>
     <span class="button__text">{{ text() }}</span>
   </span>
 </button>

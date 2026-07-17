@@ -1,21 +1,23 @@
 @use 'variables' as vars;
 
+// Точный перенос SVG (viewBox 320×51), масштабирован под высоту 48px с
+// сохранением пропорций (width = 320 * 48/51). Фиксированный размер —
+// намеренно, см. комментарий в button.ts: динамическая ширина под
+// произвольный текст — отдельный следующий шаг.
+$svg-height: 48px;
+$svg-width: 301px; // 320 * 48 / 51
+
 .button {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
+  display: inline-block;
+  width: $svg-width;
+  height: $svg-height;
   border: none;
   background: transparent;
   padding: 0;
   cursor: pointer;
-  // Мягкое внешнее свечение по силуэту.
-  filter: drop-shadow(0 0 4px var(--btn-halo));
 }
 
-// SVG заполняет кнопку; viewBox всегда равен фактическому размеру (см.
-// button.ts), поэтому 1:1 без искажения.
 .button__svg {
   position: absolute;
   inset: 0;
@@ -25,107 +27,98 @@
   overflow: visible;
 }
 
-.button__fill {
+.button__glow {
+  fill: var(--btn-glow);
+}
+
+.button__body {
   fill: var(--btn-body);
 }
 
-.button__shade-top {
-  stop-color: var(--btn-top-shade);
-}
-
-.button__shade-bottom {
-  stop-color: var(--btn-top-shade-fade);
-}
-
-// Кольца — концентрические окружности, обрезаны clipPath по телу; редкие и
-// еле заметные, как на макете.
-.button__rings {
-  fill: none;
-  stroke: var(--btn-rings);
-  stroke-width: 1;
-  mix-blend-mode: overlay;
-  opacity: 0.5;
-}
-
-// Внешняя тень рамки (как filter5_d в оригинале — мягкий тёмный ореол
-// СНАРУЖИ границы, не внутрь тела): залитая копия силуэта, размытая
-// фильтром и нарисованная ДО заливки — заливка сверху перекрывает
-// внутреннюю часть размытия, наружная остаётся видна вокруг контура.
-.button__outer-shadow {
-  fill: rgba(0, 0, 0, 0.4);
-}
-
-// Рамка — «двойная линия»: широкая мягкая (glow) + тонкая чёткая, обе по
-// одному пути → одинаковая толщина по всему периметру, включая скруглённые
-// углы.
-.button__glow-line {
-  fill: none;
-  stroke: var(--btn-glow);
-  stroke-width: 4;
-  opacity: 0.5;
-}
-
-.button__frame-line {
-  fill: none;
-  stroke: var(--btn-stroke);
-  stroke-width: 1.5;
-}
-
-// Обводка в цвет рамки — не плоская заливка, как на макете.
-.button__diamond {
+// Угловые гемы у остриёв (оригинал #FFF9DB).
+.button__tip {
   fill: var(--btn-tip);
-  stroke: var(--btn-stroke);
-  stroke-width: 0.75;
 }
 
-// Контент (иконка+текст) задаёт ширину кнопки; паддинги уводят текст от
-// острых концов; при форсированной родителем ширине flex-grow растягивает,
-// текст по центру.
+// Диамант по центру сверху (оригинал #F8ECB2) — отдельный, чуть другой тон.
+.button__gem {
+  fill: var(--btn-gem);
+}
+
+.button__edge-stop-0,
+.button__edge-stop-1 {
+  stop-color: var(--btn-edge);
+}
+
+.button__top-stop-0 {
+  stop-color: var(--btn-top-shade-a);
+}
+
+.button__top-stop-1 {
+  stop-color: var(--btn-top-shade-b);
+}
+
+// Контент (иконка+текст) — HTML-оверлей поверх SVG; позиция приближена к
+// исходной раскладке (иконка ~57–101 из 320, текст ~110–262 из 320).
 .button__content {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  flex: 1 1 auto;
-  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 18%;
+  padding-right: 6%;
+  pointer-events: none;
+}
+
+.button__icon {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 42px;
+  min-width: 20px;
+}
+
+.button__text {
+  flex: 1;
+  text-align: center;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-16;
   font-weight: vars.$font-weight-700;
   letter-spacing: 0.02em;
 }
 
-// Primary — тёплое золото по макету.
+// Primary — цвета сняты с точного приложенного SVG «Поддержать».
 .button--primary {
+  --btn-glow: #f4e9ae;
   --btn-body: #eec68c;
-  --btn-tip: #f8ecb2;
-  --btn-stroke: #f7ecb2;
-  --btn-top-shade: rgba(155, 132, 116, 0.55);
-  --btn-top-shade-fade: rgba(155, 132, 116, 0);
-  --btn-rings: rgba(255, 255, 255, 0.5);
-  --btn-halo: rgba(247, 236, 178, 0.6);
+  --btn-tip: #fff9db;
+  --btn-gem: #f8ecb2;
+  --btn-edge: #738898;
+  --btn-top-shade-a: #9b8474;
+  --btn-top-shade-b: #d5af71;
 }
 
-.button--primary .button__content {
+.button--primary .button__text {
   color: #4a3418;
 }
 
-// Secondary («Сетка»): рамка/остриё/диамант — ЗОЛОТЫЕ (как primary), синий
-// только у заливки тела и верхней тени. Оттенки navy приближены со
-// скриншота, требуют сверки при точном референсе.
+// Secondary («Сетка»): рамка/гемы/glow остаются золотыми (как primary, по
+// макету), синий только у заливки тела и верхней тени. Точного SVG нет —
+// оттенки navy приближены со скриншота, требуют сверки.
 .button--secondary {
+  --btn-glow: #f4e9ae;
   --btn-body: #2a2f6b;
-  --btn-tip: #f8ecb2;
-  --btn-stroke: #f7ecb2;
-  --btn-top-shade: rgba(59, 68, 136, 0.55);
-  --btn-top-shade-fade: rgba(59, 68, 136, 0);
-  --btn-rings: rgba(200, 210, 255, 0.35);
-  --btn-halo: rgba(247, 236, 178, 0.5);
+  --btn-tip: #fff9db;
+  --btn-gem: #f8ecb2;
+  --btn-edge: #738898;
+  --btn-top-shade-a: #3b4488;
+  --btn-top-shade-b: #5a63b0;
 }
 
-.button--secondary .button__content {
+.button--secondary .button__text {
   color: #d3d9ff;
 }
