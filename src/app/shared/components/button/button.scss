@@ -1,14 +1,11 @@
-@use 'variables' as vars;
-
 // Точный перенос SVG (viewBox 320×51), масштабирован под высоту 48px с
-// сохранением пропорций (width = 320 * 48/51). Фиксированный размер —
-// намеренно, см. комментарий в button.ts: динамическая ширина под
-// произвольный текст — отдельный следующий шаг.
+// сохранением пропорций (width = 320 * 48/51). Полностью статично — цвета
+// и текст зашиты в самом SVG (button.html), никаких CSS custom properties
+// под варианты.
 $svg-height: 48px;
 $svg-width: 301px; // 320 * 48 / 51
 
 .button {
-  position: relative;
   display: inline-block;
   width: $svg-width;
   height: $svg-height;
@@ -19,106 +16,8 @@ $svg-width: 301px; // 320 * 48 / 51
 }
 
 .button__svg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+  display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
-}
-
-.button__glow {
-  fill: var(--btn-glow);
-}
-
-.button__body {
-  fill: var(--btn-body);
-}
-
-// Угловые гемы у остриёв (оригинал #FFF9DB).
-.button__tip {
-  fill: var(--btn-tip);
-}
-
-// Диамант по центру сверху (оригинал #F8ECB2) — отдельный, чуть другой тон.
-.button__gem {
-  fill: var(--btn-gem);
-}
-
-.button__edge-stop-0,
-.button__edge-stop-1 {
-  stop-color: var(--btn-edge);
-}
-
-.button__top-stop-0 {
-  stop-color: var(--btn-top-shade-a);
-}
-
-.button__top-stop-1 {
-  stop-color: var(--btn-top-shade-b);
-}
-
-// Контент (иконка+текст) — HTML-оверлей поверх SVG; позиция приближена к
-// исходной раскладке (иконка ~57–101 из 320, текст ~110–262 из 320).
-.button__content {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  padding-left: 18%;
-  padding-right: 6%;
-  pointer-events: none;
-}
-
-.button__icon {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-}
-
-.button__text {
-  flex: 1;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: vars.$font-family-montserrat;
-  font-size: vars.$font-size-16;
-  font-weight: vars.$font-weight-700;
-  letter-spacing: 0.02em;
-}
-
-// Primary — цвета сняты с точного приложенного SVG «Поддержать».
-.button--primary {
-  --btn-glow: #f4e9ae;
-  --btn-body: #eec68c;
-  --btn-tip: #fff9db;
-  --btn-gem: #f8ecb2;
-  --btn-edge: #738898;
-  --btn-top-shade-a: #9b8474;
-  --btn-top-shade-b: #d5af71;
-}
-
-.button--primary .button__text {
-  color: #4a3418;
-}
-
-// Secondary («Сетка»): рамка/гемы/glow остаются золотыми (как primary, по
-// макету), синий только у заливки тела и верхней тени. Точного SVG нет —
-// оттенки navy приближены со скриншота, требуют сверки.
-.button--secondary {
-  --btn-glow: #f4e9ae;
-  --btn-body: #2a2f6b;
-  --btn-tip: #fff9db;
-  --btn-gem: #f8ecb2;
-  --btn-edge: #738898;
-  --btn-top-shade-a: #3b4488;
-  --btn-top-shade-b: #5a63b0;
-}
-
-.button--secondary .button__text {
-  color: #d3d9ff;
 }
