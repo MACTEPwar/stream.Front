@@ -1,15 +1,12 @@
-import { afterRenderEffect, Component, ElementRef, signal, viewChild } from '@angular/core';
+import { afterRenderEffect, Component, ElementRef, input, signal, viewChild } from '@angular/core';
 
 /**
  * Кнопка «Поддержать» (stream.Front#39) — статичный 1:1 перенос
- * приложенного SVG (Frame 68, 320×51), без параметризации: без вариантов,
- * без текста-инпута, без уникальных id. По прямому запросу пользователя
- * все inputs предыдущей версии убраны — компонент рендерит ровно то, что
- * было в макете. Единственное, что можно подставить снаружи — иконка через
- * content projection ([icon] в button.html); слот может быть и пустым —
- * тогда текст «ПОДДЕРЖАТЬ» (статичный path) сдвигается по горизонтали в
- * центр кнопки (hasIcon()), т.к. без иконки исходная левая позиция текста
- * смотрится некрасиво смещённой.
+ * приложенного SVG (Frame 68, 320×51), без вариантов, без уникальных id.
+ * Динамические места — только текст (`text()`, живой HTML-оверлей поверх
+ * SVG, typography — Figma-компонент «Button») и иконка через content
+ * projection ([icon] в button.html, слот может быть пустым). Без иконки
+ * текст автоматически сдвигается по горизонтали в центр кнопки (hasIcon()).
  */
 @Component({
   selector: 'app-button',
@@ -18,6 +15,8 @@ import { afterRenderEffect, Component, ElementRef, signal, viewChild } from '@an
   styleUrl: './button.scss',
 })
 export class Button {
+  readonly text = input.required<string>();
+
   private readonly iconSlot = viewChild<ElementRef<HTMLElement>>('iconSlot');
 
   protected readonly hasIcon = signal(false);
