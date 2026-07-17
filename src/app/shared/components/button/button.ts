@@ -9,23 +9,32 @@ const ORIGINAL_WIDTH_UNITS = 320;
 /** Exact px-equivalent of the original fixed 320-unit design (≈301.18px, was rounded to 301px before). */
 const DEFAULT_WIDTH_PX = ORIGINAL_WIDTH_UNITS * PX_PER_UNIT;
 
-// "Outer" layer (glow/filter0_i, rings/filter2_d, frame-line/filter5_d) — 5-block clip-path split
-// already established: left tip / mid-left / center gap (gem) / mid-right / right tip.
-const OUTER_LEFT = 28.1421;
-const OUTER_RIGHT = ORIGINAL_WIDTH_UNITS - OUTER_LEFT; // 291.858, mirror
+// "Glow" layer (filter0_i) — 5-block clip-path split: left tip / mid-left / center gap (gem) /
+// mid-right / right tip. The gap boundaries (GAP_LEFT/GAP_RIGHT) and the pure-shift transforms
+// (gap, right tip) are shared with the frame layer below — only the tip/mid-block anchors differ
+// per layer, since each shape's own corner vertices sit at slightly different x.
+const GLOW_LEFT = 28.1421;
+const GLOW_RIGHT = ORIGINAL_WIDTH_UNITS - GLOW_LEFT; // 291.858, mirror
 const GAP_LEFT = 150;
 const GAP_RIGHT = 170;
-const OUTER_MID_LEFT_W = GAP_LEFT - OUTER_LEFT; // 121.8579
-const OUTER_MID_RIGHT_W = OUTER_RIGHT - GAP_RIGHT; // 121.858
+const GLOW_MID_LEFT_W = GAP_LEFT - GLOW_LEFT; // 121.8579
+const GLOW_MID_RIGHT_W = GLOW_RIGHT - GAP_RIGHT; // 121.858
+
+// "Frame" layer (stroke outline, filter5_d) — same 5-block scheme as glow, but its own natural
+// corners (~2 units further in — the stroke sits inset from the glow, per its own path data).
+const FRAME_LEFT = 30.0527;
+const FRAME_RIGHT = ORIGINAL_WIDTH_UNITS - FRAME_LEFT; // 289.9473, mirror
+const FRAME_MID_LEFT_W = GAP_LEFT - FRAME_LEFT; // 119.9473
+const FRAME_MID_RIGHT_W = FRAME_RIGHT - GAP_RIGHT; // 119.9473
 
 // "Body" layer (solid fill + 2 gradient overlays, filter1_i) — 3-block split (its own natural
-// corners, ~2 units further in than the outer layer's, since the body shape is inset from glow/frame).
+// corners, ~2 units further in than the glow layer's, since the body shape is inset from glow/frame).
 const BODY_LEFT = 30.0523;
 const BODY_RIGHT = ORIGINAL_WIDTH_UNITS - BODY_LEFT; // 289.948, mirror
 const BODY_MID_W = BODY_RIGHT - BODY_LEFT; // 259.8957
 
-/** Narrowest width before a stretchable block would invert (outer mid blocks hit 0 first). */
-const MIN_VIEWBOX_WIDTH_UNITS = ORIGINAL_WIDTH_UNITS - 2 * OUTER_MID_LEFT_W;
+/** Narrowest width before a stretchable block would invert (glow mid blocks hit 0 first). */
+const MIN_VIEWBOX_WIDTH_UNITS = ORIGINAL_WIDTH_UNITS - 2 * GLOW_MID_LEFT_W;
 const MIN_WIDTH_PX = MIN_VIEWBOX_WIDTH_UNITS * PX_PER_UNIT;
 
 /** `scale`-then-`shift`, anchored at `anchor` (so `anchor` itself only moves by `shift`). */
@@ -65,17 +74,32 @@ export class Button {
   protected readonly viewBox = computed(() => `0 0 ${this.viewBoxWidth()} ${VIEWBOX_HEIGHT}`);
   private readonly extra = computed(() => this.viewBoxWidth() - ORIGINAL_WIDTH_UNITS);
 
-  // Outer layer (5 blocks): 1st/5th (tips) untouched, 2nd/4th stretch, 3rd (gap) only shifts.
-  protected readonly outerMidLeftTransform = computed(() => {
-    const w = OUTER_MID_LEFT_W + this.extra() / 2;
-    return anchoredScale(OUTER_LEFT, w / OUTER_MID_LEFT_W, 0);
+  // Glow layer (5 blocks): 1st/5th (tips) untouched, 2nd/4th stretch, 3rd (gap) only shifts.
+  protected readonly glowMidLeftTransform = computed(() => {
+    const w = GLOW_MID_LEFT_W + this.extra() / 2;
+    return anchoredScale(GLOW_LEFT, w / GLOW_MID_LEFT_W, 0);
   });
-  protected readonly outerGapTransform = computed(() => `translate(${this.extra() / 2} 0)`);
-  protected readonly outerMidRightTransform = computed(() => {
-    const w = OUTER_MID_RIGHT_W + this.extra() / 2;
-    return anchoredScale(GAP_RIGHT, w / OUTER_MID_RIGHT_W, this.extra() / 2);
+  protected readonly glowMidRightTransform = computed(() => {
+    const w = GLOW_MID_RIGHT_W + this.extra() / 2;
+    return anchoredScale(GAP_RIGHT, w / GLOW_MID_RIGHT_W, this.extra() / 2);
   });
-  protected readonly outerRightTransform = computed(() => `translate(${this.extra()} 0)`);
+
+  // Frame layer (5 blocks, own tip/mid-block anchors — see FRAME_LEFT/FRAME_RIGHT above).
+  protected readonly frameMidLeftTransform = computed(() => {
+    const w = FRAME_MID_LEFT_W + this.extra() / 2;
+    return anchoredScale(FRAME_LEFT, w / FRAME_MID_LEFT_W, 0);
+  });
+  protected readonly frameMidRightTransform = computed(() => {
+    const w = FRAME_MID_RIGHT_W + this.extra() / 2;
+    return anchoredScale(GAP_RIGHT, w / FRAME_MID_RIGHT_W, this.extra() / 2);
+  });
+
+  // Shared by both 5-block layers: the gap (fixed width, only shifts) and right tip (shifts by the
+  // full extra) don't depend on which layer's own corner anchors — same formula either way.
+  protected readonly gapTransform = computed(() => `translate(${this.extra() / 2} 0)`);
+  protected readonly rightTipTransform = computed(() => `translate(${this.extra()} 0)`);
+
+  protected readonly rTipTransform = computed(() => `translate(${this.extra() - 6} 0)`);
 
   // Body layer (3 blocks): 1st (tip) untouched, 2nd (whole middle, incl. the tiny bottom notch) stretches.
   protected readonly bodyMidTransform = computed(() => {

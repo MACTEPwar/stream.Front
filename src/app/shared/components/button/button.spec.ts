@@ -144,6 +144,46 @@ describe('Button', () => {
     expect(maskedGroup?.getAttribute('transform')).toBe('translate(105.625 0)');
   });
 
+  it('width() — угловые диамант-блики следуют за своими остриями (с ручной поправкой -6/+6), а не за centerShiftTransform()', () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.componentInstance.width.set(500);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
+    const sparkles = Array.from(svg.querySelectorAll('path[fill="#FFF9DB"]'));
+    expect(sparkles).toHaveLength(2);
+
+    const [left, right] = sparkles;
+    expect(left.getAttribute('transform')).toBe('translate(6 0)');
+    expect(right.getAttribute('transform')).toBe('translate(205.25 0)');
+  });
+
+  it('width() — рамка (filter5_d) использует свои границы (30.0527/289.947), а не границы glow', () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.componentInstance.width.set(500);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
+    const frameLeftTip = svg.querySelector('path[clip-path="url(#clip-frame-left_2821_998)"]');
+    const frameMidLeft = svg.querySelector('path[clip-path="url(#clip-frame-mid-left_2821_998)"]');
+    const frameMidRight = svg.querySelector('path[clip-path="url(#clip-frame-mid-right_2821_998)"]');
+    const frameRightTip = svg.querySelector('path[clip-path="url(#clip-frame-right_2821_998)"]');
+
+    expect(frameLeftTip?.getAttribute('transform')).toBeNull();
+    expect(frameMidLeft?.getAttribute('transform')).toBe(
+      'translate(30.0527 0) scale(1.880595061331101 1) translate(-30.0527 0)',
+    );
+    expect(frameMidRight?.getAttribute('transform')).toBe(
+      'translate(275.625 0) scale(1.8805950613311013 1) translate(-170 0)',
+    );
+    expect(frameRightTip?.getAttribute('transform')).toBe('translate(211.25 0)');
+
+    // glow's own mid-left scale differs (its corner sits at 28.1421, not 30.0527) — the two
+    // layers must not accidentally share the same clip-path/transform.
+    const glowMidLeft = svg.querySelector('path[clip-path="url(#clip-mid-left_2821_998)"]');
+    expect(glowMidLeft?.getAttribute('transform')).not.toBe(frameMidLeft?.getAttribute('transform'));
+  });
+
   it('width() — гем (filter3_d) сдвигается вместе с новым центром кнопки', () => {
     const fixture = TestBed.createComponent(ButtonHost);
     fixture.componentInstance.width.set(500);
