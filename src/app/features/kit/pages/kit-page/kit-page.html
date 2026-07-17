@@ -16,4 +16,16 @@
       </app-button>
     </div>
   </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">width() — фиксированные пиксели (9-slice: концы фиксированы, середина тянется)</h2>
+    <div class="kit-page__row">
+      <app-button text="Узкая" [width]="150" />
+      <app-button text="Поддержать" [width]="301" />
+      <app-button text="Поддержать прямо сейчас" [width]="500">
+        <img icon src="/icons/button-support-icon.svg" alt="" />
+      </app-button>
+      <app-button text="Совсем широкая" [width]="700" />
+    </div>
+  </section>
 </div>

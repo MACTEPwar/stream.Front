@@ -1,16 +1,17 @@
 @use 'variables' as vars;
 
-// Точный перенос SVG (viewBox 320×51), масштабирован под высоту 48px с
-// сохранением пропорций (width = 320 * 48/51). Статично всё, кроме текста
-// (.button__text, живой HTML-оверлей) и иконки (.button__icon, content
-// projection) — никаких CSS custom properties под варианты.
+// Высота (viewBox 320×51 → 48px) — константа независимо от width(): px/unit
+// остаётся тем же, что и раньше (48/51), поэтому острые концы кнопки при
+// любой ширине рендерятся 1:1 с оригиналом (см. PX_PER_UNIT в button.ts).
+// Ширина .button задаётся инлайново ([style.width.px]="widthPx()") — либо
+// точный эквивалент исходных 320 unit (без width()), либо то, что запросил
+// пользователь. Статично всё, кроме текста (.button__text), иконки
+// (.button__icon) и ширины — никаких CSS custom properties под варианты.
 $svg-height: 48px;
-$svg-width: 301px; // 320 * 48 / 51
 
 .button {
   position: relative;
   display: inline-block;
-  width: $svg-width;
   height: $svg-height;
   border: none;
   background: transparent;
@@ -25,17 +26,31 @@ $svg-width: 301px; // 320 * 48 / 51
   overflow: visible;
 }
 
-// Слот под иконку (content projection, [icon]) — позиция/размер соответствуют
-// зоне x:57–101 / y:5–43 из исходного viewBox 320×51 (ромбовидная подложка +
-// монетка, вынесенные в public/icons/button-support-icon.svg). Если ничего
-// не спроецировано, слот пустой.
-.button__icon {
+// Иконка+текст — единая группа, отцентрованная относительно ВСЕЙ кнопки
+// (не привязана к исходным координатам иконки/текста из макета), с зазором
+// 8px между ними. Вертикаль — по центру высоты кнопки (align-items: center),
+// не зависит от width().
+.button__content {
   position: absolute;
-  left: 17.8125%; // 57 / 320
-  top: 9.8039%; // 5 / 51
-  width: 13.75%; // 44 / 320
-  height: 74.5098%; // 38 / 51
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   pointer-events: none;
+}
+
+// Слот под иконку (content projection, [icon]) — size задаётся инлайново
+// (iconWidthPx/iconHeightPx в button.ts, константы исходного размера
+// монетки+подложки: 44×38 из viewBox 320×51). Если ничего не спроецировано,
+// слот DOM-пустой — :empty убирает его из flex-раскладки целиком, иначе
+// gap оставил бы пустой 8px зазор рядом с текстом.
+.button__icon {
+  flex: 0 0 auto;
+}
+
+.button__icon:empty {
+  display: none;
 }
 
 .button__icon > * {
@@ -45,22 +60,12 @@ $svg-width: 301px; // 320 * 48 / 51
 }
 
 // Текст — живой оверлей поверх SVG (раньше был зашит как path с градиентной
-// заливкой). Вертикально — line-height 24 из исходного viewBox, отцентрован
-// по высоте кнопки (y:12–36 из 51 — то же, на чём стоял градиент path).
-// Горизонтально — left задаётся инлайново в шаблоне (2 позиции: с иконкой /
-// без неё), тут только центрирующий translateX(-50%).
-// Typography — Figma-компонент "Button": Montserrat Bold 18/24, letter-spacing 8%.
-// Цвет — тот же вертикальный градиент #77531C→#653908, что был у path, через
-// background-clip: text.
+// заливкой). Typography — Figma-компонент "Button": Montserrat Bold 18/24,
+// letter-spacing 8%. Цвет — тот же вертикальный градиент #77531C→#653908,
+// что был у path, через background-clip: text.
 .button__text {
-  position: absolute;
-  top: 23.5294%; // 12 / 51
-  height: 47.0588%; // 24 / 51
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
+  flex: 0 0 auto;
   white-space: nowrap;
-  pointer-events: none;
 
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-18;
