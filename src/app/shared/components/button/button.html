@@ -27,6 +27,18 @@
       </filter>
     </defs>
 
+    <!--
+      Внешняя тень рамки (как filter5_d в оригинале): размытый тёмный контур
+      по тому же пути, БЕЗ clip — рисуется первым, до заливки, поэтому
+      заливка сверху перекрывает его внутреннюю половину, а наружная
+      остаётся видна вокруг границы мягким тёмным ореолом (не внутрь тела).
+    -->
+    <path
+      class="button__outer-shadow"
+      [attr.d]="bodyPath()"
+      [attr.filter]="'url(#' + uid + '-blur)'"
+    />
+
     <path class="button__fill" [attr.d]="bodyPath()" />
     <path [attr.d]="bodyPath()" [attr.fill]="'url(#' + uid + '-shade)'" />
 
@@ -35,19 +47,6 @@
       <circle [attr.cx]="centerX()" cy="60" r="34" />
       <circle [attr.cx]="centerX()" cy="60" r="48" />
     </g>
-
-    <!--
-      Тень рамки: размытый тёмный контур по тому же пути, под рамкой —
-      её внешняя половина перекрывается glow/frame-линиями сверху, а
-      внутренняя даёт мягкую тень на заливке рядом с границей (эффект
-      «приподнятой» рамки, отдельный от внешнего halo).
-    -->
-    <path
-      class="button__inner-shadow"
-      [attr.d]="bodyPath()"
-      [attr.clip-path]="'url(#' + uid + '-clip)'"
-      [attr.filter]="'url(#' + uid + '-blur)'"
-    />
 
     <path class="button__glow-line" [attr.d]="bodyPath()" />
     <path class="button__frame-line" [attr.d]="bodyPath()" />
