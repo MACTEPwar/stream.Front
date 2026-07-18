@@ -1,0 +1,571 @@
+<!--
+  Перенос приложенного SVG «Поддержать» (Frame 68, 320×51) — 1:1 код из
+  файла. По прямому запросу пользователя ранее вся динамика была убрана
+  (variant/uid), но text()/иконка/width()/type() — сознательные исключения,
+  добавленные позже. Id внутри SVG (в т.ч. url(#...) у фильтров/градиентов/
+  масок/clip-path) — как в исходнике (`_2821_998`), но к каждому добавлен
+  `-{{uid}}` (button.ts, инкрементный счётчик на класс) — раньше все id были
+  голыми и при нескольких <app-button> на одной странице конфликтовали
+  (url(#...) резолвился в первый попавшийся элемент с таким id в ДОКУМЕНТЕ,
+  не в свой собственный <svg>) — было незаметно, пока все инстансы красились
+  одинаково; с появлением type() один инстанс начал реально красить тело
+  другого (см. историю в PROJECT_MAP.md). width() — 9-slice-подобное
+  растягивание, см. константы/transform-хелперы в button.ts: острые/скруглённые
+  концы и центральный зазор под гем — фиксированного размера, растягиваются
+  только плоские середины.
+-->
+<button type="button" class="button" #buttonEl [style.width]="widthStyle()">
+  <svg
+    class="button__svg"
+    [attr.width]="viewBoxWidth()"
+    height="51"
+    [attr.viewBox]="viewBox()"
+    fill="none"
+    aria-hidden="true"
+  >
+    <g [attr.filter]="'url(#filter0_i_2821_998-' + uid + ')'">
+      <!--
+        Разбито на 5 path по горизонтали (clip-path, не пересчёт кривых —
+        картинка не меняется ни на пиксель): левый/правый острый край (граница
+        28.1421/291.858 — существующая вершина исходного контура) плюс середина,
+        которая сама разбита ещё на 3 (левая половина / центральный зазор 20px /
+        правая половина). Всё симметрично относительно центра x=160.
+      -->
+      <path
+        [attr.clip-path]="'url(#clip-left_2821_998-' + uid + ')'"
+        d="M21.0711 2.92893C22.9464 1.05357 25.49 0 28.1421 0H291.858C294.51 0 297.054 1.05357 298.929 2.92893L316.464 20.4645C318.417 22.4171 318.417 25.5829 316.464 27.5355L298.929 45.0711C297.054 46.9464 294.51 48 291.858 48H28.1422C25.49 48 22.9464 46.9464 21.0711 45.0711L3.53553 27.5355C1.58291 25.5829 1.58291 22.4171 3.53553 20.4645L21.0711 2.92893Z"
+        [attr.fill]="glowFill()"
+        fill-opacity="0.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-mid-left_2821_998-' + uid + ')'"
+        [attr.transform]="glowMidLeftTransform()"
+        d="M21.0711 2.92893C22.9464 1.05357 25.49 0 28.1421 0H291.858C294.51 0 297.054 1.05357 298.929 2.92893L316.464 20.4645C318.417 22.4171 318.417 25.5829 316.464 27.5355L298.929 45.0711C297.054 46.9464 294.51 48 291.858 48H28.1422C25.49 48 22.9464 46.9464 21.0711 45.0711L3.53553 27.5355C1.58291 25.5829 1.58291 22.4171 3.53553 20.4645L21.0711 2.92893Z"
+        [attr.fill]="glowFill()"
+        fill-opacity="0.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-mid-center_2821_998-' + uid + ')'"
+        [attr.transform]="gapTransform()"
+        d="M21.0711 2.92893C22.9464 1.05357 25.49 0 28.1421 0H291.858C294.51 0 297.054 1.05357 298.929 2.92893L316.464 20.4645C318.417 22.4171 318.417 25.5829 316.464 27.5355L298.929 45.0711C297.054 46.9464 294.51 48 291.858 48H28.1422C25.49 48 22.9464 46.9464 21.0711 45.0711L3.53553 27.5355C1.58291 25.5829 1.58291 22.4171 3.53553 20.4645L21.0711 2.92893Z"
+        [attr.fill]="glowFill()"
+        fill-opacity="0.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-mid-right_2821_998-' + uid + ')'"
+        [attr.transform]="glowMidRightTransform()"
+        d="M21.0711 2.92893C22.9464 1.05357 25.49 0 28.1421 0H291.858C294.51 0 297.054 1.05357 298.929 2.92893L316.464 20.4645C318.417 22.4171 318.417 25.5829 316.464 27.5355L298.929 45.0711C297.054 46.9464 294.51 48 291.858 48H28.1422C25.49 48 22.9464 46.9464 21.0711 45.0711L3.53553 27.5355C1.58291 25.5829 1.58291 22.4171 3.53553 20.4645L21.0711 2.92893Z"
+        [attr.fill]="glowFill()"
+        fill-opacity="0.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-right_2821_998-' + uid + ')'"
+        [attr.transform]="rightTipTransform()"
+        d="M21.0711 2.92893C22.9464 1.05357 25.49 0 28.1421 0H291.858C294.51 0 297.054 1.05357 298.929 2.92893L316.464 20.4645C318.417 22.4171 318.417 25.5829 316.464 27.5355L298.929 45.0711C297.054 46.9464 294.51 48 291.858 48H28.1422C25.49 48 22.9464 46.9464 21.0711 45.0711L3.53553 27.5355C1.58291 25.5829 1.58291 22.4171 3.53553 20.4645L21.0711 2.92893Z"
+        [attr.fill]="glowFill()"
+        fill-opacity="0.5"
+        shape-rendering="geometricPrecision"
+      />
+    </g>
+    <g [attr.filter]="'url(#filter1_i_2821_998-' + uid + ')'">
+      <!--
+        Тело (заливка+2 градиента) — единственная «3-блочная» группа (в
+        отличие от glow/колец/рамки выше, разбитых на 5): левый/правый
+        острый край (граница 30.0523/289.948 — своя вершина контура, чуть
+        уже, чем у остальных слоёв) фиксированы, средний блок — единый,
+        растягивается целиком (включая маленький хвостик-указатель снизу
+        у x≈160, он тоже симметрично промасштабируется — в отличие от
+        остальных слоёв здесь для него нет отдельного защищённого зазора).
+      -->
+      <path
+        [attr.clip-path]="'url(#clip-body-left_2821_998-' + uid + ')'"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="bodyBaseFill()"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-left_2821_998-' + uid + ')'"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="'url(#paint0_radial_2821_998-' + uid + ')'"
+        fill-opacity="0.65"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-left_2821_998-' + uid + ')'"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="'url(#paint1_radial_2821_998-' + uid + ')'"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-mid_2821_998-' + uid + ')'"
+        [attr.transform]="bodyMidTransform()"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="bodyBaseFill()"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-mid_2821_998-' + uid + ')'"
+        [attr.transform]="bodyMidTransform()"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="'url(#paint0_radial_2821_998-' + uid + ')'"
+        fill-opacity="0.65"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-mid_2821_998-' + uid + ')'"
+        [attr.transform]="bodyMidTransform()"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="'url(#paint1_radial_2821_998-' + uid + ')'"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-right_2821_998-' + uid + ')'"
+        [attr.transform]="bodyRightTransform()"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="bodyBaseFill()"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-right_2821_998-' + uid + ')'"
+        [attr.transform]="bodyRightTransform()"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="'url(#paint0_radial_2821_998-' + uid + ')'"
+        fill-opacity="0.65"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-body-right_2821_998-' + uid + ')'"
+        [attr.transform]="bodyRightTransform()"
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H162.414C162.149 44 161.895 44.1054 161.707 44.2929L160.707 45.2929C160.317 45.6834 159.683 45.6834 159.293 45.2929L158.293 44.2929C158.105 44.1054 157.851 44 157.586 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        [attr.fill]="'url(#paint1_radial_2821_998-' + uid + ')'"
+        shape-rendering="geometricPrecision"
+      />
+    </g>
+    <mask [attr.id]="'mask0_2821_998-' + uid" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="8" y="4" width="304" height="40">
+      <path
+        d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
+        fill="white"
+      />
+    </mask>
+    <!--
+      Кольца — по прямому запросу пользователя больше НЕ растягиваются
+      (масштабирование плющило бы окружности в эллипсы): один path, как в
+      исходнике, вся группа (внутри mask0_2821_998, силуэт кнопки) только
+      сдвигается на centerShiftTransform(), чтобы остаться по центру новой
+      ширины — маска применяется ДО этого сдвига (mask/содержимое ещё
+      выровнены по исходным координатам), а transform просто переносит уже
+      готовый результат целиком.
+    -->
+    <g [attr.mask]="'url(#mask0_2821_998-' + uid + ')'" [attr.transform]="centerShiftTransform()">
+      <g [attr.filter]="'url(#filter2_d_2821_998-' + uid + ')'" style="mix-blend-mode: overlay">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M279 54C279 119.722 225.722 173 160 173C94.2781 173 41 119.722 41 54C41 -11.7219 94.2781 -65 160 -65C225.722 -65 279 -11.7219 279 54ZM280 54C280 120.274 226.274 174 160 174C93.7258 174 40 120.274 40 54C40 -12.2742 93.7258 -66 160 -66C226.274 -66 280 -12.2742 280 54ZM160 97C183.748 97 203 77.7482 203 54C203 30.2518 183.748 11 160 11C136.252 11 117 30.2518 117 54C117 77.7482 136.252 97 160 97ZM160 98C184.301 98 204 78.3005 204 54C204 29.6995 184.301 10 160 10C135.699 10 116 29.6995 116 54C116 78.3005 135.699 98 160 98ZM160 75C171.598 75 181 65.598 181 54C181 42.402 171.598 33 160 33C148.402 33 139 42.402 139 54C139 65.598 148.402 75 160 75ZM160 89C179.33 89 195 73.33 195 54C195 34.67 179.33 19 160 19C140.67 19 125 34.67 125 54C125 73.33 140.67 89 160 89Z"
+          [attr.fill]="'url(#paint2_linear_2821_998-' + uid + ')'"
+          fill-opacity="0.17"
+          shape-rendering="geometricPrecision"
+        />
+      </g>
+    </g>
+    <!--
+      Угловые диамант-блики — были одним path с 2 подконтурами (левый у
+      острия ~x=2-16, правый у острия ~x=304-318), из-за чего оба двигались
+      только вместе с centerShiftTransform() (=extra/2), а острия к тому
+      моменту уже расходятся на всю extra — блики отставали от остриёв при
+      растяжении. Разбито на 2 path — левый вообще без transform (как
+      1-й блок острых концов, левое остриё никогда не двигается), правый —
+      rightTipTransform() (тот же translate(extra 0), что и у правого
+      острого края) — теперь блики всегда точно на остриях, как в макете.
+      Вне mask0_2821_998: сами по себе не нуждаются в маскировании силуэта
+      (уже точной формы), а разный transform внутри одной маскированной
+      группы был бы неприменим.
+    -->
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M10.4138 17.4142C9.63279 16.6332 8.36646 16.6332 7.58541 17.4142L2.41391 22.5857C1.63286 23.3668 1.63286 24.6331 2.41391 25.4141L7.58541 30.5856C8.36646 31.3667 9.63279 31.3667 10.4138 30.5856L15.5853 25.4141C16.3664 24.6331 16.3664 23.3668 15.5853 22.5857L10.4138 17.4142Z"
+      [attr.fill]="sparkleFill()"
+      [attr.transform]="'translate(6 0)'"
+    />
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      [attr.transform]="rTipTransform()"
+      d="M312.414 17.4142C311.633 16.6332 310.367 16.6332 309.586 17.4142L304.414 22.5857C303.633 23.3668 303.633 24.6331 304.414 25.4141L309.586 30.5856C310.367 31.3667 311.633 31.3667 312.414 30.5856L317.586 25.4141C318.367 24.6331 318.367 23.3668 317.586 22.5857L312.414 17.4142Z"
+      [attr.fill]="sparkleFill()"
+    />
+    <g [attr.filter]="'url(#filter3_d_2821_998-' + uid + ')'" [attr.transform]="centerShiftTransform()">
+      <rect
+        x="160"
+        y="37"
+        width="4.94975"
+        height="4.94975"
+        rx="1"
+        transform="rotate(45 160 37)"
+        [attr.fill]="gemFill()"
+      />
+    </g>
+    <g [attr.filter]="'url(#filter5_d_2821_998-' + uid + ')'">
+      <!--
+        Тот же 5-блочный горизонтальный срез, но со своими границами
+        30.0527/289.947 (clip-frame-*) — собственная вершина контура рамки,
+        она на ~2 unit уже, чем у glow (28.1421/291.858), поэтому переиспользовать
+        clip-left/clip-right отсюда было неверно (0-й/4-й блок захватывали
+        чуть скруглённого угла, а не чистую прямую). Зазор под гем (150–170)
+        общий с glow — переиспользует clip-mid-center/gapTransform().
+      -->
+      <path
+        [attr.clip-path]="'url(#clip-frame-left_2821_998-' + uid + ')'"
+        d="M30.0527 4.75H289.947C292.409 4.75 294.77 5.73128 296.506 7.47656L309.961 21.0029C311.61 22.6608 311.61 25.3392 309.961 26.9971L296.506 40.5234C294.77 42.2687 292.409 43.25 289.947 43.25H164.333C163.955 43.2501 163.586 43.3725 163.283 43.5996L160.75 45.5C160.333 45.8125 159.77 45.8321 159.335 45.5586L159.25 45.5L156.717 43.5996C156.414 43.3725 156.045 43.2501 155.667 43.25H30.0527C27.591 43.25 25.2302 42.2687 23.4941 40.5234L10.0391 26.9971C8.39022 25.3392 8.39022 22.6608 10.0391 21.0029L23.4941 7.47656C25.2302 5.73128 27.591 4.75 30.0527 4.75Z"
+        [attr.stroke]="frameStrokeUrl()"
+        stroke-width="1.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-frame-mid-left_2821_998-' + uid + ')'"
+        [attr.transform]="frameMidLeftTransform()"
+        d="M30.0527 4.75H289.947C292.409 4.75 294.77 5.73128 296.506 7.47656L309.961 21.0029C311.61 22.6608 311.61 25.3392 309.961 26.9971L296.506 40.5234C294.77 42.2687 292.409 43.25 289.947 43.25H164.333C163.955 43.2501 163.586 43.3725 163.283 43.5996L160.75 45.5C160.333 45.8125 159.77 45.8321 159.335 45.5586L159.25 45.5L156.717 43.5996C156.414 43.3725 156.045 43.2501 155.667 43.25H30.0527C27.591 43.25 25.2302 42.2687 23.4941 40.5234L10.0391 26.9971C8.39022 25.3392 8.39022 22.6608 10.0391 21.0029L23.4941 7.47656C25.2302 5.73128 27.591 4.75 30.0527 4.75Z"
+        [attr.stroke]="frameStrokeUrl()"
+        stroke-width="1.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-frame-mid-center_2821_998-' + uid + ')'"
+        [attr.transform]="gapTransform()"
+        d="M30.0527 4.75H289.947C292.409 4.75 294.77 5.73128 296.506 7.47656L309.961 21.0029C311.61 22.6608 311.61 25.3392 309.961 26.9971L296.506 40.5234C294.77 42.2687 292.409 43.25 289.947 43.25H164.333C163.955 43.2501 163.586 43.3725 163.283 43.5996L160.75 45.5C160.333 45.8125 159.77 45.8321 159.335 45.5586L159.25 45.5L156.717 43.5996C156.414 43.3725 156.045 43.2501 155.667 43.25H30.0527C27.591 43.25 25.2302 42.2687 23.4941 40.5234L10.0391 26.9971C8.39022 25.3392 8.39022 22.6608 10.0391 21.0029L23.4941 7.47656C25.2302 5.73128 27.591 4.75 30.0527 4.75Z"
+        [attr.stroke]="frameStrokeUrl()"
+        stroke-width="1.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-frame-mid-right_2821_998-' + uid + ')'"
+        [attr.transform]="frameMidRightTransform()"
+        d="M30.0527 4.75H289.947C292.409 4.75 294.77 5.73128 296.506 7.47656L309.961 21.0029C311.61 22.6608 311.61 25.3392 309.961 26.9971L296.506 40.5234C294.77 42.2687 292.409 43.25 289.947 43.25H164.333C163.955 43.2501 163.586 43.3725 163.283 43.5996L160.75 45.5C160.333 45.8125 159.77 45.8321 159.335 45.5586L159.25 45.5L156.717 43.5996C156.414 43.3725 156.045 43.2501 155.667 43.25H30.0527C27.591 43.25 25.2302 42.2687 23.4941 40.5234L10.0391 26.9971C8.39022 25.3392 8.39022 22.6608 10.0391 21.0029L23.4941 7.47656C25.2302 5.73128 27.591 4.75 30.0527 4.75Z"
+        [attr.stroke]="frameStrokeUrl()"
+        stroke-width="1.5"
+        shape-rendering="geometricPrecision"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-frame-right_2821_998-' + uid + ')'"
+        [attr.transform]="rightTipTransform()"
+        d="M30.0527 4.75H289.947C292.409 4.75 294.77 5.73128 296.506 7.47656L309.961 21.0029C311.61 22.6608 311.61 25.3392 309.961 26.9971L296.506 40.5234C294.77 42.2687 292.409 43.25 289.947 43.25H164.333C163.955 43.2501 163.586 43.3725 163.283 43.5996L160.75 45.5C160.333 45.8125 159.77 45.8321 159.335 45.5586L159.25 45.5L156.717 43.5996C156.414 43.3725 156.045 43.2501 155.667 43.25H30.0527C27.591 43.25 25.2302 42.2687 23.4941 40.5234L10.0391 26.9971C8.39022 25.3392 8.39022 22.6608 10.0391 21.0029L23.4941 7.47656C25.2302 5.73128 27.591 4.75 30.0527 4.75Z"
+        [attr.stroke]="frameStrokeUrl()"
+        stroke-width="1.5"
+        shape-rendering="geometricPrecision"
+      />
+    </g>
+    <defs>
+      <!--
+        clip-path-полосы для горизонтального среза glow/frame-line (filter0_i,
+        filter5_d выше) на 5 частей: границы 28.1421 и 291.858 — существующие
+        вершины контура filter0_i, симметричные относительно x=160 (28.1421 =
+        320−291.858). y/height — с большим запасом, чтобы не подрезать
+        вертикально ничего из фильтров/блюра.
+
+        На каждой внутренней границе (28.1421/150/170/291.858) у двух
+        независимо anti-aliased path, стыкующихся встык математически точно,
+        рендерер не гарантирует, что края лягут на один и тот же под-пиксель
+        — появлялась тонкая (~1px) тёмная полоса. У рамки (filter5_d) это
+        зафиксировано перекрытием clip-frame-* (см. комментарий там); у
+        glow/тела (filter0_i/filter1_i, ниже) аналогичный фикс намеренно НЕ
+        сделан — у обоих inner-shadow blur (сам заливка размывается), и
+        малейшее перекрытие расползается blur'ом в заметное яркое пятно
+        (проверено на глаз). Их шов остаётся как есть — на практике он
+        менее заметен, т.к. сама заливка уже мягкая от blur.
+      -->
+      <clipPath [attr.id]="'clip-left_2821_998-' + uid">
+        <rect x="-1000" y="-1000" width="1028.1421" height="2000" />
+      </clipPath>
+      <!--
+        Средняя полоса (28.1421–291.858) дополнительно разбита ещё на 3:
+        левая/правая половины середины + центральный зазор 20px (150–170,
+        по 10px от центра x=160 в каждую сторону) — левая и правая половины
+        середины равны по width (121.8579 ≈ 121.858) за счёт той же
+        симметрии относительно x=160.
+      -->
+      <clipPath [attr.id]="'clip-mid-left_2821_998-' + uid">
+        <rect x="28.1421" y="-1000" width="121.8579" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-mid-center_2821_998-' + uid">
+        <rect x="150" y="-1000" width="20" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-mid-right_2821_998-' + uid">
+        <rect x="170" y="-1000" width="121.858" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-right_2821_998-' + uid">
+        <rect x="291.858" y="-1000" width="1028.142" height="2000" />
+      </clipPath>
+      <!--
+        Границы «рамки» (filter5_d) — 30.0527/289.947, свои, отдельные от
+        28.1421/291.858 у glow (см. FRAME_LEFT/FRAME_RIGHT в button.ts) —
+        обводка чуть уже вписана внутрь, чем glow.
+
+        Только у рамки (не у glow/тела) острые концы и её собственный зазор
+        (clip-frame-mid-center — отдельный от общего clip-mid-center: если
+        бы поделили один clipPath на два слоя, расширение задело бы и glow)
+        продлены на 0.2 unit внутрь соседних растягиваемых частей — той же
+        природы фикс шва, что выше, но только для рамки: у неё drop-shadow
+        фильтр (feOffset+blur+composite operator="out", тень СНАРУЖИ формы),
+        а не inner-shadow (blur самой заливки, как у glow/тела) — поэтому
+        нет риска, что blur размажет перекрытие в заметное пятно (на glow/
+        теле именно так и случилось при пробе — там от фикса отказались).
+      -->
+      <clipPath [attr.id]="'clip-frame-left_2821_998-' + uid">
+        <rect x="-1000" y="-1000" width="1030.2527" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-frame-mid-left_2821_998-' + uid">
+        <rect x="30.0527" y="-1000" width="119.9473" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-frame-mid-center_2821_998-' + uid">
+        <rect x="149.8" y="-1000" width="20.4" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-frame-mid-right_2821_998-' + uid">
+        <rect x="170" y="-1000" width="119.9473" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-frame-right_2821_998-' + uid">
+        <rect x="289.7473" y="-1000" width="1030.2527" height="2000" />
+      </clipPath>
+      <!--
+        Границы «тела» (filter1_i) — 30.0523/289.948, свои, отдельные от
+        28.1421/291.858 у остальных слоёв (тело чуть уже вписано внутрь
+        рамки). Без центрального зазора — у этой группы всего 3 блока.
+      -->
+      <clipPath [attr.id]="'clip-body-left_2821_998-' + uid">
+        <rect x="-1000" y="-1000" width="1030.0523" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-body-mid_2821_998-' + uid">
+        <rect x="30.0523" y="-1000" width="259.8957" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-body-right_2821_998-' + uid">
+        <rect x="289.948" y="-1000" width="1030.052" height="2000" />
+      </clipPath>
+      <!--
+        Ширина filter0_i/filter1_i/filter5_d ниже — статичное большое число
+        (5000 unit ≈ 4700px), НЕ [attr.width] с computed-сигналом: замерено
+        эмпирически (см. PROJECT_MAP.md) — Chromium не пересчитывает
+        закешированный результат SVG-фильтра, если его x/width меняются через
+        императивный setAttribute (именно так Angular применяет attribute
+        binding) уже после первого рендера/вставки в DOM — растянутая
+        середина кнопки просто не рисуется за пределами ИСХОДНОГО региона
+        фильтра, сколько бы ни рос viewBox. Статичное значение из разметки
+        (не мутируемое) работает корректно, поэтому region просто взят с
+        большим запасом раз и навсегда вместо точного вычисления под width().
+      -->
+      <filter
+        [attr.id]="'filter0_i_2821_998-' + uid"
+        x="2.07129"
+        y="0"
+        width="5000"
+        height="48"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="1" />
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="shape" result="effect1_innerShadow_2821_998" />
+      </filter>
+      <filter
+        [attr.id]="'filter1_i_2821_998-' + uid"
+        x="8.05225"
+        y="4"
+        width="5000"
+        height="41.5858"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.65 0" />
+        <feBlend mode="normal" in2="shape" result="effect1_innerShadow_2821_998" />
+      </filter>
+      <filter
+        [attr.id]="'filter2_d_2821_998-' + uid"
+        x="10"
+        y="-96"
+        width="300"
+        height="300"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="15" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2821_998" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2821_998" result="shape" />
+      </filter>
+      <filter
+        [attr.id]="'filter3_d_2821_998-' + uid"
+        x="152.914"
+        y="33.4142"
+        width="14.1719"
+        height="14.1716"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2821_998" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2821_998" result="shape" />
+      </filter>
+      <filter
+        [attr.id]="'filter5_d_2821_998-' + uid"
+        x="4.05225"
+        y="0"
+        width="5000"
+        height="50.5"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2821_998" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2821_998" result="shape" />
+      </filter>
+      <radialGradient
+        [attr.id]="'paint0_radial_2821_998-' + uid"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(160 25.0001) rotate(-180) scale(154 1129.33)"
+      >
+        <stop stop-color="#738898" stop-opacity="0" />
+        <stop offset="1" stop-color="#738898" />
+      </radialGradient>
+      <radialGradient
+        [attr.id]="'paint1_radial_2821_998-' + uid"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(160 4) rotate(90) scale(42 520.249)"
+      >
+        <stop [attr.stop-color]="bodyTintStart()" />
+        <stop offset="1" [attr.stop-color]="bodyTintEnd()" stop-opacity="0" />
+      </radialGradient>
+      <linearGradient [attr.id]="'paint2_linear_2821_998-' + uid" x1="160" y1="5" x2="160" y2="45" gradientUnits="userSpaceOnUse">
+        <stop stop-color="white" stop-opacity="0" />
+        <stop offset="1" stop-color="white" />
+      </linearGradient>
+      <!--
+        Два ПОЛНОСТЬЮ статичных градиента вместо одного с реактивными
+        [attr.stop-color] — эмпирически найдено, что Chromium не пересчитывает
+        закешированный рендер SVG-фильтра (filter5_d, тот же класс бага, что и
+        со статичным width региона фильтра выше), если через stroke="url(#...)"
+        меняются ЦВЕТА уже существующего градиента: DOM-атрибут stop-color
+        обновляется корректно, а нарисованные пиксели остаются старыми
+        (проверено пиксельно на живом рендере). У fill="url(#paint1_radial)"
+        (тон тела, filter1_i) и обычных [attr.fill] (glow/тело/блики/гем) та
+        же реактивная мутация отрабатывает верно — баг специфичен для stroke.
+        Фикс — тот же паттерн, что и с width: не мутировать существующий
+        ресурс, а переключать [attr.stroke] МЕЖДУ двумя статичными id.
+      -->
+      <radialGradient
+        [attr.id]="'paint4_radial_2821_998-' + uid"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(160 24.9998) rotate(180) scale(154 2196.25)"
+      >
+        <stop stop-color="#F7ECB2" />
+        <stop offset="1" stop-color="#FFF9DB" />
+      </radialGradient>
+      <radialGradient
+        [attr.id]="'paint4_radial_2821_998_secondary-' + uid"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(160 24.9998) rotate(180) scale(154 2196.25)"
+      >
+        <stop stop-color="#DCDCFC" />
+        <stop offset="1" stop-color="#F0F0FF" />
+      </radialGradient>
+    </defs>
+  </svg>
+  <!--
+    Иконка + текст — .button__content (position:absolute, inset:0) центрует
+    .button__content-inner относительно ВСЕЙ кнопки целиком; сам inner —
+    обычный flex-блок (НЕ растянут inset:0, в отличие от родителя), поэтому
+    его собственная ширина — естественная (shrink-to-fit) иконка+8px-gap+
+    текст: именно её отслеживает ResizeObserver под width()="content" в
+    button.ts (см. contentInnerEl/measuredContentInnerWidthPx). Иконка:
+    раньше была захардкожена (монетка + ромбовидная подложка) прямо в
+    главном SVG (mask1_2821_998/filter4_i_2821_998), вынесена в статичный
+    SVG-ассет (public/icons/button-support-icon.svg) и подставляется через
+    content projection — если ничего не спроецировано ([icon] пуст), слот
+    остаётся DOM-пустым и `.button__icon:empty { display: none }` убирает
+    его из flex-раскладки целиком (иначе gap оставил бы пустой зазор) —
+    тогда текст просто по центру всей кнопки, без иконки в расчёте вообще
+    (и то же самое схлопывание отражается в measuredContentInnerWidthPx).
+    Текст — живой (раньше был зашит как path с градиентной заливкой
+    paint3_linear_2821_998, убран вместе с path); typography — компонент
+    "Button" из Figma (Montserrat Bold 18/24, letter-spacing 8%); фон
+    (вертикальный градиент, background-clip: text) — [style.backgroundImage],
+    т.к. цвет зависит от type() (textGradient() в button.ts). Именно
+    background-image (не шорткат background!) — background — шорткат,
+    инлайновая запись через него сбрасывает background-clip обратно на
+    border-box (даже если background-clip задан отдельно в button.scss с
+    более низким приоритетом) — текст заливался сплошным прямоугольником
+    вместо обтекания по форме букв, ловилось визуально на /kit.
+  -->
+  <div class="button__content">
+    <div class="button__content-inner" #contentInner>
+      <span class="button__icon" [style.width.px]="iconWidthPx" [style.height.px]="iconHeightPx">
+        <ng-content select="[icon]" />
+      </span>
+      <span class="button__text" [style.backgroundImage]="textGradient()">{{ text() }}</span>
+    </div>
+  </div>
+</button>

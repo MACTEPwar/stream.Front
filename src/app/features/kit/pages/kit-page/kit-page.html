@@ -1,0 +1,65 @@
+<div class="kit-page">
+  <h1 class="kit-page__title">Button</h1>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">Поддержать — без иконки (текст по центру)</h2>
+    <div class="kit-page__row">
+      <app-button text="Хелп" />
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">Поддержать — со спроецированной иконкой ([icon])</h2>
+    <div class="kit-page__row">
+      <app-button text="Парампапам">
+        <img icon src="/icons/button-support-icon.svg" alt="" />
+      </app-button>
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">width() — фиксированные пиксели (9-slice: концы фиксированы, середина тянется)</h2>
+    <div class="kit-page__row">
+      <app-button text="Узкая" [width]="150" />
+      <app-button text="Поддержать" [width]="301" />
+      <app-button text="Поддержать прямо сейчас" [width]="500">
+        <img icon src="/icons/button-support-icon.svg" alt="" />
+      </app-button>
+      <app-button text="Совсем широкая" [width]="700" />
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">width()="parent" — на всю ширину родительского контейнера</h2>
+    <div class="kit-page__parent-demo" style="width: 400px">
+      <app-button text="Во всю ширину контейнера 400px" [width]="'parent'" />
+    </div>
+    <div class="kit-page__parent-demo" style="width: 700px; margin-top: 12px">
+      <app-button text="Во всю ширину контейнера 700px" [width]="'parent'">
+        <img icon src="/icons/button-support-icon.svg" alt="" />
+      </app-button>
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">width()="content" — по контенту (иконка+зазор+текст + 50px слева/справа)</h2>
+    <div class="kit-page__row">
+      <app-button text="Ок" [width]="'content'" />
+      <app-button text="Поддержать прямо сейчас" [width]="'content'" />
+      <app-button text="С иконкой" [width]="'content'">
+        <img icon src="/icons/button-support-icon.svg" alt="" />
+      </app-button>
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">type()="secondary" — те же геометрия/размеры, другие цвета</h2>
+    <div class="kit-page__row">
+      <app-button text="Secondary" type="secondary" />
+      <app-button text="Парампапам" type="secondary">
+        <img icon src="/icons/button-support-icon.svg" alt="" />
+      </app-button>
+      <app-button text="Поддержать прямо сейчас" type="secondary" [width]="500" />
+    </div>
+  </section>
+</div>

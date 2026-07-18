@@ -1,0 +1,87 @@
+@use 'variables' as vars;
+
+// Высота (viewBox 320×51 → 48px) — константа независимо от width(): px/unit
+// остаётся тем же, что и раньше (48/51), поэтому острые концы кнопки при
+// любой ширине рендерятся 1:1 с оригиналом (см. PX_PER_UNIT в button.ts).
+// Ширина .button задаётся инлайново ([style.width.px]="widthPx()") — либо
+// точный эквивалент исходных 320 unit (без width()), либо то, что запросил
+// пользователь. Статично всё, кроме текста (.button__text), иконки
+// (.button__icon) и ширины — никаких CSS custom properties под варианты.
+$svg-height: 48px;
+
+.button {
+  position: relative;
+  display: inline-block;
+  height: $svg-height;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.button__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+// Иконка+текст — единая группа, отцентрованная относительно ВСЕЙ кнопки
+// (не привязана к исходным координатам иконки/текста из макета). Вертикаль —
+// по центру высоты кнопки (align-items: center), не зависит от width().
+.button__content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+// НЕ растянут inset:0 (в отличие от родителя выше) — его собственная ширина
+// естественная (shrink-to-fit), с зазором 8px между иконкой и текстом. Это
+// то, что измеряет ResizeObserver под width()="content" в button.ts.
+.button__content-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// Слот под иконку (content projection, [icon]) — size задаётся инлайново
+// (iconWidthPx/iconHeightPx в button.ts, константы исходного размера
+// монетки+подложки: 44×38 из viewBox 320×51). Если ничего не спроецировано,
+// слот DOM-пустой — :empty убирает его из flex-раскладки целиком, иначе
+// gap оставил бы пустой 8px зазор рядом с текстом.
+.button__icon {
+  flex: 0 0 auto;
+}
+
+.button__icon:empty {
+  display: none;
+}
+
+.button__icon > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// Текст — живой оверлей поверх SVG (раньше был зашит как path с градиентной
+// заливкой). Typography — Figma-компонент "Button": Montserrat Bold 18/24,
+// letter-spacing 8%. Сам градиент (зависит от type()) — [style.background]
+// в button.html/textGradient() в button.ts, здесь только механика затекания
+// фона в текст.
+.button__text {
+  flex: 0 0 auto;
+  white-space: nowrap;
+
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-18;
+  font-weight: vars.$font-weight-700;
+  line-height: 24px;
+  letter-spacing: 0.08em;
+
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
