@@ -12,6 +12,15 @@ const DEFAULT_WIDTH_PX = ORIGINAL_WIDTH_UNITS * PX_PER_UNIT;
 /** Отступ слева/справа от контента (иконка+зазор+текст) в режиме width="content". */
 const CONTENT_PADDING_PX = 50;
 
+// Все id/url(#...) внутри главного SVG (button.html) захардкожены как в исходнике
+// (_2821_998), к каждому добавляется -{{uid}} — иначе несколько <app-button> на
+// одной странице (см. /kit) делят один и тот же id, и url(#...)/getElementById
+// резолвится в ПЕРВЫЙ такой элемент в документе, а не в свой собственный (было
+// незаметно, пока все инстансы были одного цвета — с появлением type() один
+// экземпляр начал реально красить тело/glow другого: DOM внутри своего <svg>
+// показывал верный цвет, а нарисованный пиксель — от чужого инстанса).
+let nextButtonUid = 0;
+
 // "Glow" layer (filter0_i) — 5-block clip-path split: left tip / mid-left / center gap (gem) /
 // mid-right / right tip. The gap boundaries (GAP_LEFT/GAP_RIGHT) and the pure-shift transforms
 // (gap, right tip) are shared with the frame layer below — only the tip/mid-block anchors differ
@@ -83,6 +92,8 @@ export type ButtonType = 'primary' | 'secondary';
   styleUrl: './button.scss',
 })
 export class Button {
+  protected readonly uid = `btn${nextButtonUid++}`;
+
   readonly text = input.required<string>();
   readonly width = input<number | ButtonWidthMode>();
   readonly type = input<ButtonType>('primary');
@@ -112,7 +123,9 @@ export class Button {
   // НЕ мутируем цвета одного градиента, переключаем ссылку между двумя
   // статичными градиентами (Chromium-баг с filter5_d, найден пиксельно).
   protected readonly frameStrokeUrl = computed(() =>
-    this.isSecondary() ? 'url(#paint4_radial_2821_998_secondary)' : 'url(#paint4_radial_2821_998)',
+    this.isSecondary()
+      ? `url(#paint4_radial_2821_998_secondary-${this.uid})`
+      : `url(#paint4_radial_2821_998-${this.uid})`,
   );
 
   private readonly buttonEl = viewChild<ElementRef<HTMLButtonElement>>('buttonEl');

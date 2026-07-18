@@ -21,6 +21,10 @@ class ButtonHost {
   readonly type = signal<ButtonType>('primary');
 }
 
+// Каждый инстанс Button получает свой -{{uid}} суффикс на все id/url(#...) (см.
+// button.ts/button.html) — поэтому здесь везде используются селекторы "начинается
+// с" (^=), а не точное совпадение: сам суффикс в тестах не важен и не предсказуем
+// (инкрементный счётчик общий на все тесты в файле).
 describe('Button', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({ imports: [ButtonHost] });
@@ -116,9 +120,9 @@ describe('Button', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    const leftTip = svg.querySelector('path[clip-path="url(#clip-left_2821_998)"]');
-    const midLeft = svg.querySelector('path[clip-path="url(#clip-mid-left_2821_998)"]');
-    const midRight = svg.querySelector('path[clip-path="url(#clip-mid-right_2821_998)"]');
+    const leftTip = svg.querySelector('path[clip-path^="url(#clip-left_2821_998"]');
+    const midLeft = svg.querySelector('path[clip-path^="url(#clip-mid-left_2821_998"]');
+    const midRight = svg.querySelector('path[clip-path^="url(#clip-mid-right_2821_998"]');
 
     expect(leftTip?.getAttribute('transform')).toBeNull();
     expect(midLeft?.getAttribute('transform')).toContain('scale(');
@@ -140,8 +144,8 @@ describe('Button', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    const ringsPath = svg.querySelector('g[filter="url(#filter2_d_2821_998)"] path');
-    const maskedGroup = svg.querySelector('g[mask="url(#mask0_2821_998)"]');
+    const ringsPath = svg.querySelector('g[filter^="url(#filter2_d_2821_998"] path');
+    const maskedGroup = svg.querySelector('g[mask^="url(#mask0_2821_998"]');
 
     expect(ringsPath?.getAttribute('transform')).toBeNull();
     expect(maskedGroup?.getAttribute('transform')).toBe('translate(105.625 0)');
@@ -167,10 +171,10 @@ describe('Button', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    const frameLeftTip = svg.querySelector('path[clip-path="url(#clip-frame-left_2821_998)"]');
-    const frameMidLeft = svg.querySelector('path[clip-path="url(#clip-frame-mid-left_2821_998)"]');
-    const frameMidRight = svg.querySelector('path[clip-path="url(#clip-frame-mid-right_2821_998)"]');
-    const frameRightTip = svg.querySelector('path[clip-path="url(#clip-frame-right_2821_998)"]');
+    const frameLeftTip = svg.querySelector('path[clip-path^="url(#clip-frame-left_2821_998"]');
+    const frameMidLeft = svg.querySelector('path[clip-path^="url(#clip-frame-mid-left_2821_998"]');
+    const frameMidRight = svg.querySelector('path[clip-path^="url(#clip-frame-mid-right_2821_998"]');
+    const frameRightTip = svg.querySelector('path[clip-path^="url(#clip-frame-right_2821_998"]');
 
     expect(frameLeftTip?.getAttribute('transform')).toBeNull();
     expect(frameMidLeft?.getAttribute('transform')).toBe(
@@ -183,7 +187,7 @@ describe('Button', () => {
 
     // glow's own mid-left scale differs (its corner sits at 28.1421, not 30.0527) — the two
     // layers must not accidentally share the same clip-path/transform.
-    const glowMidLeft = svg.querySelector('path[clip-path="url(#clip-mid-left_2821_998)"]');
+    const glowMidLeft = svg.querySelector('path[clip-path^="url(#clip-mid-left_2821_998"]');
     expect(glowMidLeft?.getAttribute('transform')).not.toBe(frameMidLeft?.getAttribute('transform'));
   });
 
@@ -192,8 +196,8 @@ describe('Button', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    const frameGap = svg.querySelector('path[clip-path="url(#clip-frame-mid-center_2821_998)"]');
-    const glowGap = svg.querySelector('path[clip-path="url(#clip-mid-center_2821_998)"]');
+    const frameGap = svg.querySelector('path[clip-path^="url(#clip-frame-mid-center_2821_998"]');
+    const glowGap = svg.querySelector('path[clip-path^="url(#clip-mid-center_2821_998"]');
     expect(frameGap).not.toBeNull();
     expect(glowGap).not.toBeNull();
     expect(frameGap).not.toBe(glowGap);
@@ -205,7 +209,7 @@ describe('Button', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    const gemGroup = svg.querySelector('g[filter="url(#filter3_d_2821_998)"]');
+    const gemGroup = svg.querySelector('g[filter^="url(#filter3_d_2821_998"]');
     expect(gemGroup?.getAttribute('transform')).toBe('translate(105.625 0)');
   });
 
@@ -216,7 +220,7 @@ describe('Button', () => {
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
     ['filter0_i_2821_998', 'filter1_i_2821_998', 'filter5_d_2821_998'].forEach((id) => {
-      const filter = svg.querySelector(`#${id}`);
+      const filter = svg.querySelector(`[id^="${id}"]`);
       expect(Number(filter?.getAttribute('width'))).toBeGreaterThan(1000);
     });
   });
@@ -244,8 +248,8 @@ describe('Button', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    expect(svg.querySelector('path[clip-path="url(#clip-left_2821_998)"]')?.getAttribute('fill')).toBe('#F4E9AE');
-    expect(svg.querySelector('path[clip-path="url(#clip-body-left_2821_998)"]')?.getAttribute('fill')).toBe(
+    expect(svg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.getAttribute('fill')).toBe('#F4E9AE');
+    expect(svg.querySelector('path[clip-path^="url(#clip-body-left_2821_998"]')?.getAttribute('fill')).toBe(
       '#EEC68C',
     );
     const text: HTMLElement = fixture.nativeElement.querySelector('.button__text');
@@ -259,11 +263,11 @@ describe('Button', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    expect(svg.querySelector('path[clip-path="url(#clip-left_2821_998)"]')?.getAttribute('fill')).toBe('#8383F3');
-    expect(svg.querySelector('path[clip-path="url(#clip-body-left_2821_998)"]')?.getAttribute('fill')).toBe(
+    expect(svg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.getAttribute('fill')).toBe('#8383F3');
+    expect(svg.querySelector('path[clip-path^="url(#clip-body-left_2821_998"]')?.getAttribute('fill')).toBe(
       '#3F3FAF',
     );
-    const bodyTintStops = svg.querySelectorAll('#paint1_radial_2821_998 stop');
+    const bodyTintStops = svg.querySelectorAll('[id^="paint1_radial_2821_998"] stop');
     expect(bodyTintStops[0].getAttribute('stop-color')).toBe('#26267B');
     expect(bodyTintStops[1].getAttribute('stop-color')).toBe('#7171D5');
     const text: HTMLElement = fixture.nativeElement.querySelector('.button__text');
@@ -275,21 +279,64 @@ describe('Button', () => {
     // Рамка — НЕ мутация stop-color (Chromium не перерисовывал закешированный
     // filter5_d, см. комментарий у paint4_radial_2821_998_secondary в
     // button.html), а переключение stroke на отдельный статичный градиент.
-    const frameTip = svg.querySelector('path[clip-path="url(#clip-frame-left_2821_998)"]');
-    expect(frameTip?.getAttribute('stroke')).toBe('url(#paint4_radial_2821_998_secondary)');
-    const secondaryFrameStops = svg.querySelectorAll('#paint4_radial_2821_998_secondary stop');
+    const frameTip = svg.querySelector('path[clip-path^="url(#clip-frame-left_2821_998"]');
+    expect(frameTip?.getAttribute('stroke')).toContain('paint4_radial_2821_998_secondary');
+    const secondaryFrameStops = svg.querySelectorAll('[id^="paint4_radial_2821_998_secondary"] stop');
     expect(secondaryFrameStops[0].getAttribute('stop-color')).toBe('#DCDCFC');
     expect(secondaryFrameStops[1].getAttribute('stop-color')).toBe('#F0F0FF');
-    const primaryFrameStops = svg.querySelectorAll('#paint4_radial_2821_998 stop');
-    expect(primaryFrameStops[0].getAttribute('stop-color')).toBe('#F7ECB2');
+    // "начинается с paint4_radial_2821_998" тоже поймал бы *_secondary — исключаем явно
+    const primaryFrameGradient = Array.from(svg.querySelectorAll('[id^="paint4_radial_2821_998"]')).find(
+      (el) => !el.id.includes('_secondary'),
+    );
+    const primaryFrameStops = primaryFrameGradient?.querySelectorAll('stop') ?? [];
+    expect(primaryFrameStops[0]?.getAttribute('stop-color')).toBe('#F7ECB2');
     const sparkles = svg.querySelectorAll('path[fill="#F0F0FF"]');
     expect(sparkles).toHaveLength(2);
-    const gem = svg.querySelector('g[filter="url(#filter3_d_2821_998)"] rect');
+    const gem = svg.querySelector('g[filter^="url(#filter3_d_2821_998"] rect');
     expect(gem?.getAttribute('fill')).toBe('#DCDCFC');
 
     // серый оверлей (paint0_radial) и кольца (paint2_linear) — не меняются между
     // типами (проверено по исходнику Frame 68_2 — цвета там идентичны primary)
-    const grayStops = svg.querySelectorAll('#paint0_radial_2821_998 stop');
+    const grayStops = svg.querySelectorAll('[id^="paint0_radial_2821_998"] stop');
     expect(grayStops[0].getAttribute('stop-color')).toBe('#738898');
+  });
+
+  it('несколько инстансов на одной странице — каждый использует свои собственные id/url(#...), не первого попавшегося (Chromium резолвит url(#id) по документу целиком, не по локальному <svg>)', () => {
+    const primaryFixture = TestBed.createComponent(ButtonHost);
+    primaryFixture.detectChanges();
+
+    const secondaryFixture = TestBed.createComponent(ButtonHost);
+    secondaryFixture.componentInstance.type.set('secondary');
+    secondaryFixture.detectChanges();
+
+    // оба фикстуры одновременно в document.body — так же, как несколько
+    // <app-button> на одной странице (см. /kit)
+    document.body.appendChild(primaryFixture.nativeElement);
+    document.body.appendChild(secondaryFixture.nativeElement);
+
+    const primarySvg: SVGSVGElement = primaryFixture.nativeElement.querySelector('svg.button__svg');
+    const secondarySvg: SVGSVGElement = secondaryFixture.nativeElement.querySelector('svg.button__svg');
+
+    const primaryGlowId = primarySvg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.id;
+    const secondaryGlowId = secondarySvg
+      .querySelector('g[filter^="url(#filter0_i_2821_998"]')
+      ?.getAttribute('filter');
+
+    // id/url(#...) внутри каждого <svg> различаются между инстансами
+    expect(primaryGlowId).not.toBe(secondaryGlowId);
+
+    // и, что важнее для самого бага: url(#paint1_radial...) у secondary-инстанса
+    // резолвится (document.getElementById, тот же алгоритм, что и у браузерного
+    // рендера url(#...)) именно в СВОЙ градиент с секондари-цветами, не в
+    // primary-градиент первого инстанса
+    const secondaryTintUrl = secondarySvg
+      .querySelector('path[clip-path^="url(#clip-body-left_2821_998"][fill*="paint1_radial"]')
+      ?.getAttribute('fill');
+    const referencedId = secondaryTintUrl?.slice('url(#'.length, -1) ?? '';
+    const resolved = document.getElementById(referencedId);
+    expect(resolved?.querySelector('stop')?.getAttribute('stop-color')).toBe('#26267B');
+
+    document.body.removeChild(primaryFixture.nativeElement);
+    document.body.removeChild(secondaryFixture.nativeElement);
   });
 });
