@@ -11,6 +11,10 @@ const SUBPLATE_ANCHOR_X = 15;
 const SUBPLATE_BODY_WIDTH = 104.75 - SUBPLATE_ANCHOR_X;
 const BORDER_ANCHOR_X = 14.75;
 const BORDER_STRAIGHT_WIDTH = 105.75 - BORDER_ANCHOR_X;
+const RIGHT_SUBPLATE_ANCHOR_X = 643.75;
+const RIGHT_SUBPLATE_WIDTH = RIGHT_SUBPLATE_ANCHOR_X - 542.75;
+const RIGHT_BORDER_ANCHOR_X = 643.75;
+const RIGHT_BORDER_STRAIGHT_WIDTH = RIGHT_BORDER_ANCHOR_X - 552.75;
 
 function anchoredScale(anchor: number, scale: number): string {
   return `translate(${anchor} 0) scale(${scale} 1) translate(${-anchor} 0)`;
@@ -161,6 +165,47 @@ describe('ListItem', () => {
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     const [, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
     expect(subplateBody.getAttribute('transform')).toBe(anchoredScale(SUBPLATE_ANCHOR_X, 1));
+  });
+
+  it('lastSegmentShiftPx() ≠ 0 — правая подложка/прямая часть границы растягиваются влево анкором в фиксированном правом крае, «крючок» границы/разделитель сдвигаются влево', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Пн', width: '48px' },
+      { text: 'Турнир выходного дня', width: 1 },
+      { text: '18:00', width: '100px' },
+    ]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
+    const [rightBorderStraight, rightBorderHook] = Array.from(svg.querySelectorAll('path[fill^="url(#paint7_linear"]'));
+    const rightDivider = svg.querySelector('g[mask^="url(#mask0"]');
+
+    // 100 - 56 = 44 (lastSegmentShiftPx)
+    expect(rightSubplate?.getAttribute('transform')).toBe(
+      anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, (RIGHT_SUBPLATE_WIDTH + 44) / RIGHT_SUBPLATE_WIDTH),
+    );
+    expect(rightBorderStraight.getAttribute('transform')).toBe(
+      anchoredScale(RIGHT_BORDER_ANCHOR_X, (RIGHT_BORDER_STRAIGHT_WIDTH + 44) / RIGHT_BORDER_STRAIGHT_WIDTH),
+    );
+    expect(rightBorderHook.getAttribute('transform')).toBe('translate(-44 0)');
+    expect(rightDivider?.getAttribute('transform')).toBe('translate(-44 0)');
+  });
+
+  it('width() последнего сегмента = базовым 56px — правый декор без сдвига/растяжения (identity-transform)', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Пн', width: '48px' },
+      { text: 'Стрим', width: 1 },
+      { text: '20:00', width: '56px' },
+    ]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
+    const rightDivider = svg.querySelector('g[mask^="url(#mask0"]');
+    expect(rightSubplate?.getAttribute('transform')).toBe(anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, 1));
+    expect(rightDivider?.getAttribute('transform')).toBe('translate(0 0)');
   });
 
   it('произвольное количество сегментов (не только 3) — рендерится без ошибок', () => {

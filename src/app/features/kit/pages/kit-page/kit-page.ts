@@ -56,5 +56,16 @@ export class KitPage {
         { text: '18:00', width: '56px', align: 'right' },
       ],
     },
+    // Последний сегмент шире, чем у остальных строк (100px вместо 56px) —
+    // правый декор (подложка/её граница/разделитель) зеркально растягивается
+    // влево (см. lastSegmentShiftPx() в list-item.ts).
+    {
+      id: 5,
+      segments: [
+        { text: 'Пт', width: '148px', align: 'left' },
+        { text: 'Финал сезона', width: 1, align: 'center' },
+        { text: '21:00 (КИЕВ)', width: '100px', align: 'right' },
+      ],
+    },
   ];
 }

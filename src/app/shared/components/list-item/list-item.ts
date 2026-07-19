@@ -9,6 +9,11 @@ let nextListItemUid = 0;
 // значением и реально заданной шириной первого сегмента.
 const FIRST_SEGMENT_BASELINE_WIDTH_PX = 48;
 
+// Зеркально — последний сегмент и декор в ПРАВОЙ части строки (подложка
+// paint5_radial, её граница filter4_d/paint7_linear, разделитель filter1_d).
+// Базовое значение — ширина последнего сегмента в демо-данных `/kit` (56px).
+const LAST_SEGMENT_BASELINE_WIDTH_PX = 56;
+
 // Геометрия подложки/границы — см. firstSegmentShiftPx()/subplateBodyTransform()/
 // borderStraightTransform() ниже. Якоря/ширины — вершины исходного контура
 // в Schedule.svg (там же, где стыкуются прямая и «крючок»/остриё частей).
@@ -16,6 +21,15 @@ const SUBPLATE_ANCHOR_X = 15;
 const SUBPLATE_BODY_WIDTH = 104.75 - SUBPLATE_ANCHOR_X;
 const BORDER_ANCHOR_X = 14.75;
 const BORDER_STRAIGHT_WIDTH = 105.75 - BORDER_ANCHOR_X;
+
+// Правая подложка/граница — зеркало левых: анкор у ПРАВОГО (фиксированного,
+// это же край самой пилюли) края, растягиваются влево. Подложка справа —
+// простой прямоугольник (нет остриёй-«стрелки», как у левой) — ей не нужен
+// clip-path на fixed/stretch части, весь path растягивается целиком.
+const RIGHT_SUBPLATE_ANCHOR_X = 643.75;
+const RIGHT_SUBPLATE_WIDTH = RIGHT_SUBPLATE_ANCHOR_X - 542.75;
+const RIGHT_BORDER_ANCHOR_X = 643.75;
+const RIGHT_BORDER_STRAIGHT_WIDTH = RIGHT_BORDER_ANCHOR_X - 552.75;
 
 /** `scale`-затем-`shift`, анкорится в `anchor` (та же формула, что у `Button`). */
 function anchoredScale(anchor: number, scale: number): string {
@@ -109,6 +123,35 @@ export class ListItem {
     anchoredScale(BORDER_ANCHOR_X, (BORDER_STRAIGHT_WIDTH + this.firstSegmentShiftPx()) / BORDER_STRAIGHT_WIDTH),
   );
   protected readonly borderCurlTransform = computed(() => `translate(${this.firstSegmentShiftPx()} 0)`);
+
+  // Зеркало firstSegmentShiftPx() — но для последнего сегмента и разница
+  // считается так же (ширина − базовое значение), сам сдвиг декора при
+  // использовании направлен влево (отрицательный x), см. rightBorderHookTransform()/
+  // rightDividerTransform() ниже.
+  protected readonly lastSegmentShiftPx = computed(() => {
+    const segments = this.segments();
+    const width = segments[segments.length - 1]?.width;
+    if (typeof width !== 'string') return 0;
+    const match = /^(-?\d*\.?\d+)px$/.exec(width.trim());
+    if (!match) return 0;
+    return Number(match[1]) - LAST_SEGMENT_BASELINE_WIDTH_PX;
+  });
+
+  // Правая подложка/граница растягиваются влево (анкор — фиксированный правый
+  // край у обеих, тот же принцип, что у левых subplateBodyTransform()/
+  // borderStraightTransform()); «крючок» границы и разделитель — просто
+  // сдвигаются влево вместе (rightBorderHookTransform()/rightDividerTransform()).
+  protected readonly rightSubplateTransform = computed(() =>
+    anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, (RIGHT_SUBPLATE_WIDTH + this.lastSegmentShiftPx()) / RIGHT_SUBPLATE_WIDTH),
+  );
+  protected readonly rightBorderStraightTransform = computed(() =>
+    anchoredScale(
+      RIGHT_BORDER_ANCHOR_X,
+      (RIGHT_BORDER_STRAIGHT_WIDTH + this.lastSegmentShiftPx()) / RIGHT_BORDER_STRAIGHT_WIDTH,
+    ),
+  );
+  protected readonly rightBorderHookTransform = computed(() => `translate(${-this.lastSegmentShiftPx()} 0)`);
+  protected readonly rightDividerTransform = computed(() => `translate(${-this.lastSegmentShiftPx()} 0)`);
 
   protected segmentFlex(segment: ListItemSegment): string {
     const { width } = segment;
