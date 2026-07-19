@@ -87,4 +87,45 @@
       <app-schedule-day-row weekday="Ср" eventTitle="Разбор заявок" time="19:30" />
     </div>
   </section>
+
+  <h1 class="kit-page__title">ListContainer</h1>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">
+      direction="column" + itemWidth="stretch" (дефолт) — вертикальный стек, элементы на всю ширину (кейс Schedule, 7
+      строк)
+    </h2>
+    <div class="kit-page__list-demo">
+      <app-list-container [gap]="8">
+        <div class="kit-page__list-item">День 1</div>
+        <div class="kit-page__list-item">День 2</div>
+        <div class="kit-page__list-item">День 3</div>
+      </app-list-container>
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">
+      direction="row" + itemWidth="stretch" — горизонтальный ряд, колонки делят ширину поровну по количеству
+      элементов (кейс Donators)
+    </h2>
+    <div class="kit-page__list-demo">
+      <app-list-container direction="row" [gap]="8">
+        <div class="kit-page__list-item">1</div>
+        <div class="kit-page__list-item">2</div>
+        <div class="kit-page__list-item">3</div>
+      </app-list-container>
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">direction="row" + itemWidth="auto" — ширина колонки по контенту</h2>
+    <div class="kit-page__list-demo">
+      <app-list-container direction="row" itemWidth="auto" [gap]="8">
+        <div class="kit-page__list-item">Коротко</div>
+        <div class="kit-page__list-item">Средней длины</div>
+        <div class="kit-page__list-item">Совсем длинный элемент списка</div>
+      </app-list-container>
+    </div>
+  </section>
 </div>
