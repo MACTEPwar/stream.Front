@@ -10,9 +10,9 @@ import { ListItem, ListItemSegment } from './list-item';
 })
 class ListItemHost {
   readonly segments = signal<ListItemSegment[]>([
-    { text: 'Пн' },
-    { text: 'Стрим на движке' },
-    { text: '20:00' },
+    { text: 'Пн', width: '60px', align: 'left' },
+    { text: 'Стрим на движке', width: 1, align: 'center' },
+    { text: '20:00', width: '60px', align: 'right' },
   ]);
 }
 
@@ -32,17 +32,53 @@ describe('ListItem', () => {
     expect(texts).toEqual(['Пн', 'Стрим на движке', '20:00']);
   });
 
-  it('первый/последний сегмент — крайние (--edge, --left/--right), средний — растягивается по центру', () => {
+  it('width() строкой — фиксированная CSS-длина (flex: 0 0 <width>)', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const [first, middle, last] = Array.from(el.querySelectorAll('.day-row__segment'));
-    expect(first.classList).toContain('day-row__segment--edge');
-    expect(first.classList).toContain('day-row__segment--left');
-    expect(middle.classList).not.toContain('day-row__segment--edge');
-    expect(last.classList).toContain('day-row__segment--edge');
-    expect(last.classList).toContain('day-row__segment--right');
+    const [first] = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    expect(first.style.flex).toBe('0 0 60px');
+  });
+
+  it('width() числом — пропорциональный flex-grow (flex: <n> <n> 0)', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const [, middle] = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    expect(middle.style.flex).toBe('1 1 0px');
+  });
+
+  it('без width() — дефолт flex: 1 1 0 (равная доля)', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([{ text: 'A' }, { text: 'B' }]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const segments = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    expect(segments[0].style.flex).toBe('1 1 0px');
+    expect(segments[1].style.flex).toBe('1 1 0px');
+  });
+
+  it('align() — управляет text-align каждого сегмента независимо, дефолт "left"', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const segments = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    expect(segments[0].style.textAlign).toBe('left');
+    expect(segments[1].style.textAlign).toBe('center');
+    expect(segments[2].style.textAlign).toBe('right');
+  });
+
+  it('без align() — дефолтный text-align "left"', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([{ text: 'A' }]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect((el.querySelector('.day-row__segment') as HTMLElement).style.textAlign).toBe('left');
   });
 
   it('без color() у сегмента — дефолтный цвет #F9F9F9, с color() — используется он', () => {

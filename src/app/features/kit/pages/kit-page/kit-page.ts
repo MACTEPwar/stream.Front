@@ -15,12 +15,35 @@ import { SectionTitle } from '../../../../shared/components/section-title/sectio
   styleUrl: './kit-page.scss',
 })
 export class KitPage {
-  // Сегменты собираются вызывающим кодом (здесь — демо-страницей, в реальном
-  // использовании — фичей вроде Schedule): online-строка — 3 сегмента
-  // дефолтным цветом, offline — средний/правый сегмент явно красным.
+  // Сегменты (текст/ширина/цвет/выравнивание) собираются вызывающим кодом
+  // (здесь — демо-страницей, в реальном использовании — фичей вроде
+  // Schedule): weekday — узкий фиксированный слева, event — растягивается
+  // по центру, time — узкий фиксированный справа; online — дефолтным
+  // цветом, offline — event/time явно красным.
   protected readonly scheduleListItems: ListItemData[] = [
-    { id: 1, segments: [{ text: 'Пн' }, { text: 'Стрим на движке' }, { text: '20:00' }] },
-    { id: 2, segments: [{ text: 'Вт' }, { text: 'Оффлайн', color: '#CF1717' }, { text: '--:--', color: '#CF1717' }] },
-    { id: 3, segments: [{ text: 'Ср' }, { text: 'Разбор заявок' }, { text: '19:30' }] },
+    {
+      id: 1,
+      segments: [
+        { text: 'Пн', width: '48px', align: 'right' },
+        { text: 'Стрим на движке', width: 1, align: 'center' },
+        { text: '20:00', width: '56px', align: 'right' },
+      ],
+    },
+    {
+      id: 2,
+      segments: [
+        { text: 'Вт', width: '48px', align: 'center' },
+        { text: 'Оффлайн', width: 1, align: 'center', color: '#CF1717' },
+        { text: '--:--', width: '56px', align: 'right', color: '#CF1717' },
+      ],
+    },
+    {
+      id: 3,
+      segments: [
+        { text: 'Ср', width: '48px', align: 'left' },
+        { text: 'Разбор заявок', width: 1, align: 'center' },
+        { text: '19:30', width: '56px', align: 'right' },
+      ],
+    },
   ];
 }

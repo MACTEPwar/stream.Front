@@ -221,12 +221,11 @@
   </svg>
 
   <div class="day-row__content">
-    @for (segment of segments(); track $index; let first = $first; let last = $last) {
+    @for (segment of segments(); track $index) {
       <span
         class="day-row__segment"
-        [class.day-row__segment--edge]="first || last"
-        [class.day-row__segment--left]="first"
-        [class.day-row__segment--right]="last && !first"
+        [style.flex]="segmentFlex(segment)"
+        [style.textAlign]="segment.align ?? 'left'"
         [style.color]="segment.color ?? '#F9F9F9'"
       >{{ segment.text }}</span>
     }

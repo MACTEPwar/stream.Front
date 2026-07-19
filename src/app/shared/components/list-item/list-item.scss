@@ -27,24 +27,10 @@
   font-weight: vars.$font-weight-700;
 }
 
-// Крайние (первый/последний) сегменты — по контенту, не растягиваются;
-// средние делят оставшееся место поровну и центрируются (см. list-item.ts).
+// flex и text-align — целиком из segment.width()/segment.align() (см.
+// list-item.ts: segmentFlex()), никакой позиционной "умной" логики тут нет.
 .day-row__segment {
-  flex: 1 1 0;
-  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  &--edge {
-    flex: 0 0 auto;
-  }
-
-  &--left {
-    text-align: left;
-  }
-
-  &--right {
-    text-align: right;
-  }
 }

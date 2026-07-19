@@ -82,7 +82,8 @@
   <section class="kit-page__section">
     <h2 class="kit-page__section-title">
       data (items()) + настройки (settings()) — List раскладывает элементы (direction/itemWidth/gap) и рендерит
-      каждый через ListItem; сегменты и их цвет (online/offline) собирает вызывающий код
+      каждый через ListItem; каждый сегмент внутри item'а — свои text/width/color/align (здесь: weekday/event/time
+      с фиксированной шириной по краям и растягивающейся серединой, online/offline — свой color)
     </h2>
     <div class="kit-page__list-demo">
       <app-list [items]="scheduleListItems" [settings]="{ gap: 8 }" />
