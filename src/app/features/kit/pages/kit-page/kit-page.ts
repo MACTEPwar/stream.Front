@@ -88,5 +88,16 @@ export class KitPage {
       ],
       dividers: { left: 'none' },
     },
+    // direction: 'right' — весь декор (остриё-«стрелка», разделители, паддинги
+    // контента) зеркалится целиком, остриё оказывается справа вместо левого.
+    {
+      id: 8,
+      segments: [
+        { text: 'Пн', width: '48px', align: 'right' },
+        { text: 'Зеркальное направление', width: 1, align: 'center' },
+        { text: '20:00', width: '56px', align: 'right' },
+      ],
+      direction: 'right',
+    },
   ];
 }

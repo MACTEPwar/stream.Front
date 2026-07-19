@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
-import { ListItem, ListItemDividers, ListItemSegment } from '../list-item/list-item';
+import { ListItem, ListItemDirection, ListItemDividers, ListItemSegment } from '../list-item/list-item';
 
 /** Направление раскладки — вертикальный стек строк или горизонтальный ряд. */
 export type ListDirection = 'row' | 'column';
@@ -19,6 +19,8 @@ export interface ListItemData {
   segments: ListItemSegment[];
   /** Тип левого/правого декоративного разделителя этого item'а — см. `ListItemDividers`, без значения — оба `'ornament'`. */
   dividers?: ListItemDividers;
+  /** Направление декора этого item'а — см. `ListItemDirection`, без значения — `'left'`. */
+  direction?: ListItemDirection;
 }
 
 /**

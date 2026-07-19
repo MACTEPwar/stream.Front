@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { ListItem, ListItemDividers, ListItemSegment } from './list-item';
+import { ListItem, ListItemDirection, ListItemDividers, ListItemSegment } from './list-item';
 
 // Те же якоря/ширины, что в list-item.ts (SUBPLATE_ANCHOR_X/SUBPLATE_BODY_WIDTH/
 // BORDER_ANCHOR_X/BORDER_STRAIGHT_WIDTH) — продублированы здесь, чтобы ожидаемые
@@ -23,7 +23,7 @@ function anchoredScale(anchor: number, scale: number): string {
 @Component({
   selector: 'app-list-item-host',
   imports: [ListItem],
-  template: `<app-list-item [segments]="segments()" [dividers]="dividers()" />`,
+  template: `<app-list-item [segments]="segments()" [dividers]="dividers()" [direction]="direction()" />`,
 })
 class ListItemHost {
   readonly segments = signal<ListItemSegment[]>([
@@ -32,6 +32,7 @@ class ListItemHost {
     { text: '20:00', width: '60px', align: 'right' },
   ]);
   readonly dividers = signal<ListItemDividers>({});
+  readonly direction = signal<ListItemDirection>('left');
 }
 
 // Каждый инстанс получает свой -{{uid}} суффикс на все id/url(#...) (см.
@@ -289,6 +290,23 @@ describe('ListItem', () => {
     );
     const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
     expect(rightSubplate?.getAttribute('transform')).toBe(anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, 1));
+  });
+
+  it('без direction() — дефолт "left", класс day-row--mirrored не применяется', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.detectChanges();
+
+    const dayRow: HTMLElement = fixture.nativeElement.querySelector('.day-row');
+    expect(dayRow.classList.contains('day-row--mirrored')).toBe(false);
+  });
+
+  it('direction() = "right" — весь декор зеркалится классом day-row--mirrored', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.direction.set('right');
+    fixture.detectChanges();
+
+    const dayRow: HTMLElement = fixture.nativeElement.querySelector('.day-row');
+    expect(dayRow.classList.contains('day-row--mirrored')).toBe(true);
   });
 
   it('произвольное количество сегментов (не только 3) — рендерится без ошибок', () => {

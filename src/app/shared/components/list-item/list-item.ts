@@ -66,6 +66,15 @@ export interface ListItemDividers {
   right?: ListItemDividerType;
 }
 
+/**
+ * `'left'` (дефолт) — остриё-«стрелка» подложки смотрит влево, как в
+ * исходном Schedule.svg. `'right'` — весь декор зеркалится по горизонтали
+ * (`scaleX(-1)` на `.day-row`, см. list-item.scss) — остриё оказывается
+ * справа. Раскладка сегментов (`segments()`, `dividers()`) не меняется —
+ * зеркалится только декоративная отрисовка, а не модель контента.
+ */
+export type ListItemDirection = 'left' | 'right';
+
 /** Один "сегмент" строки — горизонтальное деление со своими текстом/шириной/цветом/выравниванием. */
 export interface ListItemSegment {
   text: string;
@@ -120,6 +129,7 @@ export class ListItem {
 
   readonly segments = input.required<ListItemSegment[]>();
   readonly dividers = input<ListItemDividers>({});
+  readonly direction = input<ListItemDirection>('left');
 
   protected readonly leftDividerType = computed(() => this.dividers().left ?? 'ornament');
   protected readonly rightDividerType = computed(() => this.dividers().right ?? 'ornament');
