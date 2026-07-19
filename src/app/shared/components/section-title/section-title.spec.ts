@@ -3,19 +3,53 @@ import { TestBed } from '@angular/core/testing';
 
 import { SectionTitle } from './section-title';
 
+// jsdom не реализует ResizeObserver — section-title.ts это учитывает
+// (typeof ResizeObserver === 'undefined' guard, ширина остаётся на
+// DEFAULT_WIDTH). Чтобы всё же проверить реактивную геометрию (растягивание
+// линий/сдвиг шеврона) без реального браузера, подменяем глобальный
+// ResizeObserver фейком и триггерим его коллбэк вручную — тот же общий
+// приём, что используется для тестирования любого ResizeObserver-based кода
+// в jsdom.
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  private readonly callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    FakeResizeObserver.instances.push(this);
+  }
+
+  // Реальный ResizeObserver здесь не нужен — измерение подменяется вручную через trigger().
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  observe(): void {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  disconnect(): void {}
+
+  trigger(width: number): void {
+    this.callback([{ contentRect: { width } } as ResizeObserverEntry], this as unknown as ResizeObserver);
+  }
+}
+
 @Component({
   selector: 'app-section-title-host',
   imports: [SectionTitle],
-  template: `<app-section-title [text]="text()" [width]="width()" />`,
+  template: `<app-section-title [text]="text()" />`,
 })
 class SectionTitleHost {
   readonly text = signal('Расписание');
-  readonly width = signal<number | undefined>(undefined);
 }
 
 describe('SectionTitle', () => {
+  let originalResizeObserver: typeof ResizeObserver | undefined;
+
   beforeEach(() => {
     TestBed.configureTestingModule({ imports: [SectionTitleHost] });
+    originalResizeObserver = globalThis.ResizeObserver;
+    FakeResizeObserver.instances = [];
+  });
+
+  afterEach(() => {
+    globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
   });
 
   it('рендерит текст в <h2>', () => {
@@ -41,7 +75,7 @@ describe('SectionTitle', () => {
     expect(rightLine).not.toBeNull();
   });
 
-  it('без width() — ширина равна исходному дизайну (210), геометрия совпадает с оригиналом 1:1', () => {
+  it('без ResizeObserver (jsdom) — ширина падает на DEFAULT_WIDTH (210), геометрия совпадает с оригиналом 1:1', () => {
     const fixture = TestBed.createComponent(SectionTitleHost);
     fixture.detectChanges();
 
@@ -58,9 +92,11 @@ describe('SectionTitle', () => {
     expect(chevron?.getAttribute('transform')).toBe('translate(0 0)'); // 210/2 = 105 = исходный центр шеврона
   });
 
-  it('width() — растягивает левую/правую линии от общей ширины, шеврон остаётся фиксированного размера по центру', () => {
+  it('ширина текста растягивает левую/правую линии, шеврон остаётся фиксированного размера по центру', () => {
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
     const fixture = TestBed.createComponent(SectionTitleHost);
-    fixture.componentInstance.width.set(400);
+    fixture.detectChanges();
+    FakeResizeObserver.instances[0]?.trigger(400);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.section-title__underline');
@@ -81,9 +117,11 @@ describe('SectionTitle', () => {
     expect(leftLength).toBe(rightLength);
   });
 
-  it('width() — градиенты линий совпадают по координатам с фактическими x1/x2 линии (не остаются на исходных 0/98/112/210)', () => {
+  it('градиенты линий совпадают по координатам с фактическими x1/x2 линии (не остаются на исходных 0/98/112/210)', () => {
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
     const fixture = TestBed.createComponent(SectionTitleHost);
-    fixture.componentInstance.width.set(400);
+    fixture.detectChanges();
+    FakeResizeObserver.instances[0]?.trigger(400);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.section-title__underline');
@@ -96,9 +134,11 @@ describe('SectionTitle', () => {
     expect(rightGradient?.getAttribute('x2')).toBe('400');
   });
 
-  it("width() меньше 210 (дефолта) — clip-left/clip-right не обрезают линии, которые теперь короче исходных 98/112 (регрессия: было видно разрыв между шевроном и линией на width()=150)", () => {
+  it("ширина текста меньше 210 (дефолта) — clip-left/clip-right не обрезают линии, которые теперь короче исходных 98/112 (регрессия: был виден разрыв между шевроном и линией)", () => {
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
     const fixture = TestBed.createComponent(SectionTitleHost);
-    fixture.componentInstance.width.set(150);
+    fixture.detectChanges();
+    FakeResizeObserver.instances[0]?.trigger(150);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.section-title__underline');
@@ -117,9 +157,11 @@ describe('SectionTitle', () => {
     expect(rightClipEnd).toBeGreaterThanOrEqual(Number(rightLine.getAttribute('x2')));
   });
 
-  it('width() меньше минимума — кламп не даёт линиям инвертироваться', () => {
+  it('совсем короткая ширина текста — кламп не даёт линиям инвертироваться', () => {
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
     const fixture = TestBed.createComponent(SectionTitleHost);
-    fixture.componentInstance.width.set(1);
+    fixture.detectChanges();
+    FakeResizeObserver.instances[0]?.trigger(1);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.section-title__underline');
@@ -148,7 +190,6 @@ describe('SectionTitle', () => {
     first.detectChanges();
     const second = TestBed.createComponent(SectionTitleHost);
     second.componentInstance.text.set('Топ донатеров');
-    second.componentInstance.width.set(300);
     second.detectChanges();
 
     document.body.appendChild(first.nativeElement);
