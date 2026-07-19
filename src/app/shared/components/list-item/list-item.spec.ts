@@ -3,6 +3,19 @@ import { TestBed } from '@angular/core/testing';
 
 import { ListItem, ListItemSegment } from './list-item';
 
+// Те же якоря/ширины, что в list-item.ts (SUBPLATE_ANCHOR_X/SUBPLATE_BODY_WIDTH/
+// BORDER_ANCHOR_X/BORDER_STRAIGHT_WIDTH) — продублированы здесь, чтобы ожидаемые
+// строки transform считались той же арифметикой (не хардкодить округлённые
+// вручную десятичные, которые могут не совпасть с float-представлением JS).
+const SUBPLATE_ANCHOR_X = 15;
+const SUBPLATE_BODY_WIDTH = 104.75 - SUBPLATE_ANCHOR_X;
+const BORDER_ANCHOR_X = 14.75;
+const BORDER_STRAIGHT_WIDTH = 105.75 - BORDER_ANCHOR_X;
+
+function anchoredScale(anchor: number, scale: number): string {
+  return `translate(${anchor} 0) scale(${scale} 1) translate(${-anchor} 0)`;
+}
+
 @Component({
   selector: 'app-list-item-host',
   imports: [ListItem],
@@ -95,6 +108,59 @@ describe('ListItem', () => {
     expect(segments[0].style.color).toBe('rgb(249, 249, 249)');
     expect(segments[1].style.color).toBe('rgb(207, 23, 23)');
     expect(segments[2].style.color).toBe('rgb(207, 23, 23)');
+  });
+
+  it('firstSegmentShiftPx() ≠ 0 — остриё подложки/«крючок» границы/разделитель просто сдвигаются, прямые части подложки/границы растягиваются анкором в своей левой вершине', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Четверг', width: '100px' },
+      { text: 'Турнир', width: 1 },
+      { text: '18:00', width: '56px' },
+    ]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const [subplateTip, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
+    const [borderStraight, borderCurl] = Array.from(svg.querySelectorAll('path[fill^="url(#paint8_linear"]'));
+    const divider = svg.querySelector('g[mask^="url(#mask1"]');
+
+    // 100 - 48 = 52 (firstSegmentShiftPx)
+    expect(subplateTip.getAttribute('transform')).toBeNull();
+    expect(subplateBody.getAttribute('transform')).toBe(
+      anchoredScale(SUBPLATE_ANCHOR_X, (SUBPLATE_BODY_WIDTH + 52) / SUBPLATE_BODY_WIDTH),
+    );
+    expect(borderStraight.getAttribute('transform')).toBe(
+      anchoredScale(BORDER_ANCHOR_X, (BORDER_STRAIGHT_WIDTH + 52) / BORDER_STRAIGHT_WIDTH),
+    );
+    expect(borderCurl.getAttribute('transform')).toBe('translate(52 0)');
+    expect(divider?.getAttribute('transform')).toBe('translate(52 0)');
+  });
+
+  it('width() первого сегмента = базовым 48px — декор без сдвига/растяжения (identity-transform)', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Пн', width: '48px' },
+      { text: 'Стрим', width: 1 },
+      { text: '20:00', width: '56px' },
+    ]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const [, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
+    const [borderStraight, borderCurl] = Array.from(svg.querySelectorAll('path[fill^="url(#paint8_linear"]'));
+    expect(subplateBody.getAttribute('transform')).toBe(anchoredScale(SUBPLATE_ANCHOR_X, 1));
+    expect(borderStraight.getAttribute('transform')).toBe(anchoredScale(BORDER_ANCHOR_X, 1));
+    expect(borderCurl.getAttribute('transform')).toBe('translate(0 0)');
+  });
+
+  it('width() первого сегмента не задан фиксированным px (число/%/отсутствует) — сдвига/растяжения нет', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([{ text: 'Пн', width: 1 }, { text: 'X' }, { text: 'Y' }]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const [, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
+    expect(subplateBody.getAttribute('transform')).toBe(anchoredScale(SUBPLATE_ANCHOR_X, 1));
   });
 
   it('произвольное количество сегментов (не только 3) — рендерится без ошибок', () => {

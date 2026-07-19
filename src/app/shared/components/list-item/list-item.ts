@@ -1,6 +1,26 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 let nextListItemUid = 0;
+
+// Ширина первого сегмента, при которой декор (подложка-«стрелка», её граница,
+// левый орнамент-разделитель) стоит на своих исходных местах из Schedule.svg
+// — ровно то значение, что задано у первого демо-item'а на /kit (48px).
+// firstSegmentShiftPx() ниже сдвигает декор на разницу между этим базовым
+// значением и реально заданной шириной первого сегмента.
+const FIRST_SEGMENT_BASELINE_WIDTH_PX = 48;
+
+// Геометрия подложки/границы — см. firstSegmentShiftPx()/subplateBodyTransform()/
+// borderStraightTransform() ниже. Якоря/ширины — вершины исходного контура
+// в Schedule.svg (там же, где стыкуются прямая и «крючок»/остриё частей).
+const SUBPLATE_ANCHOR_X = 15;
+const SUBPLATE_BODY_WIDTH = 104.75 - SUBPLATE_ANCHOR_X;
+const BORDER_ANCHOR_X = 14.75;
+const BORDER_STRAIGHT_WIDTH = 105.75 - BORDER_ANCHOR_X;
+
+/** `scale`-затем-`shift`, анкорится в `anchor` (та же формула, что у `Button`). */
+function anchoredScale(anchor: number, scale: number): string {
+  return `translate(${anchor} 0) scale(${scale} 1) translate(${-anchor} 0)`;
+}
 
 export type ListItemSegmentAlign = 'left' | 'center' | 'right';
 
@@ -57,6 +77,38 @@ export class ListItem {
   protected readonly uid = `listitem${nextListItemUid++}`;
 
   readonly segments = input.required<ListItemSegment[]>();
+
+  // Декор в левой части строки (подложка-«стрелка» под первым сегментом,
+  // её граница, орнамент-разделитель между 1-м и 2-м сегментом) в исходнике
+  // рассчитан на конкретную ширину первого сегмента — по прямому запросу
+  // пользователя эти элементы теперь двигаются вместе с шириной первого
+  // сегмента (пока — только он, не остальные), чтобы отступ между концом
+  // подложки и началом разделителя оставался визуально таким же независимо
+  // от заданной ширины. Считается только для фиксированной px-ширины
+  // (`width: '48px'`) — сегменты с долевой (`number`) или процентной
+  // шириной не имеют статически известного px-размера (реальная ширина
+  // известна только браузеру после раскладки), сдвиг для них не применяется.
+  protected readonly firstSegmentShiftPx = computed(() => {
+    const width = this.segments()[0]?.width;
+    if (typeof width !== 'string') return 0;
+    const match = /^(-?\d*\.?\d+)px$/.exec(width.trim());
+    if (!match) return 0;
+    return Number(match[1]) - FIRST_SEGMENT_BASELINE_WIDTH_PX;
+  });
+
+  // Подложка и её граница не просто сдвигаются — растягиваются (левый край,
+  // включая остриё-«стрелку» подложки и «крючок» границы, остаётся на месте,
+  // растягивается только прямая середина), по прямому запросу пользователя.
+  // Разделитель (firstSegmentShiftPx() применяется напрямую в шаблоне) и
+  // «крючок» границы (borderCurlTransform()) — просто сдвигаются вместе, они
+  // не часть растягиваемой прямой, а фиксированный декор на её конце.
+  protected readonly subplateBodyTransform = computed(() =>
+    anchoredScale(SUBPLATE_ANCHOR_X, (SUBPLATE_BODY_WIDTH + this.firstSegmentShiftPx()) / SUBPLATE_BODY_WIDTH),
+  );
+  protected readonly borderStraightTransform = computed(() =>
+    anchoredScale(BORDER_ANCHOR_X, (BORDER_STRAIGHT_WIDTH + this.firstSegmentShiftPx()) / BORDER_STRAIGHT_WIDTH),
+  );
+  protected readonly borderCurlTransform = computed(() => `translate(${this.firstSegmentShiftPx()} 0)`);
 
   protected segmentFlex(segment: ListItemSegment): string {
     const { width } = segment;

@@ -45,5 +45,16 @@ export class KitPage {
         { text: '19:30', width: '56px', align: 'right' },
       ],
     },
+    // Первый сегмент шире, чем у остальных строк (100px вместо 48px) — декор
+    // слева (подложка/её граница/разделитель) должен сдвинуться вместе с ним,
+    // сохранив те же зазоры (см. firstSegmentShiftPx() в list-item.ts).
+    {
+      id: 4,
+      segments: [
+        { text: 'Четверг', width: '100px', align: 'right' },
+        { text: 'Турнир', width: 1, align: 'center' },
+        { text: '18:00', width: '56px', align: 'right' },
+      ],
+    },
   ];
 }
