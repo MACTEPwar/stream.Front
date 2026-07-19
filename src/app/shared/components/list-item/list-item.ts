@@ -31,12 +31,40 @@ const RIGHT_SUBPLATE_WIDTH = RIGHT_SUBPLATE_ANCHOR_X - 542.75;
 const RIGHT_BORDER_ANCHOR_X = 643.75;
 const RIGHT_BORDER_STRAIGHT_WIDTH = RIGHT_BORDER_ANCHOR_X - 552.75;
 
+// Тёмная подложка (paint6_radial) под «резиновым» (width: 1 и т.п.) средним
+// сегментом — в исходнике статична (x=169.75, width=320), т.е. её левый/
+// правый край НЕ следует за левым/правым разделителем при изменении ширины
+// первого/последнего сегмента. Из-за этого отступ резинового сегмента от
+// разделителя менялся вместе с чужой шириной, а при уменьшении первого/
+// последнего сегмента ниже базового подложка перекрывала сдвинувшийся
+// разделитель. Оба края подложки должны двигаться вместе со «своим»
+// разделителем 1:1 (centerBackgroundX()/centerBackgroundWidth() ниже).
+const CENTER_BACKGROUND_X = 169.75;
+const CENTER_BACKGROUND_WIDTH = 320;
+
 /** `scale`-затем-`shift`, анкорится в `anchor` (та же формула, что у `Button`). */
 function anchoredScale(anchor: number, scale: number): string {
   return `translate(${anchor} 0) scale(${scale} 1) translate(${-anchor} 0)`;
 }
 
 export type ListItemSegmentAlign = 'left' | 'center' | 'right';
+
+/** `'ornament'` — декоративный завиток из Schedule.svg (как сейчас, дефолт); `'none'` — разделитель скрыт. */
+export type ListItemDividerType = 'ornament' | 'none';
+
+/**
+ * Тип разделителей у левого/правого декоративного узла строки (`filter2_d`/
+ * `filter1_d` в шаблоне) — по прямому запросу пользователя настройка НЕ на
+ * сегменте (позиция обоих узлов и так жёстко привязана к ширине первого и
+ * последнего сегмента через firstSegmentShiftPx()/lastSegmentShiftPx(), от
+ * количества сегментов не зависит), а отдельным объектом, чтобы работало
+ * одинаково что при 2 сегментах, что при 3+. Без значения — оба `'ornament'`
+ * (текущее поведение, обратная совместимость).
+ */
+export interface ListItemDividers {
+  left?: ListItemDividerType;
+  right?: ListItemDividerType;
+}
 
 /** Один "сегмент" строки — горизонтальное деление со своими текстом/шириной/цветом/выравниванием. */
 export interface ListItemSegment {
@@ -91,6 +119,10 @@ export class ListItem {
   protected readonly uid = `listitem${nextListItemUid++}`;
 
   readonly segments = input.required<ListItemSegment[]>();
+  readonly dividers = input<ListItemDividers>({});
+
+  protected readonly leftDividerType = computed(() => this.dividers().left ?? 'ornament');
+  protected readonly rightDividerType = computed(() => this.dividers().right ?? 'ornament');
 
   // Декор в левой части строки (подложка-«стрелка» под первым сегментом,
   // её граница, орнамент-разделитель между 1-м и 2-м сегментом) в исходнике
@@ -152,6 +184,25 @@ export class ListItem {
   );
   protected readonly rightBorderHookTransform = computed(() => `translate(${-this.lastSegmentShiftPx()} 0)`);
   protected readonly rightDividerTransform = computed(() => `translate(${-this.lastSegmentShiftPx()} 0)`);
+
+  // Подложка под резиновым сегментом растягивается за оба края одновременно:
+  // левый следует за firstSegmentShiftPx() (тот же сдвиг, что у левого
+  // разделителя), правый — за lastSegmentShiftPx() (тот же сдвиг, что у
+  // правого), так что отступ от каждого разделителя остаётся исходным вне
+  // зависимости от ширины первого/последнего сегмента.
+  protected readonly centerBackgroundX = computed(() => CENTER_BACKGROUND_X + this.firstSegmentShiftPx());
+  protected readonly centerBackgroundWidth = computed(
+    () => CENTER_BACKGROUND_WIDTH - this.firstSegmentShiftPx() - this.lastSegmentShiftPx(),
+  );
+  // paint6_radial задан в userSpaceOnUse со своим gradientTransform (не
+  // objectBoundingBox) — она не следует за x/width рекста автоматически,
+  // пересчитываем центр/радиус вручную по той же формуле, что и у исходного
+  // (центр = x + width/2, масштаб = width/2).
+  protected readonly centerBackgroundGradientTransform = computed(() => {
+    const width = this.centerBackgroundWidth();
+    const centerX = this.centerBackgroundX() + width / 2;
+    return `translate(${centerX} 27) rotate(180) scale(${width / 2} 51)`;
+  });
 
   protected segmentFlex(segment: ListItemSegment): string {
     const { width } = segment;

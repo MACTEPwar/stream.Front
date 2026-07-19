@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { ListItem, ListItemSegment } from './list-item';
+import { ListItem, ListItemDividers, ListItemSegment } from './list-item';
 
 // Те же якоря/ширины, что в list-item.ts (SUBPLATE_ANCHOR_X/SUBPLATE_BODY_WIDTH/
 // BORDER_ANCHOR_X/BORDER_STRAIGHT_WIDTH) — продублированы здесь, чтобы ожидаемые
@@ -23,7 +23,7 @@ function anchoredScale(anchor: number, scale: number): string {
 @Component({
   selector: 'app-list-item-host',
   imports: [ListItem],
-  template: `<app-list-item [segments]="segments()" />`,
+  template: `<app-list-item [segments]="segments()" [dividers]="dividers()" />`,
 })
 class ListItemHost {
   readonly segments = signal<ListItemSegment[]>([
@@ -31,6 +31,7 @@ class ListItemHost {
     { text: 'Стрим на движке', width: 1, align: 'center' },
     { text: '20:00', width: '60px', align: 'right' },
   ]);
+  readonly dividers = signal<ListItemDividers>({});
 }
 
 // Каждый инстанс получает свой -{{uid}} суффикс на все id/url(#...) (см.
@@ -206,6 +207,88 @@ describe('ListItem', () => {
     const rightDivider = svg.querySelector('g[mask^="url(#mask0"]');
     expect(rightSubplate?.getAttribute('transform')).toBe(anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, 1));
     expect(rightDivider?.getAttribute('transform')).toBe('translate(0 0)');
+  });
+
+  it('подложка резинового сегмента растягивается за оба края вместе с первым/последним сегментом, отступ от разделителей не меняется', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Четверг', width: '100px' },
+      { text: 'Турнир', width: 1 },
+      { text: '18:00', width: '100px' },
+    ]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const centerRect = svg.querySelector('rect[fill^="url(#paint6_radial"]');
+
+    // firstSegmentShiftPx = 100 - 48 = 52, lastSegmentShiftPx = 100 - 56 = 44
+    expect(centerRect?.getAttribute('x')).toBe(`${169.75 + 52}`);
+    expect(centerRect?.getAttribute('width')).toBe(`${320 - 52 - 44}`);
+  });
+
+  it('width() первого/последнего сегментов = базовым — подложка резинового сегмента без сдвига/растяжения', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Пн', width: '48px' },
+      { text: 'Стрим', width: 1 },
+      { text: '20:00', width: '56px' },
+    ]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const centerRect = svg.querySelector('rect[fill^="url(#paint6_radial"]');
+    expect(centerRect?.getAttribute('x')).toBe('169.75');
+    expect(centerRect?.getAttribute('width')).toBe('320');
+  });
+
+  it('без dividers() — оба разделителя рендерятся (дефолт "ornament")', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    expect(svg.querySelector('g[mask^="url(#mask0"]')).not.toBeNull();
+    expect(svg.querySelector('g[mask^="url(#mask1"]')).not.toBeNull();
+  });
+
+  it('dividers() — "none" скрывает соответствующий разделитель независимо от сегментов', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.dividers.set({ left: 'none' });
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    expect(svg.querySelector('g[mask^="url(#mask1"]')).toBeNull();
+    expect(svg.querySelector('g[mask^="url(#mask0"]')).not.toBeNull();
+  });
+
+  it('dividers() — оба "none" скрывает оба разделителя', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.dividers.set({ left: 'none', right: 'none' });
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    expect(svg.querySelector('g[mask^="url(#mask0"]')).toBeNull();
+    expect(svg.querySelector('g[mask^="url(#mask1"]')).toBeNull();
+  });
+
+  it('2 сегмента (не только 3) — рендерится без ошибок, декор слева/справа по-прежнему завязан на первый/последний сегмент', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Сб', width: '100px' },
+      { text: 'Кастомная игра', width: 1 },
+    ]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.day-row__segment')).toHaveLength(2);
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    const [, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
+    // 100 - 48 = 52 (firstSegmentShiftPx, второй/последний сегмент без фикс. px-ширины не сдвигает правый декор)
+    expect(subplateBody.getAttribute('transform')).toBe(
+      anchoredScale(SUBPLATE_ANCHOR_X, (SUBPLATE_BODY_WIDTH + 52) / SUBPLATE_BODY_WIDTH),
+    );
+    const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
+    expect(rightSubplate?.getAttribute('transform')).toBe(anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, 1));
   });
 
   it('произвольное количество сегментов (не только 3) — рендерится без ошибок', () => {

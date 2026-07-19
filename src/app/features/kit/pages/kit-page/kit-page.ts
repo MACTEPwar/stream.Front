@@ -62,10 +62,31 @@ export class KitPage {
     {
       id: 5,
       segments: [
-        { text: 'Пт', width: '148px', align: 'left' },
+        { text: 'Пт', width: '58px', align: 'left' },
         { text: 'Финал сезона', width: 1, align: 'center' },
         { text: '21:00 (КИЕВ)', width: '100px', align: 'right' },
       ],
+    },
+    // Сегментов 2, а не 3 — decor слева/справа (подложка/граница/разделитель)
+    // по-прежнему завязан на ширину первого/последнего сегмента, «средних»
+    // сегментов для этого не требуется.
+    {
+      id: 6,
+      segments: [
+        { text: 'Сб', width: '48px', align: 'right' },
+        { text: 'Кастомная игра', width: 1, align: 'center' },
+      ],
+    },
+    // dividers() — настройка типа разделителя отдельно от segments(), не
+    // завязана на конкретный сегмент: левый разделитель отключён (`'none'`).
+    {
+      id: 7,
+      segments: [
+        { text: 'Вс', width: '48px', align: 'right' },
+        { text: 'Открытая тренировка', width: 1, align: 'center' },
+        { text: '15:00', width: '56px', align: 'right' },
+      ],
+      dividers: { left: 'none' },
     },
   ];
 }
