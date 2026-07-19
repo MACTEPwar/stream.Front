@@ -76,12 +76,22 @@
 
   <section class="kit-page__section">
     <h2 class="kit-page__section-title">
-      подчёркивание разбито на 3 части (clip-path: линия/шеврон/линия), пока без растягивания под текст — размер
-      статичный 1:1 как в исходнике (следующий шаг)
+      подчёркивание разбито на 3 части (clip-path: линия/шеврон/линия), размер по умолчанию — 210px, как в исходнике
     </h2>
     <div class="kit-page__row">
       <app-section-title text="Топ" />
       <app-section-title text="Очень длинный заголовок секции для проверки" />
+    </div>
+  </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">
+      width() — растягивает левую/правую линии (равны и зеркальны), шеврон только сдвигается, сам не масштабируется
+    </h2>
+    <div class="kit-page__row">
+      <app-section-title text="Расписание" [width]="150" />
+      <app-section-title text="Расписание" [width]="300" />
+      <app-section-title text="Расписание" [width]="500" />
     </div>
   </section>
 </div>

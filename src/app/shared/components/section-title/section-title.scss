@@ -16,11 +16,11 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-// Зафиксировано на 210px, как в исходном SVG — это только разбивка на 3
-// части (clip-path в section-title.html), без растягивания под текст, см.
-// комментарий там же.
+// Ширина НЕ задаётся здесь CSS-ом (перекрыла бы реактивный [attr.width] в
+// section-title.html — CSS width для SVG всегда побеждает HTML/SVG-атрибут
+// width при рендере) — totalWidth() в section-title.ts подгоняет её под
+// width() input.
 .section-title__underline {
   display: block;
-  width: 210px;
   height: 12px;
 }
