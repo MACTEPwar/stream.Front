@@ -1,0 +1,13 @@
+// Миксины named после буквального имени Figma text-стиля (не выдуманная
+// семантическая роль вроде "heading") — та же конвенция именования, что и в
+// _variables.scss.
+
+@use 'variables' as vars;
+
+@mixin h1 {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-28;
+  font-weight: vars.$font-weight-700;
+  line-height: vars.$line-height-36;
+  letter-spacing: vars.$letter-spacing-8;
+}

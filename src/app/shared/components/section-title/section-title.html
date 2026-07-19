@@ -1,0 +1,148 @@
+<!--
+  Перенос декоративного подчёркивания из приложенного SVG (Group 471,
+  viewBox 0 0 210 53) — только нижняя часть (filter1_d_2906_2094). Верхняя
+  часть исходника (текст, запечённый как path с тенью, filter0_d_2906_2094)
+  удалена целиком — текст здесь живой (`text()`), рендерится обычным `<h2>`
+  (не `<h1>` — компонент переиспользуется по несколько раз на одной
+  странице, `<h1>`×N сломал бы outline), тень — CSS `text-shadow` (не
+  SVG-фильтр — проще и не тянет за собой тот же класс Chromium-багов с
+  filter-регионами, что был у Button).
+
+  3 части — левая линия / шеврон («птичка») / правая линия — общая ширина НЕ
+  вводится отдельным инпутом, а равна фактической ширине текста
+  (#textEl, измеряется ResizeObserver'ом в section-title.ts → totalWidth()).
+  Левая/правая линии растягиваются от неё ([attr.x2]/[attr.x1]), шеврон
+  только сдвигается (chevronTransform()), сам не масштабируется — его path
+  нарисован в исходных координатах 98–112, поэтому clip-center (см. ниже)
+  остаётся статичным: clip-path вычисляется В ЛОКАЛЬНЫХ координатах ДО
+  transform (тот же факт, что уже использовался в Button), а transform потом
+  просто переносит уже готовый результат.
+
+  clip-left/clip-right — статичные, но с запасом ОБЕИХ сторон (-5000..5000),
+  а не подогнаны под leftLineEndX()/rightLineStartX() реактивно (по образцу
+  filter-региона ниже и общего паттерна Button — не мутировать
+  resource-регион реактивно). Граница именно 112/98 (как в исходнике) здесь
+  НЕ годится: rightLineStartX()/leftLineEndX() при узком тексте уходят
+  ВНУТРЬ этой границы (например totalWidth()=150 → rightLineStartX()=82
+  < 112) — статичный clip-right с x=112 обрезал бы кусок линии между 82 и
+  112, давая видимый разрыв между шевроном и линией (поймано визуально на
+  /kit, когда ширина ещё вводилась через width()). Раз сами линии и так не
+  рисуют ничего за пределами собственных x1/x2, clip-path здесь чисто
+  структурный (наглядное разбиение на 3 части) — при запасе с ОБЕИХ сторон
+  он гарантированно ничего не обрезает ни при какой ширине текста.
+
+  Id внутри SVG — с суффиксом -{{ uid }} (тот же приём, что и в Button,
+  frontend/src/app/shared/components/button/): без него несколько
+  <app-section-title> на одной странице (ровно ситуация /kit) делили бы
+  один и тот же id, а url(#id) резолвился бы в первый попавшийся элемент в
+  документе, не в свой собственный <svg>.
+-->
+<div class="section-title">
+  <h2 class="section-title__text" #textEl>{{ text() }}</h2>
+  <svg
+    class="section-title__underline"
+    [attr.width]="totalWidth()"
+    height="12"
+    [attr.viewBox]="viewBox()"
+    fill="none"
+    aria-hidden="true"
+  >
+    <g [attr.filter]="'url(#filter1_d_2906_2094-' + uid + ')'">
+      <line
+        [attr.clip-path]="'url(#clip-left_2906_2094-' + uid + ')'"
+        x1="0"
+        y1="44"
+        [attr.x2]="leftLineEndX()"
+        y2="44"
+        stroke-width="1"
+        stroke-linecap="round"
+        [attr.stroke]="'url(#paint0_linear_2906_2094-' + uid + ')'"
+      />
+      <path
+        [attr.clip-path]="'url(#clip-center_2906_2094-' + uid + ')'"
+        d="M98 44H99.6492C99.8763 44 100.097 44.0773 100.274 44.2191L104.375 47.5002C104.74 47.7924 105.259 47.7924 105.624 47.5002L109.726 44.2191C109.903 44.0773 110.123 44 110.351 44H112"
+        stroke="#F7ECB2"
+        [attr.transform]="chevronTransform()"
+      />
+      <line
+        [attr.clip-path]="'url(#clip-right_2906_2094-' + uid + ')'"
+        [attr.x1]="rightLineStartX()"
+        y1="44"
+        [attr.x2]="totalWidth()"
+        y2="44"
+        stroke-width="1"
+        stroke-linecap="round"
+        [attr.stroke]="'url(#paint1_linear_2906_2094-' + uid + ')'"
+      />
+    </g>
+    <defs>
+      <!--
+        Градиенты на линиях — gradientUnits="userSpaceOnUse" с явными
+        пиксельными координатами (не objectBoundingBox по умолчанию):
+        <line> здесь строго горизонтальна (y1=y2), поэтому её bounding box
+        имеет нулевую высоту — objectBoundingBox-градиент на таком
+        вырожденном bbox не рендерится (пусто/невидимо) в браузерах, хотя
+        DOM полностью корректен. userSpaceOnUse с абсолютными координатами
+        этого не касается — но раз линии теперь растягиваются, координаты
+        градиента должны совпадать с фактическими x1/x2 линии, поэтому тоже
+        реактивные (в отличие от clip-left/clip-right выше — это не
+        генерический запас, а точное совпадение с концом/началом линии,
+        иначе затухание "уедет" от фактического края).
+      -->
+      <clipPath [attr.id]="'clip-left_2906_2094-' + uid">
+        <rect x="-5000" y="-1000" width="10000" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-center_2906_2094-' + uid">
+        <rect x="98" y="-1000" width="14" height="2000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-right_2906_2094-' + uid">
+        <rect x="-5000" y="-1000" width="10000" height="2000" />
+      </clipPath>
+      <filter
+        [attr.id]="'filter1_d_2906_2094-' + uid"
+        x="-100"
+        y="41.5"
+        width="5000"
+        height="10.7194"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset dy="1" />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2906_2094" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2906_2094" result="shape" />
+      </filter>
+      <linearGradient
+        [attr.id]="'paint0_linear_2906_2094-' + uid"
+        x1="0"
+        y1="44"
+        [attr.x2]="leftLineEndX()"
+        y2="44"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stop-color="white" stop-opacity="0" />
+        <stop offset="1" stop-color="#F7ECB2" />
+      </linearGradient>
+      <linearGradient
+        [attr.id]="'paint1_linear_2906_2094-' + uid"
+        [attr.x1]="rightLineStartX()"
+        y1="44"
+        [attr.x2]="totalWidth()"
+        y2="44"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stop-color="#F7ECB2" />
+        <stop offset="1" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+  </svg>
+</div>
