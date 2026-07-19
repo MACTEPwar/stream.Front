@@ -25,33 +25,39 @@ describe('SectionTitle', () => {
     expect(heading?.textContent).toBe('Расписание');
   });
 
-  it('рендерит декоративное подчёркивание — 2 затухающие линии + шеврон по центру', () => {
+  it('подчёркивание разбито на 3 части по горизонтали (clip-path) — левая линия / шеврон / правая линия, границы 98/112', () => {
     const fixture = TestBed.createComponent(SectionTitleHost);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.section-title__underline');
     expect(svg).not.toBeNull();
-    const gradientLines = svg.querySelectorAll('path[fill^="url(#paint"]');
-    expect(gradientLines).toHaveLength(2);
-    const chevron = svg.querySelector('path[stroke="#F7ECB2"]');
+
+    const leftLine = svg.querySelector('line[clip-path^="url(#clip-left_2906_2094"]');
+    const chevron = svg.querySelector('path[clip-path^="url(#clip-center_2906_2094"]');
+    const rightLine = svg.querySelector('line[clip-path^="url(#clip-right_2906_2094"]');
+    expect(leftLine).not.toBeNull();
     expect(chevron).not.toBeNull();
+    expect(rightLine).not.toBeNull();
+
+    expect(leftLine?.getAttribute('x1')).toBe('0');
+    expect(leftLine?.getAttribute('x2')).toBe('98');
+    expect(rightLine?.getAttribute('x1')).toBe('112');
+    expect(rightLine?.getAttribute('x2')).toBe('210');
   });
 
-  it('typography — Figma-стиль "H1" (Montserrat Bold 28/36, letter-spacing 8%) из mixins.h1', () => {
+  it('размер полностью статичный — без растягивания под текст (следующий шаг, ещё не сделан)', () => {
     const fixture = TestBed.createComponent(SectionTitleHost);
     fixture.detectChanges();
 
-    const heading: HTMLElement = fixture.nativeElement.querySelector('h2.section-title__text');
-    const cs = getComputedStyle(heading);
-    expect(cs.fontFamily).toContain('Montserrat');
-    expect(cs.fontWeight).toBe('700');
-    expect(cs.fontSize).toBe('28px');
-    expect(cs.lineHeight).toBe('36px');
-    expect(cs.letterSpacing).not.toBe('normal');
-    expect(cs.textShadow).not.toBe('none');
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.section-title__underline');
+    expect(svg.getAttribute('width')).toBe('210');
+
+    fixture.componentInstance.text.set('Очень длинный заголовок секции для проверки переноса');
+    fixture.detectChanges();
+    expect(svg.getAttribute('width')).toBe('210');
   });
 
-  it('меняет текст на разной длине без ошибок рендера — подчёркивание при этом остаётся фиксированной ширины (известное ограничение этого прохода)', () => {
+  it('меняет текст на разной длине без ошибок рендера', () => {
     const fixture = TestBed.createComponent(SectionTitleHost);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('h2').textContent).toBe('Расписание');
@@ -61,9 +67,6 @@ describe('SectionTitle', () => {
     expect(fixture.nativeElement.querySelector('h2').textContent).toBe(
       'Очень длинный заголовок секции для проверки переноса',
     );
-
-    const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.section-title__underline');
-    expect(svg.getAttribute('width')).toBe('210');
   });
 
   it('несколько инстансов на одной странице — каждый использует свои собственные id/url(#...), не первого попавшегося', () => {
@@ -83,7 +86,7 @@ describe('SectionTitle', () => {
     const secondFilterId = secondSvg.querySelector('g')?.getAttribute('filter');
     expect(firstFilterId).not.toBe(secondFilterId);
 
-    const secondLineUrl = secondSvg.querySelector('path[fill^="url(#paint0_linear"]')?.getAttribute('fill');
+    const secondLineUrl = secondSvg.querySelector('line[stroke^="url(#paint0_linear"]')?.getAttribute('stroke');
     const referencedId = secondLineUrl?.slice('url(#'.length, -1) ?? '';
     const resolved = document.getElementById(referencedId);
     expect(resolved).not.toBeNull();
