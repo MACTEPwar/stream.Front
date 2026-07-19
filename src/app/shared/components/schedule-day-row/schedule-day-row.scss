@@ -1,0 +1,52 @@
+@use 'variables' as vars;
+
+.day-row {
+  position: relative;
+  width: 644px;
+  height: 51px;
+}
+
+.day-row__svg {
+  position: absolute;
+  inset: 0;
+  width: 644px;
+  height: 58px;
+  overflow: visible;
+}
+
+// Зоны текста — визуальное приближение (баковый текст исходника не даёт
+// точных координат/кегля, см. комментарий в schedule-day-row.ts).
+.day-row__content {
+  position: absolute;
+  inset: 0 24px 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-700;
+  color: #f9f9f9;
+}
+
+.day-row__weekday {
+  flex: 0 0 auto;
+}
+
+.day-row__event {
+  flex: 1 1 auto;
+  text-align: center;
+
+  &--offline {
+    color: #cf1717;
+  }
+}
+
+.day-row__time {
+  flex: 0 0 auto;
+  min-width: 52px;
+  text-align: right;
+
+  &--offline {
+    color: #cf1717;
+  }
+}

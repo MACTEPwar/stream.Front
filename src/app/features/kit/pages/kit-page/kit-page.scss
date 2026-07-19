@@ -33,3 +33,9 @@
 .kit-page__parent-demo {
   outline: 1px dashed rgba(255, 255, 255, 0.3);
 }
+
+.kit-page__column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

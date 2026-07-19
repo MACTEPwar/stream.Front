@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 
 import { Button } from '../../../../shared/components/button/button';
+import { ScheduleDayRow } from '../../../../shared/components/schedule-day-row/schedule-day-row';
 import { SectionTitle } from '../../../../shared/components/section-title/section-title';
 
 /**
@@ -9,7 +10,7 @@ import { SectionTitle } from '../../../../shared/components/section-title/sectio
  */
 @Component({
   selector: 'app-kit-page',
-  imports: [Button, SectionTitle],
+  imports: [Button, SectionTitle, ScheduleDayRow],
   templateUrl: './kit-page.html',
   styleUrl: './kit-page.scss',
 })

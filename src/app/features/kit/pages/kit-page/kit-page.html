@@ -76,4 +76,15 @@
       <app-section-title text="Очень длинный заголовок секции для проверки" />
     </div>
   </section>
+
+  <h1 class="kit-page__title">ScheduleDayRow</h1>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">online (обычный вид) / offline (красный лейбл «Оффлайн» и «--:--»)</h2>
+    <div class="kit-page__column">
+      <app-schedule-day-row weekday="Пн" eventTitle="Стрим на движке" time="20:00" />
+      <app-schedule-day-row weekday="Вт" [isOnline]="false" />
+      <app-schedule-day-row weekday="Ср" eventTitle="Разбор заявок" time="19:30" />
+    </div>
+  </section>
 </div>
