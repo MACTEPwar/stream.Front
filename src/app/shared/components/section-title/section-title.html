@@ -1,0 +1,93 @@
+<!--
+  Перенос декоративного подчёркивания из приложенного SVG (Group 471,
+  viewBox 0 0 210 53) — 1:1, только нижняя часть (2 затухающие линии +
+  центральный шеврон, filter1_d_2906_2094). Верхняя часть исходника (текст,
+  запечённый как path с тенью, filter0_d_2906_2094) удалена целиком — текст
+  здесь живой (`text()`), рендерится обычным `<h2>` (не `<h1>` — компонент
+  переиспользуется по несколько раз на одной странице, `<h1>`×N сломал бы
+  outline), тень — CSS `text-shadow` (не SVG-фильтр — проще и не тянет за
+  собой тот же класс Chromium-багов с filter-регионами, что был у Button).
+
+  Ширина подчёркивания зафиксирована на 210px, как в исходнике — по прямому
+  запросу пользователя перенесено как есть, адаптация под произвольную
+  длину текста отложена на будущую задачу (см. PROJECT_MAP.md).
+
+  Id внутри SVG — с суффиксом -{{ uid }} (тот же приём, что и в Button,
+  frontend/src/app/shared/components/button/): без него несколько
+  <app-section-title> на одной странице (ровно ситуация /kit) делили бы
+  один и тот же id, а url(#id) резолвился бы в первый попавшийся элемент в
+  документе, не в свой собственный <svg>.
+-->
+<div class="section-title">
+  <h2 class="section-title__text">{{ text() }}</h2>
+  <svg
+    class="section-title__underline"
+    width="210"
+    height="12"
+    viewBox="0 41 210 12"
+    fill="none"
+    aria-hidden="true"
+  >
+    <g [attr.filter]="'url(#filter1_d_2906_2094-' + uid + ')'">
+      <path
+        d="M3.5 43.5C3.22386 43.5 3 43.7239 3 44C3 44.2761 3.22386 44.5 3.5 44.5V44V43.5ZM3.5 44V44.5H98.0001V44V43.5H3.5V44Z"
+        [attr.fill]="'url(#paint0_linear_2906_2094-' + uid + ')'"
+      />
+      <path
+        d="M98 44H99.6492C99.8763 44 100.097 44.0773 100.274 44.2191L104.375 47.5002C104.74 47.7924 105.259 47.7924 105.624 47.5002L109.726 44.2191C109.903 44.0773 110.123 44 110.351 44H112"
+        stroke="#F7ECB2"
+      />
+      <path
+        d="M206.5 44.5C206.776 44.5 207 44.2761 207 44C207 43.7239 206.776 43.5 206.5 43.5V44V44.5ZM112 44V44.5H206.5V44V43.5H112V44Z"
+        [attr.fill]="'url(#paint1_linear_2906_2094-' + uid + ')'"
+      />
+    </g>
+    <defs>
+      <filter
+        [attr.id]="'filter1_d_2906_2094-' + uid"
+        x="0"
+        y="41.5"
+        width="210"
+        height="10.7194"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset dy="1" />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2906_2094" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2906_2094" result="shape" />
+      </filter>
+      <linearGradient
+        [attr.id]="'paint0_linear_2906_2094-' + uid"
+        x1="3.5"
+        y1="44.5"
+        x2="98.0001"
+        y2="44.4999"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stop-color="white" stop-opacity="0" />
+        <stop offset="1" stop-color="#F7ECB2" />
+      </linearGradient>
+      <linearGradient
+        [attr.id]="'paint1_linear_2906_2094-' + uid"
+        x1="112"
+        y1="44.5"
+        x2="206.5"
+        y2="44.4999"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stop-color="#F7ECB2" />
+        <stop offset="1" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+  </svg>
+</div>
