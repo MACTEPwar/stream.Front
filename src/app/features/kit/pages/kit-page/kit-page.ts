@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 
 import { Button } from '../../../../shared/components/button/button';
-import { ListContainer } from '../../../../shared/components/list-container/list-container';
-import { ScheduleDayRow } from '../../../../shared/components/schedule-day-row/schedule-day-row';
+import { List, ListItemData } from '../../../../shared/components/list/list';
 import { SectionTitle } from '../../../../shared/components/section-title/section-title';
 
 /**
@@ -11,8 +10,17 @@ import { SectionTitle } from '../../../../shared/components/section-title/sectio
  */
 @Component({
   selector: 'app-kit-page',
-  imports: [Button, SectionTitle, ListContainer, ScheduleDayRow],
+  imports: [Button, SectionTitle, List],
   templateUrl: './kit-page.html',
   styleUrl: './kit-page.scss',
 })
-export class KitPage {}
+export class KitPage {
+  // Сегменты собираются вызывающим кодом (здесь — демо-страницей, в реальном
+  // использовании — фичей вроде Schedule): online-строка — 3 сегмента
+  // дефолтным цветом, offline — средний/правый сегмент явно красным.
+  protected readonly scheduleListItems: ListItemData[] = [
+    { id: 1, segments: [{ text: 'Пн' }, { text: 'Стрим на движке' }, { text: '20:00' }] },
+    { id: 2, segments: [{ text: 'Вт' }, { text: 'Оффлайн', color: '#CF1717' }, { text: '--:--', color: '#CF1717' }] },
+    { id: 3, segments: [{ text: 'Ср' }, { text: 'Разбор заявок' }, { text: '19:30' }] },
+  ];
+}

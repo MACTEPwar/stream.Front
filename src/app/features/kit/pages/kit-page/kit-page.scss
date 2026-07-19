@@ -34,24 +34,10 @@
   outline: 1px dashed rgba(255, 255, 255, 0.3);
 }
 
-.kit-page__column {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-// Демонстрация ListContainer — сам компонент не рисует ничего (только layout),
-// поэтому обёртка/плейсхолдеры нужны исключительно для того, чтобы раскладку
-// (grid-auto-flow/растяжение) было видно глазами.
+// Демонстрация List — сам компонент рисует только строки (ListItem), рамка
+// нужна исключительно чтобы раскладку (grid-auto-flow/растяжение) было видно.
 .kit-page__list-demo {
-  max-width: 640px;
+  max-width: 660px;
   outline: 1px dashed rgba(255, 255, 255, 0.3);
   padding: 8px;
-}
-
-.kit-page__list-item {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px 12px;
-  white-space: nowrap;
 }

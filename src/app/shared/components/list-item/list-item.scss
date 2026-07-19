@@ -1,0 +1,50 @@
+@use 'variables' as vars;
+
+.day-row {
+  position: relative;
+  width: 644px;
+  height: 51px;
+}
+
+.day-row__svg {
+  position: absolute;
+  inset: 0;
+  width: 644px;
+  height: 58px;
+  overflow: visible;
+}
+
+// Зоны сегментов — визуальное приближение (баковый текст исходника не даёт
+// точных координат/кегля, см. комментарий в list-item.ts).
+.day-row__content {
+  position: absolute;
+  inset: 0 24px 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-700;
+}
+
+// Крайние (первый/последний) сегменты — по контенту, не растягиваются;
+// средние делят оставшееся место поровну и центрируются (см. list-item.ts).
+.day-row__segment {
+  flex: 1 1 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &--edge {
+    flex: 0 0 auto;
+  }
+
+  &--left {
+    text-align: left;
+  }
+
+  &--right {
+    text-align: right;
+  }
+}

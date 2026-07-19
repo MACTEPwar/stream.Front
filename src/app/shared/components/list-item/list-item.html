@@ -221,8 +221,14 @@
   </svg>
 
   <div class="day-row__content">
-    <span class="day-row__weekday">{{ weekday() }}</span>
-    <span class="day-row__event" [class.day-row__event--offline]="!isOnline()">{{ displayEvent() }}</span>
-    <span class="day-row__time" [class.day-row__time--offline]="!isOnline()">{{ displayTime() }}</span>
+    @for (segment of segments(); track $index; let first = $first; let last = $last) {
+      <span
+        class="day-row__segment"
+        [class.day-row__segment--edge]="first || last"
+        [class.day-row__segment--left]="first"
+        [class.day-row__segment--right]="last && !first"
+        [style.color]="segment.color ?? '#F9F9F9'"
+      >{{ segment.text }}</span>
+    }
   </div>
 </div>
