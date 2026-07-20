@@ -1,0 +1,11 @@
+.social-links-block {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.social-links-block__list {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+}

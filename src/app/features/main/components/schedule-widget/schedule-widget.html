@@ -1,0 +1,15 @@
+<div class="schedule-widget">
+  <app-section-title class="schedule-widget__title" text="Расписание" />
+
+  @if (isLoading()) {
+    <div class="schedule-widget__list">
+      @for (row of skeletonRows; track row) {
+        <app-skeleton height="56px" radius="12px" />
+      }
+    </div>
+  } @else if (hasError()) {
+    <app-error-message />
+  } @else {
+    <app-list [items]="items()" [settings]="{ gap: 8 }" />
+  }
+</div>

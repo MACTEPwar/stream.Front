@@ -1,0 +1,42 @@
+.social-link-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #f9f9f9;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.social-link-item__icon {
+  width: 32px;
+  height: 32px;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+.social-link-item__handle {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+// Наведение — единственная подсказка кликабельности (плоская строка без
+// собственного декора, в отличие от ListItem/Button): иконка чуть
+// увеличивается и подсвечивается тем же золотым тоном, что и её градиент
+// (#F7ECB2), хэндл окрашивается в тот же цвет.
+.social-link-item:hover .social-link-item__icon,
+.social-link-item:focus-visible .social-link-item__icon {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 6px rgba(247, 236, 178, 0.65));
+}
+
+.social-link-item:hover .social-link-item__handle,
+.social-link-item:focus-visible .social-link-item__handle {
+  color: #f7ecb2;
+}
+
+.social-link-item:focus-visible {
+  outline: 2px solid #f7ecb2;
+  outline-offset: 4px;
+}
