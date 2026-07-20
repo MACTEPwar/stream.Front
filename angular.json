@@ -67,9 +67,6 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": {
-            "port": 4210
-          },
           "configurations": {
             "production": {
               "buildTarget": "stream-front:build:production"

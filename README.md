@@ -57,7 +57,7 @@ To start a local development server, run:
 npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4210/` (dev-server port is fixed via `angular.json`'s `serve.options.port`, not the Angular CLI default `4200` — must match `CORS_ORIGIN` on the backend). The application will automatically reload whenever you modify any of the source files.
+Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
 ## Code scaffolding
 
