@@ -33,3 +33,11 @@
 .kit-page__parent-demo {
   outline: 1px dashed rgba(255, 255, 255, 0.3);
 }
+
+// Демонстрация List — сам компонент рисует только строки (ListItem), рамка
+// нужна исключительно чтобы раскладку (grid-auto-flow/растяжение) было видно.
+.kit-page__list-demo {
+  max-width: 660px;
+  outline: 1px dashed rgba(255, 255, 255, 0.3);
+  padding: 8px;
+}

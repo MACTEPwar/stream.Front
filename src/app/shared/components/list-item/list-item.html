@@ -1,0 +1,333 @@
+<div class="day-row" [class.day-row--mirrored]="direction() === 'right'">
+  <svg
+    class="day-row__svg"
+    width="644"
+    height="58"
+    viewBox="-2 0 648 58"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    shape-rendering="geometricPrecision"
+  >
+    <g [attr.filter]="'url(#filter0_d-' + uid + ')'">
+      <path
+        d="M643.75 3H26.7501C23.6025 3 20.6386 4.48194 18.7501 7L6.00006 24C4.66675 25.7778 4.66675 28.2222 6.00006 30L18.7501 47C20.6386 49.5181 23.6025 51 26.7501 51H643.75V3Z"
+        [attr.fill]="'url(#paint0_linear-' + uid + ')'"
+      />
+
+      <!-- Разделитель — после каждого сегмента, кроме последнего (dividerInstances(),
+           по прямому запросу пользователя), позиция — фактическая граница между
+           боксами сегментов (segmentBoxes() в list-item.ts — та же единая система
+           координат, что и у текста/подложек), тип ('left'/'right' — какой из двух
+           узоров, 'none' — скрыт) выбирается вызывающим кодом через dividers().
+           Сама графика узора одна на оба варианта, меняется только маска/её id
+           (уникален на инстанс разделителя, их может быть несколько) и transform. -->
+      @for (instance of dividerInstances(); track $index) {
+        @if (instance.type === 'left') {
+          <g opacity="0.35" [attr.filter]="'url(#filter2_d-' + uid + ')'">
+            <mask [attr.id]="'mask-left-' + uid + '-' + $index" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="115" y="4" width="39" height="46">
+              <rect x="115.75" y="4" width="38" height="46" fill="#D9D9D9" />
+            </mask>
+            <g [attr.mask]="'url(#mask-left-' + uid + '-' + $index + ')'" [attr.transform]="leftOrnamentTransform(instance.x)">
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M103.75 2C103.75 2.33498 103.757 2.66836 103.77 3H102.77C102.757 2.66829 102.75 2.33491 102.75 2C102.75 -11.8071 113.943 -23 127.75 -23C141.557 -23 152.75 -11.8071 152.75 2C152.75 6.55359 151.533 10.8228 149.405 14.5C151.533 18.1772 152.75 22.4464 152.75 27C152.75 31.3487 151.64 35.438 149.687 39C151.64 42.562 152.75 46.6513 152.75 51C152.75 64.8071 141.557 76 127.75 76C113.943 76 102.75 64.8071 102.75 51H103.75C103.75 64.2548 114.495 75 127.75 75C141.005 75 151.75 64.2548 151.75 51C151.75 47.0432 150.792 43.31 149.096 40.0195C144.705 47.2046 136.787 52 127.75 52C125.312 52 122.955 51.6509 120.727 51H127.75C136.633 51 144.39 46.1736 148.539 39C144.39 31.8264 136.633 27 127.75 27H123.75C122.806 27.2439 122.384 27.611 121.75 28.5L115.75 26.5L121.75 24.5C122.398 25.257 122.813 25.6173 123.75 26H127.75C136.425 26 144.026 21.397 148.242 14.5C144.026 7.60302 136.425 3 127.75 3H120.727C122.955 2.34908 125.312 2 127.75 2C136.593 2 144.364 6.59179 148.809 13.5212C150.684 10.1014 151.75 6.17523 151.75 2C151.75 -11.2548 141.005 -22 127.75 -22C114.495 -22 103.75 -11.2548 103.75 2ZM148.809 15.4788C150.684 18.8986 151.75 22.8248 151.75 27C151.75 30.9568 150.792 34.69 149.096 37.9804C145.537 32.1566 139.661 27.9028 132.75 26.5C139.478 25.1344 145.225 21.0666 148.809 15.4788Z"
+                [attr.fill]="'url(#paint2_linear-' + uid + ')'"
+              />
+            </g>
+          </g>
+        } @else if (instance.type === 'right') {
+          <g opacity="0.35" [attr.filter]="'url(#filter1_d-' + uid + ')'">
+            <mask [attr.id]="'mask-right-' + uid + '-' + $index" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="505" y="4" width="39" height="46">
+              <rect width="38" height="46" transform="matrix(-1 0 0 1 543.75 4)" fill="#D9D9D9" />
+            </mask>
+            <g [attr.mask]="'url(#mask-right-' + uid + '-' + $index + ')'" [attr.transform]="rightOrnamentTransform(instance.x)">
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M555.75 2C555.75 2.33498 555.743 2.66836 555.73 3H556.73C556.743 2.66829 556.75 2.33491 556.75 2C556.75 -11.8071 545.557 -23 531.75 -23C517.943 -23 506.75 -11.8071 506.75 2C506.75 6.55359 507.967 10.8228 510.095 14.5C507.967 18.1772 506.75 22.4464 506.75 27C506.75 31.3487 507.86 35.438 509.813 39C507.86 42.562 506.75 46.6513 506.75 51C506.75 64.8071 517.943 76 531.75 76C545.557 76 556.75 64.8071 556.75 51H555.75C555.75 64.2548 545.005 75 531.75 75C518.495 75 507.75 64.2548 507.75 51C507.75 47.0432 508.708 43.31 510.404 40.0195C514.795 47.2046 522.713 52 531.75 52C534.188 52 536.545 51.6509 538.773 51H531.75C522.867 51 515.11 46.1736 510.961 39C515.11 31.8264 522.867 27 531.75 27H535.75C536.694 27.2439 537.116 27.611 537.75 28.5L543.75 26.5L537.75 24.5C537.102 25.257 536.687 25.6173 535.75 26H531.75C523.075 26 515.474 21.397 511.258 14.5C515.474 7.60302 523.075 3 531.75 3H538.773C536.545 2.34908 534.188 2 531.75 2C522.907 2 515.136 6.59179 510.691 13.5212C508.816 10.1014 507.75 6.17523 507.75 2C507.75 -11.2548 518.495 -22 531.75 -22C545.005 -22 555.75 -11.2548 555.75 2ZM510.691 15.4788C508.816 18.8986 507.75 22.8248 507.75 27C507.75 30.9568 508.708 34.69 510.404 37.9804C513.963 32.1566 519.839 27.9028 526.75 26.5C520.022 25.1344 514.275 21.0666 510.691 15.4788Z"
+                [attr.fill]="'url(#paint1_linear-' + uid + ')'"
+              />
+            </g>
+          </g>
+        }
+      }
+
+      <!-- Начальная/конечная подложка — только при >=2 сегментах (по прямому запросу
+           пользователя: единственный сегмент получает только центральную подложку). -->
+      @if (hasStartAndEnd()) {
+        <!-- Подложка-«стрелка»: остриё (x<=15) статично, прямая часть (x>=15) растягивается вправо
+             анкором в x=15 — острие остаётся на месте пилюли, растёт только прямая (subplateBodyTransform()). -->
+        <path
+          d="M15.0116 12H104.75V42H15L6.00116 30.0015C4.66728 28.223 4.66788 25.7774 6.00265 23.9996L15.0116 12Z"
+          [attr.fill]="'url(#paint3_radial-' + uid + ')'"
+          [attr.clip-path]="'url(#clip-subplate-tip-' + uid + ')'"
+        />
+        <path
+          d="M15.0116 12H104.75V42H15L6.00116 30.0015C4.66728 28.223 4.66788 25.7774 6.00265 23.9996L15.0116 12Z"
+          [attr.fill]="'url(#paint3_radial-' + uid + ')'"
+          [attr.clip-path]="'url(#clip-subplate-body-' + uid + ')'"
+          [attr.transform]="subplateBodyTransform()"
+        />
+      }
+
+      <g [attr.filter]="'url(#filter3_d-' + uid + ')'">
+        <path
+          d="M26.75 3.5C23.7599 3.5 20.9445 4.90784 19.1504 7.2998L6.40039 24.2998C5.20041 25.8998 5.20041 28.1002 6.40039 29.7002L19.1504 46.7002C20.9445 49.0922 23.7599 50.5 26.75 50.5H643.25V3.5H26.75Z"
+          [attr.stroke]="'url(#paint4_linear-' + uid + ')'"
+        />
+      </g>
+
+      @if (hasStartAndEnd()) {
+        <!-- Правая подложка — простой прямоугольник (без остриёй), весь растягивается влево,
+             анкор в фиксированном правом крае (rightSubplateTransform()). -->
+        <path
+          d="M542.75 12H643.75V42H542.75V12Z"
+          [attr.fill]="'url(#paint5_radial-' + uid + ')'"
+          [attr.transform]="rightSubplateTransform()"
+        />
+      }
+      <!-- Центральная(ые) подложка(и) — по одной на каждый сегмент МЕЖДУ начальным и
+           конечным (centerSubplates() в list-item.ts), либо единственная статичная —
+           когда сегмент один (нет начального/конечного вовсе). Оба края каждой следуют
+           за «своим» соседним разделителем — отступ от него остаётся постоянным при
+           любой ширине соседних сегментов, подложка не перекрывает сдвинувшийся декор. -->
+      @for (subplate of centerSubplates(); track $index) {
+        <rect
+          opacity="0.7"
+          [attr.x]="subplate.x"
+          y="12"
+          [attr.width]="subplate.width"
+          height="30"
+          [attr.fill]="'url(#paint6_radial-' + uid + '-' + $index + ')'"
+        />
+      }
+
+      @if (hasStartAndEnd()) {
+        <!-- Граница правой подложки: прямая часть (x>=552.75) растягивается анкором в x=643.75
+             (rightBorderStraightTransform()), «крючок»-остриё (x<=552.75) сдвигается вместе
+             с разделителем (rightBorderHookTransform() = -lastSegmentShiftPx()). -->
+        <g opacity="0.35" [attr.filter]="'url(#filter4_d-' + uid + ')'">
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M552.75 12.5L643.75 12.5001V13.5001L552.75 13.5C547.503 13.5 543.25 9.2467 543.25 4H544.25C544.25 8.69442 548.056 12.5 552.75 12.5ZM552.75 41.5001L643.75 41.5V40.5L552.75 40.5001C547.503 40.5001 543.25 44.7534 543.25 50.0001H544.25C544.25 45.3057 548.056 41.5001 552.75 41.5001Z"
+            [attr.fill]="'url(#paint7_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-right-border-straight-' + uid + ')'"
+            [attr.transform]="rightBorderStraightTransform()"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M552.75 12.5L643.75 12.5001V13.5001L552.75 13.5C547.503 13.5 543.25 9.2467 543.25 4H544.25C544.25 8.69442 548.056 12.5 552.75 12.5ZM552.75 41.5001L643.75 41.5V40.5L552.75 40.5001C547.503 40.5001 543.25 44.7534 543.25 50.0001H544.25C544.25 45.3057 548.056 41.5001 552.75 41.5001Z"
+            [attr.fill]="'url(#paint7_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-right-border-hook-' + uid + ')'"
+            [attr.transform]="rightBorderHookTransform()"
+          />
+        </g>
+        <!-- Граница подложки: прямая часть (x<=105.75) растягивается анкором в x=14.75
+             (borderStraightTransform()), «крючок»-остриё на конце (x>=105.75) просто сдвигается
+             вместе с разделителем (borderCurlTransform() = тот же firstSegmentShiftPx()). -->
+        <g opacity="0.35" [attr.filter]="'url(#filter5_d-' + uid + ')'">
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M105.75 12.5L14.75 12.5001V13.5001L105.75 13.5C110.997 13.5 115.25 9.2467 115.25 4H114.25C114.25 8.69442 110.444 12.5 105.75 12.5ZM105.75 41.5001L14.75 41.5V40.5L105.75 40.5001C110.997 40.5001 115.25 44.7534 115.25 50.0001H114.25C114.25 45.3057 110.444 41.5001 105.75 41.5001Z"
+            [attr.fill]="'url(#paint8_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-border-straight-' + uid + ')'"
+            [attr.transform]="borderStraightTransform()"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M105.75 12.5L14.75 12.5001V13.5001L105.75 13.5C110.997 13.5 115.25 9.2467 115.25 4H114.25C114.25 8.69442 110.444 12.5 105.75 12.5ZM105.75 41.5001L14.75 41.5V40.5L105.75 40.5001C110.997 40.5001 115.25 44.7534 115.25 50.0001H114.25C114.25 45.3057 110.444 41.5001 105.75 41.5001Z"
+            [attr.fill]="'url(#paint8_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-border-curl-' + uid + ')'"
+            [attr.transform]="borderCurlTransform()"
+          />
+        </g>
+      }
+
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M240.25 11.5C239.974 11.5 239.75 11.7239 239.75 12C239.75 12.2761 239.974 12.5 240.25 12.5L420.25 12.5C420.526 12.5 420.75 12.2762 420.75 12C420.75 11.7239 420.526 11.5 420.25 11.5L240.25 11.5ZM240.25 41.5C239.974 41.5 239.75 41.7239 239.75 42C239.75 42.2761 239.974 42.5 240.25 42.5L420.25 42.5C420.526 42.5 420.75 42.2762 420.75 42C420.75 41.7239 420.526 41.5 420.25 41.5L240.25 41.5Z"
+        [attr.fill]="'url(#paint9_radial-' + uid + ')'"
+        fill-opacity="0.3"
+      />
+    </g>
+
+    <defs>
+      <!-- clip-subplate-*/clip-border-* — статично большие (не завязаны на firstSegmentShiftPx()),
+           разбивают подложку/границу на фиксированную и растягиваемую часть, см. list-item.ts. -->
+      <clipPath [attr.id]="'clip-subplate-tip-' + uid">
+        <rect x="-5000" y="-5000" width="5015" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-subplate-body-' + uid">
+        <rect x="15" y="-5000" width="5000" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-border-straight-' + uid">
+        <rect x="-5000" y="-5000" width="5105.75" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-border-curl-' + uid">
+        <rect x="105.75" y="-5000" width="5000" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-right-border-straight-' + uid">
+        <rect x="552.75" y="-5000" width="5000" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-right-border-hook-' + uid">
+        <rect x="-5000" y="-5000" width="5552.75" height="10000" />
+      </clipPath>
+      <filter [attr.id]="'filter0_d-' + uid" x="-1.25" y="0" width="650" height="58" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feOffset dy="2" />
+        <feGaussianBlur stdDeviation="2.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+      <filter [attr.id]="'filter1_d-' + uid" x="-2000" y="2" width="3000" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feOffset dy="1" />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+      <!-- filter1_d/filter2_d/filter5_d region — статично увеличен (x/width, не [attr.width]): их
+           содержимое сдвигается (разделители — по всей ширине строки через segmentBoxes(),
+           filter5_d — вместе с подложкой через firstSegmentShiftPx()), исходный (узкий) регион
+           обрезал бы декор при сдвиге. -->
+      <filter [attr.id]="'filter2_d-' + uid" x="-1000" y="2" width="3000" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feOffset dy="1" />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+      <filter [attr.id]="'filter3_d-' + uid" x="2" y="1" width="644.75" height="54" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feOffset dy="1" />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+      <filter [attr.id]="'filter4_d-' + uid" x="-2000" y="2" width="3000" height="52.0001" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feOffset dy="1" />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+      <filter [attr.id]="'filter5_d-' + uid" x="-1000" y="2" width="3000" height="52.0001" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feOffset dy="1" />
+        <feGaussianBlur stdDeviation="1.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+      </filter>
+
+      <linearGradient [attr.id]="'paint0_linear-' + uid" x1="3.75006" y1="27" x2="643.75" y2="27" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#0048D7" stop-opacity="0.35" />
+        <stop offset="1" stop-color="#0048D7" stop-opacity="0" />
+      </linearGradient>
+      <linearGradient [attr.id]="'paint1_linear-' + uid" x1="543.75" y1="27" x2="506.75" y2="27" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#F8ECB2" />
+        <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
+      </linearGradient>
+      <linearGradient [attr.id]="'paint2_linear-' + uid" x1="115.75" y1="27" x2="152.75" y2="27" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#F8ECB2" />
+        <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
+      </linearGradient>
+      <radialGradient
+        [attr.id]="'paint3_radial-' + uid"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(105.75 27) rotate(180) scale(102 102)"
+      >
+        <stop stop-opacity="0" />
+        <stop offset="1" stop-opacity="0.25" />
+      </radialGradient>
+      <linearGradient [attr.id]="'paint4_linear-' + uid" x1="3.75" y1="26.9998" x2="643.75" y2="26.9998" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#F7ECB2" />
+        <stop offset="0.513912" stop-color="#F7ECB2" stop-opacity="0.25" />
+        <stop offset="0.817708" stop-color="#F7ECB2" stop-opacity="0.38" />
+        <stop offset="1" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+      <radialGradient
+        [attr.id]="'paint5_radial-' + uid"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientUnits="userSpaceOnUse"
+        gradientTransform="translate(644.75 27) rotate(180) scale(102 102)"
+      >
+        <stop stop-opacity="0.25" />
+        <stop offset="1" stop-opacity="0" />
+      </radialGradient>
+      @for (subplate of centerSubplates(); track $index) {
+        <radialGradient
+          [attr.id]="'paint6_radial-' + uid + '-' + $index"
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          [attr.gradientTransform]="centerSubplateGradientTransform(subplate)"
+        >
+          <stop stop-opacity="0.25" />
+          <stop offset="1" stop-opacity="0" />
+        </radialGradient>
+      }
+      <linearGradient [attr.id]="'paint7_linear-' + uid" x1="643.255" y1="46.5" x2="543.25" y2="46.5" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#F8ECB2" />
+        <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
+      </linearGradient>
+      <linearGradient [attr.id]="'paint8_linear-' + uid" x1="15.2451" y1="46.5" x2="115.25" y2="46.5" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#F8ECB2" />
+        <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
+      </linearGradient>
+      <radialGradient
+        [attr.id]="'paint9_radial-' + uid"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientTransform="matrix(92 0.00024933 0.00145577 -516212 328.75 11.4998)"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stop-color="#F7EBB2" />
+        <stop offset="1" stop-color="#F7EBB2" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <div class="day-row__content">
+    @for (segment of segments(); track $index) {
+      <span
+        class="day-row__segment"
+        [style.left.px]="segmentBoxes()[$index].x"
+        [style.width.px]="segmentBoxes()[$index].width"
+        [style.textAlign]="segment.align ?? 'left'"
+        [style.justifyContent]="segmentJustifyContent(segment.align)"
+        [style.color]="segment.color ?? '#F9F9F9'"
+      >{{ segment.text }}</span>
+    }
+  </div>
+</div>

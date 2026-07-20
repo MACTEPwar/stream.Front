@@ -76,4 +76,17 @@
       <app-section-title text="Очень длинный заголовок секции для проверки" />
     </div>
   </section>
+
+  <h1 class="kit-page__title">List</h1>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">
+      data (items()) + настройки (settings()) — List раскладывает элементы (direction/itemWidth/gap) и рендерит
+      каждый через ListItem; каждый сегмент внутри item'а — свои text/width/color/align (здесь: weekday/event/time
+      с фиксированной шириной по краям и растягивающейся серединой, online/offline — свой color)
+    </h2>
+    <div class="kit-page__list-demo">
+      <app-list [items]="scheduleListItems" [settings]="{ gap: 8 }" />
+    </div>
+  </section>
 </div>

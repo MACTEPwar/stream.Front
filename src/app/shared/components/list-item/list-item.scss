@@ -1,0 +1,56 @@
+@use 'variables' as vars;
+
+.day-row {
+  position: relative;
+  width: 644px;
+  height: 51px;
+}
+
+// direction() = 'right' — зеркалим весь декор целиком (остриё-«стрелка»
+// подложки, оба разделителя, блики, паддинги содержимого — все они смещены
+// в исходнике несимметрично относительно центра именно под «стрелку» слева,
+// чистый scaleX(-1) отражает их все разом без переписывания path'ов/
+// градиентов вручную). day-row__content зеркалится ВТОРОЙ раз — текст должен
+// остаться читаемым (не зеркальным), а не его позиция: двойной scaleX(-1)
+// (внешний на .day-row, внутренний на .day-row__content) отменяет отражение
+// глифов, при этом сама позиция контента (унаследованная от уже
+// отражённого родителя) остаётся зеркальной — тот же приём, что используют
+// для RTL-разворота иконок.
+.day-row--mirrored {
+  transform: scaleX(-1);
+
+  .day-row__content {
+    transform: scaleX(-1);
+  }
+}
+
+.day-row__svg {
+  position: absolute;
+  inset: 0;
+  width: 644px;
+  height: 58px;
+  overflow: visible;
+}
+
+// Typography общая для всех сегментов — сама раскладка (позиция/ширина)
+// теперь на каждом .day-row__segment отдельно (left/width — inline style
+// из segmentBoxes(), см. list-item.ts), не здесь: тот же бокс, что и у
+// соответствующей подложки, единый источник геометрии для обоих слоёв.
+.day-row__content {
+  position: absolute;
+  inset: 0;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-700;
+}
+
+.day-row__segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
