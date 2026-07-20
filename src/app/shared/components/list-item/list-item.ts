@@ -31,16 +31,6 @@ const RIGHT_SUBPLATE_WIDTH = RIGHT_SUBPLATE_ANCHOR_X - 542.75;
 const RIGHT_BORDER_ANCHOR_X = 643.75;
 const RIGHT_BORDER_STRAIGHT_WIDTH = RIGHT_BORDER_ANCHOR_X - 552.75;
 
-// Геометрия content-слоя (.day-row__content в list-item.scss) — нужна, чтобы
-// считать пиксельные границы МЕЖДУ сегментами (boundaryPositions() ниже) в
-// тех же координатах, что и SVG-декор (оба слоя — абсолютные поверх одного
-// 644px .day-row, так что CSS-px в content и SVG userSpace — одно и то же
-// число). Должны оставаться синхронными с .day-row__content в list-item.scss.
-const CONTENT_LEFT_INSET = 30;
-const CONTENT_RIGHT_INSET = 24;
-const CONTENT_GAP = 16;
-const CONTENT_AVAILABLE_WIDTH = 644 - CONTENT_LEFT_INSET - CONTENT_RIGHT_INSET;
-
 // Собственный центр каждого варианта орнамента-разделителя в его исходных
 // координатах из Schedule.svg (mask-rect'ы filter2_d/filter1_d) — тот же
 // принцип анкора, что у anchoredScale(), но без масштаба: разделитель не
@@ -49,16 +39,33 @@ const CONTENT_AVAILABLE_WIDTH = 644 - CONTENT_LEFT_INSET - CONTENT_RIGHT_INSET;
 const LEFT_ORNAMENT_CENTER_X = 115.75 + 38 / 2;
 const RIGHT_ORNAMENT_CENTER_X = 543.75 - 38 / 2;
 
-// Тёмная подложка (paint6_radial) под «резиновым» (width: 1 и т.п.) средним
-// сегментом — в исходнике статична (x=169.75, width=320), т.е. её левый/
-// правый край НЕ следует за левым/правым разделителем при изменении ширины
-// первого/последнего сегмента. Из-за этого отступ резинового сегмента от
-// разделителя менялся вместе с чужой шириной, а при уменьшении первого/
-// последнего сегмента ниже базового подложка перекрывала сдвинувшийся
-// разделитель. Оба края подложки должны двигаться вместе со «своим»
-// разделителем 1:1 (centerBackgroundX()/centerBackgroundWidth() ниже).
-const CENTER_BACKGROUND_X = 169.75;
-const CENTER_BACKGROUND_WIDTH = 320;
+// N=1 — единственный сегмент, границ между сегментами нет (не от чего
+// оттолкнуться) — подложка использует ту же исходную геометрию, что и у
+// одиночной центральной подложки при нулевых сдвигах.
+const SOLO_CENTER_SUBPLATE_X = 169.75;
+const SOLO_CENTER_SUBPLATE_WIDTH = 320;
+
+// Текст сегмента должен занимать РОВНО ту же область, что и его подложка —
+// по прямому запросу пользователя ("выровнять области текста и подложку —
+// они должны соответствовать"). Раньше текст (CSS `flex`, `inset: 0 24px 0
+// 30px`/`gap: 16px`, подобранные на глаз) и декор (координаты, снятые с
+// самого Schedule.svg) были ДВУМЯ независимыми, никогда не откалиброванными
+// друг под друга системами координат — расходились в размере и позиции.
+// Теперь используется ОДНА система: все текстовые/декоративные боксы
+// считаются последовательно (segmentBoxes() ниже) от одного и того же
+// левого края (START_TEXT_LEFT) до одного и того же правого (END_TEXT_RIGHT)
+// — оба выведены так, чтобы при БАЗОВЫХ ширинах (48px/56px) итоговая
+// раскладка совпадала с исходным нерастянутым положением подложек в
+// Schedule.svg (104.75 − 48 = 56.75 слева, 542.75 + 56 = 598.75 справа).
+const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_SEGMENT_BASELINE_WIDTH_PX;
+const END_TEXT_RIGHT = RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_SEGMENT_BASELINE_WIDTH_PX;
+
+// Зазор между соседними боксами — единый на любую границу (крайнюю или
+// внутреннюю), а не унаследованный из Schedule.svg асимметричный (там левый/
+// правый/центральный зазоры были все разными, т.к. в исходнике никогда не
+// было больше одной внутренней границы). Ширины хватает, чтобы вместить сам
+// орнамент-разделитель (38px) плюс отступ по ~8px с каждой стороны.
+const BOUNDARY_GAP = 54;
 
 /** `scale`-затем-`shift`, анкорится в `anchor` (та же формула, что у `Button`). */
 function anchoredScale(anchor: number, scale: number): string {
@@ -83,7 +90,7 @@ export type ListItemDividerType = 'left' | 'right' | 'none';
  * `segments()[i]` и `segments()[i + 1]`, длина массива до `segments().length
  * - 1`. Без значения на конкретном индексе — `'left'`. Позиция каждого
  * разделителя считается арифметически от фактической ширины сегментов
- * (boundaryPositions() ниже) — НЕ от DOM-измерения (ResizeObserver), так
+ * (segmentBoxes() ниже) — НЕ от DOM-измерения (ResizeObserver), так
  * что при нескольких "резиновых" (`width: number`) сегментах их доля
  * расчитывается той же пропорцией, что и настоящий CSS `flex-grow`.
  */
@@ -130,11 +137,13 @@ export interface ListItemSegment {
  * слева, event растягивается по центру, time узкий справа; offline — те же
  * 3 позиции, но event/time с текстом «Оффлайн»/`--:--` и красным `color`).
  *
- * Раскладка сегментов — на CSS `flex` напрямую (`width()` каждого сегмента
- * → `flex`-shorthand, см. `segmentFlex()`), без скрытой "умной" логики по
- * позиции сегмента (было — первый/последний не растягивались автоматически;
- * убрано в пользу явного контроля, раз вызывающий код теперь настраивает
- * всё сам).
+ * Раскладка сегментов — абсолютным позиционированием (`segmentBoxes()`),
+ * единая последовательная система координат для ВСЕХ сегментов сразу (от
+ * `START_TEXT_LEFT` до `END_TEXT_RIGHT`) — по прямому запросу пользователя
+ * ("текст и подложка должны соответствовать"). Раньше текст и декор жили в
+ * двух независимо подобранных системах координат (CSS `flex`/`inset`/`gap`
+ * против координат из Schedule.svg) и расходились в размере/позиции —
+ * теперь единственный источник истины на оба слоя.
  *
  * Декор перенесён 1:1 из Schedule.svg (детали — см. историю компонента до
  * переименования в PROJECT_MAP.md), `id`/`url(#...)` — с `uid`-суффиксом.
@@ -159,11 +168,15 @@ export class ListItem {
   // оставшееся после вычета всех фиксированных ширин и зазоров место
   // пропорционально своим числам (та же арифметика, что настоящий CSS
   // `flex-grow` — по прямому уточнению пользователя обычно "резиновый"
-  // сегмент только один, но формула корректна и для нескольких).
+  // сегмент только один, но формула корректна и для нескольких). Доступное
+  // место считается от START_TEXT_LEFT до END_TEXT_RIGHT, той же единой
+  // системы координат, что и у самих подложек — не отдельного CSS-инсета.
   protected readonly segmentWidthsPx = computed(() => {
     const segments = this.segments();
-    const gapTotal = Math.max(segments.length - 1, 0) * CONTENT_GAP;
-    const available = CONTENT_AVAILABLE_WIDTH - gapTotal;
+    if (segments.length < 2) return segments.map(() => 0);
+
+    const gapTotal = (segments.length - 1) * BOUNDARY_GAP;
+    const available = END_TEXT_RIGHT - START_TEXT_LEFT - gapTotal;
 
     let fixedTotal = 0;
     let flexTotal = 0;
@@ -186,53 +199,45 @@ export class ListItem {
     return parsed.map((entry) => ('fixedPx' in entry ? entry.fixedPx : entry.flex * flexUnitPx));
   });
 
-  // x-координата (в тех же единицах, что и SVG userSpace — оба слоя абсолютные
-  // поверх одного 644px .day-row) середины зазора после сегмента i, для
-  // i = 0..segments().length-2 — ровно там, где рисуется разделитель dividers()[i].
-  // Длина массива = segments().length - 1: 0 сегментов зазоров у строки из 1
-  // элемента (по прямому запросу пользователя — "разделителя нет только если 1 элемент").
-  protected readonly boundaryPositions = computed(() => {
-    const widths = this.segmentWidthsPx();
-    const positions: number[] = [];
-    let x = CONTENT_LEFT_INSET;
-    for (let i = 0; i < widths.length - 1; i++) {
-      x += widths[i] ?? 0;
-      positions.push(x + CONTENT_GAP / 2);
-      x += CONTENT_GAP;
+  // Бокс (x/width) каждого сегмента — единственный источник истины и для
+  // текста, и для подложки: последовательно, от START_TEXT_LEFT, ширина
+  // каждого — ровно его "логическая" ширина (segmentWidthsPx()), без
+  // поправок по роли. Крайние боксы автоматически стыкуются своим ПРАВЫМ
+  // (первый) / ЛЕВЫМ (последний) краем с реальным краем подложки при любой
+  // ширине — это гарантирует сама формула START_TEXT_LEFT/END_TEXT_RIGHT
+  // (обе выведены так, что box.x±box.width всегда алгебраически совпадает
+  // с SUBPLATE_ANCHOR_X+SUBPLATE_BODY_WIDTH+firstSegmentShiftPx() и
+  // симметричным выражением справа — см. firstSegmentShiftPx()/
+  // lastSegmentShiftPx() ниже, тождество не требует отдельной поправки).
+  // При N=1 границ нет — статичный соло-бокс.
+  protected readonly segmentBoxes = computed(() => {
+    const segments = this.segments();
+    if (segments.length === 1) {
+      return [{ x: SOLO_CENTER_SUBPLATE_X, width: SOLO_CENTER_SUBPLATE_WIDTH }];
     }
-    return positions;
+    const widths = this.segmentWidthsPx();
+    const boxes: { x: number; width: number }[] = [];
+    let cursor = START_TEXT_LEFT;
+    for (const width of widths) {
+      const boxWidth = width ?? 0;
+      boxes.push({ x: cursor, width: boxWidth });
+      cursor += boxWidth + BOUNDARY_GAP;
+    }
+    return boxes;
   });
 
-  // x каждого разделителя — НЕ напрямую boundaryPositions() (та арифметика
-  // живёт в системе координат CSS-content-слоя, 30px/16px и т.п., которая
-  // на баллвом значении НЕ совпадает с тем, где реально нарисован узор в
-  // Schedule.svg — при подстановке давала неправильный, слишком маленький
-  // зазор от подложки). Первый и последний разделитель обязаны сохранять
-  // тот же зазор от левой/правой подложки, что и раньше (задача, которую
-  // уже решают firstSegmentShiftPx()/lastSegmentShiftPx() для самой
-  // подложки) — переиспользуем ИХ, а не общую арифметику по границам:
-  // 0-й разделитель = собственный центр узора + firstSegmentShiftPx() (тот
-  // же сдвиг, что у подложки), последний (индекс segments().length-2) =
-  // собственный центр + (−lastSegmentShiftPx()). Только СТРОГО внутренние
-  // границы (существуют начиная с 4 сегментов, между 2-м и 3-м) — не имеют
-  // такого эталона в исходнике, для них используется общая арифметика
-  // boundaryPositions(). При 2 сегментах единственная граница — она же и
-  // первая, и последняя одновременно: приоритет отдаётся «первой» ветке
-  // (реже расходится с ожиданием — тот же принцип, что уже был откалиброван
-  // для одного сегмента в firstSegmentShiftPx()/lastSegmentShiftPx()).
+  // x каждого разделителя — середина зазора между боксом сегмента i и i+1,
+  // той же единой геометрии, что и сами боксы (не отдельная система
+  // координат) — при N=1 границ нет вовсе (по прямому запросу пользователя
+  // — "разделителя нет только если 1 элемент").
   protected readonly dividerInstances = computed(() => {
     const count = this.segments().length;
     if (count < 2) return [];
-    const generic = this.boundaryPositions();
+    const boxes = this.segmentBoxes();
     const dividers = this.dividers();
-    const lastIndex = count - 2;
     return Array.from({ length: count - 1 }, (_, i) => {
-      const x =
-        i === 0
-          ? LEFT_ORNAMENT_CENTER_X + this.firstSegmentShiftPx()
-          : i === lastIndex
-            ? RIGHT_ORNAMENT_CENTER_X - this.lastSegmentShiftPx()
-            : (generic[i] ?? 0);
+      const box = boxes[i];
+      const x = (box?.x ?? 0) + (box?.width ?? 0) + BOUNDARY_GAP / 2;
       return { x, type: dividers[i] ?? 'left' };
     });
   });
@@ -246,28 +251,24 @@ export class ListItem {
   }
 
   // Декор в левой части строки (подложка-«стрелка» под первым сегментом,
-  // её граница, орнамент-разделитель между 1-м и 2-м сегментом) в исходнике
-  // рассчитан на конкретную ширину первого сегмента — по прямому запросу
-  // пользователя эти элементы теперь двигаются вместе с шириной первого
-  // сегмента (пока — только он, не остальные), чтобы отступ между концом
-  // подложки и началом разделителя оставался визуально таким же независимо
-  // от заданной ширины. Считается только для фиксированной px-ширины
-  // (`width: '48px'`) — сегменты с долевой (`number`) или процентной
-  // шириной не имеют статически известного px-размера (реальная ширина
-  // известна только браузеру после раскладки), сдвиг для них не применяется.
+  // её граница) в исходнике рассчитан на конкретную ширину первого
+  // сегмента — по прямому запросу пользователя эти элементы двигаются
+  // вместе с фактическим боксом первого сегмента (segmentBoxes()[0]),
+  // чтобы отступ между концом подложки и началом разделителя оставался
+  // визуально таким же независимо от заданной ширины. Правый край бокса
+  // (START_TEXT_LEFT + box.width) алгебраически совпадает с правым краем
+  // растянутой подложки (SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH + shift)
+  // при ЛЮБОМ box.width — тождество за счёт того, как выведен START_TEXT_LEFT
+  // (см. константу выше), поправка на роль сегмента не нужна.
   protected readonly firstSegmentShiftPx = computed(() => {
-    const width = this.segments()[0]?.width;
-    if (typeof width !== 'string') return 0;
-    const match = /^(-?\d*\.?\d+)px$/.exec(width.trim());
-    if (!match) return 0;
-    return Number(match[1]) - FIRST_SEGMENT_BASELINE_WIDTH_PX;
+    if (this.segments().length < 2) return 0;
+    return this.segmentBoxes()[0].width - FIRST_SEGMENT_BASELINE_WIDTH_PX;
   });
 
   // Подложка и её граница не просто сдвигаются — растягиваются (левый край,
   // включая остриё-«стрелку» подложки и «крючок» границы, остаётся на месте,
   // растягивается только прямая середина), по прямому запросу пользователя.
-  // Разделитель (firstSegmentShiftPx() применяется напрямую в шаблоне) и
-  // «крючок» границы (borderCurlTransform()) — просто сдвигаются вместе, они
+  // «Крючок» границы (borderCurlTransform()) — просто сдвигается вместе, он
   // не часть растягиваемой прямой, а фиксированный декор на её конце.
   protected readonly subplateBodyTransform = computed(() =>
     anchoredScale(SUBPLATE_ANCHOR_X, (SUBPLATE_BODY_WIDTH + this.firstSegmentShiftPx()) / SUBPLATE_BODY_WIDTH),
@@ -277,23 +278,19 @@ export class ListItem {
   );
   protected readonly borderCurlTransform = computed(() => `translate(${this.firstSegmentShiftPx()} 0)`);
 
-  // Зеркало firstSegmentShiftPx() — но для последнего сегмента и разница
-  // считается так же (ширина − базовое значение), сам сдвиг декора при
-  // использовании направлен влево (отрицательный x), см. rightBorderHookTransform()/
-  // rightDividerTransform() ниже.
+  // Зеркало firstSegmentShiftPx() — но от бокса ПОСЛЕДНЕГО сегмента, сам
+  // сдвиг декора при использовании направлен влево (отрицательный x),
+  // см. rightBorderHookTransform() ниже.
   protected readonly lastSegmentShiftPx = computed(() => {
-    const segments = this.segments();
-    const width = segments[segments.length - 1]?.width;
-    if (typeof width !== 'string') return 0;
-    const match = /^(-?\d*\.?\d+)px$/.exec(width.trim());
-    if (!match) return 0;
-    return Number(match[1]) - LAST_SEGMENT_BASELINE_WIDTH_PX;
+    const boxes = this.segmentBoxes();
+    if (boxes.length < 2) return 0;
+    return boxes[boxes.length - 1].width - LAST_SEGMENT_BASELINE_WIDTH_PX;
   });
 
   // Правая подложка/граница растягиваются влево (анкор — фиксированный правый
   // край у обеих, тот же принцип, что у левых subplateBodyTransform()/
-  // borderStraightTransform()); «крючок» границы и разделитель — просто
-  // сдвигаются влево вместе (rightBorderHookTransform()/rightDividerTransform()).
+  // borderStraightTransform()); «крючок» границы — просто сдвигается влево
+  // вместе (rightBorderHookTransform()).
   protected readonly rightSubplateTransform = computed(() =>
     anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, (RIGHT_SUBPLATE_WIDTH + this.lastSegmentShiftPx()) / RIGHT_SUBPLATE_WIDTH),
   );
@@ -304,31 +301,49 @@ export class ListItem {
     ),
   );
   protected readonly rightBorderHookTransform = computed(() => `translate(${-this.lastSegmentShiftPx()} 0)`);
-  protected readonly rightDividerTransform = computed(() => `translate(${-this.lastSegmentShiftPx()} 0)`);
 
-  // Подложка под резиновым сегментом растягивается за оба края одновременно:
-  // левый следует за firstSegmentShiftPx() (тот же сдвиг, что у левого
-  // разделителя), правый — за lastSegmentShiftPx() (тот же сдвиг, что у
-  // правого), так что отступ от каждого разделителя остаётся исходным вне
-  // зависимости от ширины первого/последнего сегмента.
-  protected readonly centerBackgroundX = computed(() => CENTER_BACKGROUND_X + this.firstSegmentShiftPx());
-  protected readonly centerBackgroundWidth = computed(
-    () => CENTER_BACKGROUND_WIDTH - this.firstSegmentShiftPx() - this.lastSegmentShiftPx(),
-  );
+  // Роль сегмента определяет, какая у него подложка: 1-й (при >=2 сегментах)
+  // — «начальная» (стрелка, subplateBodyTransform() и т.п. выше), последний
+  // (при >=2) — «конечная» (rightSubplateTransform() и т.п.), сегменты МЕЖДУ
+  // ними (индексы 1..N-2) — «центральная», по одной на каждый, N-2 штук.
+  // Бокс каждой центральной подложки — ровно бокс её сегмента (segmentBoxes()),
+  // тот же самый, что и у текста — единая геометрия, никакого отдельного
+  // зазора от разделителя не считается (уже заложен в BOUNDARY_GAP при
+  // построении самих боксов). При N=1 — соло-подложка (см. segmentBoxes()),
+  // при N<=2 центральных нет вовсе (0..N-2 сегментов между начальным/
+  // конечным, пусто, когда их не больше 2).
+  protected readonly hasStartAndEnd = computed(() => this.segments().length >= 2);
+  protected readonly centerSubplates = computed(() => {
+    const count = this.segments().length;
+    if (count === 1) return this.segmentBoxes();
+    if (count < 3) return [];
+    return this.segmentBoxes().slice(1, -1);
+  });
   // paint6_radial задан в userSpaceOnUse со своим gradientTransform (не
   // objectBoundingBox) — она не следует за x/width рекста автоматически,
   // пересчитываем центр/радиус вручную по той же формуле, что и у исходного
-  // (центр = x + width/2, масштаб = width/2).
-  protected readonly centerBackgroundGradientTransform = computed(() => {
-    const width = this.centerBackgroundWidth();
-    const centerX = this.centerBackgroundX() + width / 2;
-    return `translate(${centerX} 27) rotate(180) scale(${width / 2} 51)`;
-  });
+  // (центр = x + width/2, масштаб = width/2); каждая подложка — свой
+  // инстанс градиента (id — uid + индекс), общий на все не подходит, т.к.
+  // у каждой свои x/width.
+  protected centerSubplateGradientTransform(subplate: { x: number; width: number }): string {
+    const centerX = subplate.x + subplate.width / 2;
+    return `translate(${centerX} 27) rotate(180) scale(${subplate.width / 2} 51)`;
+  }
 
-  protected segmentFlex(segment: ListItemSegment): string {
-    const { width } = segment;
-    if (typeof width === 'number') return `${width} ${width} 0px`;
-    if (typeof width === 'string') return `0 0 ${width}`;
-    return '1 1 0px';
+  // .day-row__segment — flex-контейнер (align-items: center для вертикального
+  // центрирования однострочного текста), а flex-контейнеры игнорируют
+  // text-align при позиционировании своего содержимого — за горизонтальное
+  // положение внутри flex-контейнера отвечает justify-content, не text-align
+  // (регрессия, появившаяся вместе с переходом на абсолютное позиционирование
+  // сегментов — раньше .day-row__segment не было flex-контейнером).
+  protected segmentJustifyContent(align: ListItemSegmentAlign | undefined): string {
+    switch (align) {
+      case 'center':
+        return 'center';
+      case 'right':
+        return 'flex-end';
+      default:
+        return 'flex-start';
+    }
   }
 }

@@ -16,11 +16,11 @@
 
       <!-- Разделитель — после каждого сегмента, кроме последнего (dividerInstances(),
            по прямому запросу пользователя), позиция — фактическая граница между
-           сегментами (boundaryPositions() в list-item.ts), тип ('left'/'right' —
-           какой из двух узоров, 'none' — скрыт) выбирается вызывающим кодом через
-           dividers(). Сама графика узора — общая на оба варианта (см. ng-template
-           ниже), меняется только маска-mask/её id (уникален на инстанс разделителя,
-           не только на компонент — их теперь может быть несколько) и transform. -->
+           боксами сегментов (segmentBoxes() в list-item.ts — та же единая система
+           координат, что и у текста/подложек), тип ('left'/'right' — какой из двух
+           узоров, 'none' — скрыт) выбирается вызывающим кодом через dividers().
+           Сама графика узора одна на оба варианта, меняется только маска/её id
+           (уникален на инстанс разделителя, их может быть несколько) и transform. -->
       @for (instance of dividerInstances(); track $index) {
         @if (instance.type === 'left') {
           <g opacity="0.35" [attr.filter]="'url(#filter2_d-' + uid + ')'">
@@ -53,19 +53,23 @@
         }
       }
 
-      <!-- Подложка-«стрелка»: остриё (x<=15) статично, прямая часть (x>=15) растягивается вправо
-           анкором в x=15 — острие остаётся на месте пилюли, растёт только прямая (subplateBodyTransform()). -->
-      <path
-        d="M15.0116 12H104.75V42H15L6.00116 30.0015C4.66728 28.223 4.66788 25.7774 6.00265 23.9996L15.0116 12Z"
-        [attr.fill]="'url(#paint3_radial-' + uid + ')'"
-        [attr.clip-path]="'url(#clip-subplate-tip-' + uid + ')'"
-      />
-      <path
-        d="M15.0116 12H104.75V42H15L6.00116 30.0015C4.66728 28.223 4.66788 25.7774 6.00265 23.9996L15.0116 12Z"
-        [attr.fill]="'url(#paint3_radial-' + uid + ')'"
-        [attr.clip-path]="'url(#clip-subplate-body-' + uid + ')'"
-        [attr.transform]="subplateBodyTransform()"
-      />
+      <!-- Начальная/конечная подложка — только при >=2 сегментах (по прямому запросу
+           пользователя: единственный сегмент получает только центральную подложку). -->
+      @if (hasStartAndEnd()) {
+        <!-- Подложка-«стрелка»: остриё (x<=15) статично, прямая часть (x>=15) растягивается вправо
+             анкором в x=15 — острие остаётся на месте пилюли, растёт только прямая (subplateBodyTransform()). -->
+        <path
+          d="M15.0116 12H104.75V42H15L6.00116 30.0015C4.66728 28.223 4.66788 25.7774 6.00265 23.9996L15.0116 12Z"
+          [attr.fill]="'url(#paint3_radial-' + uid + ')'"
+          [attr.clip-path]="'url(#clip-subplate-tip-' + uid + ')'"
+        />
+        <path
+          d="M15.0116 12H104.75V42H15L6.00116 30.0015C4.66728 28.223 4.66788 25.7774 6.00265 23.9996L15.0116 12Z"
+          [attr.fill]="'url(#paint3_radial-' + uid + ')'"
+          [attr.clip-path]="'url(#clip-subplate-body-' + uid + ')'"
+          [attr.transform]="subplateBodyTransform()"
+        />
+      }
 
       <g [attr.filter]="'url(#filter3_d-' + uid + ')'">
         <path
@@ -74,68 +78,75 @@
         />
       </g>
 
-      <!-- Правая подложка — простой прямоугольник (без остриёй), весь растягивается влево,
-           анкор в фиксированном правом крае (rightSubplateTransform()). -->
-      <path
-        d="M542.75 12H643.75V42H542.75V12Z"
-        [attr.fill]="'url(#paint5_radial-' + uid + ')'"
-        [attr.transform]="rightSubplateTransform()"
-      />
-      <!-- Подложка резинового сегмента: оба края растягиваются со «своим»
-           разделителем (centerBackgroundX()/centerBackgroundWidth()) — отступ
-           от разделителя остаётся постоянным при любой ширине первого/
-           последнего сегмента, подложка не перекрывает сдвинувшийся декор. -->
-      <rect
-        opacity="0.7"
-        [attr.x]="centerBackgroundX()"
-        y="12"
-        [attr.width]="centerBackgroundWidth()"
-        height="30"
-        [attr.fill]="'url(#paint6_radial-' + uid + ')'"
-      />
+      @if (hasStartAndEnd()) {
+        <!-- Правая подложка — простой прямоугольник (без остриёй), весь растягивается влево,
+             анкор в фиксированном правом крае (rightSubplateTransform()). -->
+        <path
+          d="M542.75 12H643.75V42H542.75V12Z"
+          [attr.fill]="'url(#paint5_radial-' + uid + ')'"
+          [attr.transform]="rightSubplateTransform()"
+        />
+      }
+      <!-- Центральная(ые) подложка(и) — по одной на каждый сегмент МЕЖДУ начальным и
+           конечным (centerSubplates() в list-item.ts), либо единственная статичная —
+           когда сегмент один (нет начального/конечного вовсе). Оба края каждой следуют
+           за «своим» соседним разделителем — отступ от него остаётся постоянным при
+           любой ширине соседних сегментов, подложка не перекрывает сдвинувшийся декор. -->
+      @for (subplate of centerSubplates(); track $index) {
+        <rect
+          opacity="0.7"
+          [attr.x]="subplate.x"
+          y="12"
+          [attr.width]="subplate.width"
+          height="30"
+          [attr.fill]="'url(#paint6_radial-' + uid + '-' + $index + ')'"
+        />
+      }
 
-      <!-- Граница правой подложки: прямая часть (x>=552.75) растягивается анкором в x=643.75
-           (rightBorderStraightTransform()), «крючок»-остриё (x<=552.75) сдвигается вместе
-           с разделителем (rightBorderHookTransform() = -lastSegmentShiftPx()). -->
-      <g opacity="0.35" [attr.filter]="'url(#filter4_d-' + uid + ')'">
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M552.75 12.5L643.75 12.5001V13.5001L552.75 13.5C547.503 13.5 543.25 9.2467 543.25 4H544.25C544.25 8.69442 548.056 12.5 552.75 12.5ZM552.75 41.5001L643.75 41.5V40.5L552.75 40.5001C547.503 40.5001 543.25 44.7534 543.25 50.0001H544.25C544.25 45.3057 548.056 41.5001 552.75 41.5001Z"
-          [attr.fill]="'url(#paint7_linear-' + uid + ')'"
-          [attr.clip-path]="'url(#clip-right-border-straight-' + uid + ')'"
-          [attr.transform]="rightBorderStraightTransform()"
-        />
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M552.75 12.5L643.75 12.5001V13.5001L552.75 13.5C547.503 13.5 543.25 9.2467 543.25 4H544.25C544.25 8.69442 548.056 12.5 552.75 12.5ZM552.75 41.5001L643.75 41.5V40.5L552.75 40.5001C547.503 40.5001 543.25 44.7534 543.25 50.0001H544.25C544.25 45.3057 548.056 41.5001 552.75 41.5001Z"
-          [attr.fill]="'url(#paint7_linear-' + uid + ')'"
-          [attr.clip-path]="'url(#clip-right-border-hook-' + uid + ')'"
-          [attr.transform]="rightBorderHookTransform()"
-        />
-      </g>
-      <!-- Граница подложки: прямая часть (x<=105.75) растягивается анкором в x=14.75
-           (borderStraightTransform()), «крючок»-остриё на конце (x>=105.75) просто сдвигается
-           вместе с разделителем (borderCurlTransform() = тот же firstSegmentShiftPx()). -->
-      <g opacity="0.35" [attr.filter]="'url(#filter5_d-' + uid + ')'">
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M105.75 12.5L14.75 12.5001V13.5001L105.75 13.5C110.997 13.5 115.25 9.2467 115.25 4H114.25C114.25 8.69442 110.444 12.5 105.75 12.5ZM105.75 41.5001L14.75 41.5V40.5L105.75 40.5001C110.997 40.5001 115.25 44.7534 115.25 50.0001H114.25C114.25 45.3057 110.444 41.5001 105.75 41.5001Z"
-          [attr.fill]="'url(#paint8_linear-' + uid + ')'"
-          [attr.clip-path]="'url(#clip-border-straight-' + uid + ')'"
-          [attr.transform]="borderStraightTransform()"
-        />
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M105.75 12.5L14.75 12.5001V13.5001L105.75 13.5C110.997 13.5 115.25 9.2467 115.25 4H114.25C114.25 8.69442 110.444 12.5 105.75 12.5ZM105.75 41.5001L14.75 41.5V40.5L105.75 40.5001C110.997 40.5001 115.25 44.7534 115.25 50.0001H114.25C114.25 45.3057 110.444 41.5001 105.75 41.5001Z"
-          [attr.fill]="'url(#paint8_linear-' + uid + ')'"
-          [attr.clip-path]="'url(#clip-border-curl-' + uid + ')'"
-          [attr.transform]="borderCurlTransform()"
-        />
-      </g>
+      @if (hasStartAndEnd()) {
+        <!-- Граница правой подложки: прямая часть (x>=552.75) растягивается анкором в x=643.75
+             (rightBorderStraightTransform()), «крючок»-остриё (x<=552.75) сдвигается вместе
+             с разделителем (rightBorderHookTransform() = -lastSegmentShiftPx()). -->
+        <g opacity="0.35" [attr.filter]="'url(#filter4_d-' + uid + ')'">
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M552.75 12.5L643.75 12.5001V13.5001L552.75 13.5C547.503 13.5 543.25 9.2467 543.25 4H544.25C544.25 8.69442 548.056 12.5 552.75 12.5ZM552.75 41.5001L643.75 41.5V40.5L552.75 40.5001C547.503 40.5001 543.25 44.7534 543.25 50.0001H544.25C544.25 45.3057 548.056 41.5001 552.75 41.5001Z"
+            [attr.fill]="'url(#paint7_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-right-border-straight-' + uid + ')'"
+            [attr.transform]="rightBorderStraightTransform()"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M552.75 12.5L643.75 12.5001V13.5001L552.75 13.5C547.503 13.5 543.25 9.2467 543.25 4H544.25C544.25 8.69442 548.056 12.5 552.75 12.5ZM552.75 41.5001L643.75 41.5V40.5L552.75 40.5001C547.503 40.5001 543.25 44.7534 543.25 50.0001H544.25C544.25 45.3057 548.056 41.5001 552.75 41.5001Z"
+            [attr.fill]="'url(#paint7_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-right-border-hook-' + uid + ')'"
+            [attr.transform]="rightBorderHookTransform()"
+          />
+        </g>
+        <!-- Граница подложки: прямая часть (x<=105.75) растягивается анкором в x=14.75
+             (borderStraightTransform()), «крючок»-остриё на конце (x>=105.75) просто сдвигается
+             вместе с разделителем (borderCurlTransform() = тот же firstSegmentShiftPx()). -->
+        <g opacity="0.35" [attr.filter]="'url(#filter5_d-' + uid + ')'">
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M105.75 12.5L14.75 12.5001V13.5001L105.75 13.5C110.997 13.5 115.25 9.2467 115.25 4H114.25C114.25 8.69442 110.444 12.5 105.75 12.5ZM105.75 41.5001L14.75 41.5V40.5L105.75 40.5001C110.997 40.5001 115.25 44.7534 115.25 50.0001H114.25C114.25 45.3057 110.444 41.5001 105.75 41.5001Z"
+            [attr.fill]="'url(#paint8_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-border-straight-' + uid + ')'"
+            [attr.transform]="borderStraightTransform()"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M105.75 12.5L14.75 12.5001V13.5001L105.75 13.5C110.997 13.5 115.25 9.2467 115.25 4H114.25C114.25 8.69442 110.444 12.5 105.75 12.5ZM105.75 41.5001L14.75 41.5V40.5L105.75 40.5001C110.997 40.5001 115.25 44.7534 115.25 50.0001H114.25C114.25 45.3057 110.444 41.5001 105.75 41.5001Z"
+            [attr.fill]="'url(#paint8_linear-' + uid + ')'"
+            [attr.clip-path]="'url(#clip-border-curl-' + uid + ')'"
+            [attr.transform]="borderCurlTransform()"
+          />
+        </g>
+      }
 
       <path
         fill-rule="evenodd"
@@ -188,7 +199,7 @@
         <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
       </filter>
       <!-- filter1_d/filter2_d/filter5_d region — статично увеличен (x/width, не [attr.width]): их
-           содержимое сдвигается (разделители — по всей ширине строки через boundaryPositions(),
+           содержимое сдвигается (разделители — по всей ширине строки через segmentBoxes(),
            filter5_d — вместе с подложкой через firstSegmentShiftPx()), исходный (узкий) регион
            обрезал бы декор при сдвиге. -->
       <filter [attr.id]="'filter2_d-' + uid" x="-1000" y="2" width="3000" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
@@ -272,17 +283,19 @@
         <stop stop-opacity="0.25" />
         <stop offset="1" stop-opacity="0" />
       </radialGradient>
-      <radialGradient
-        [attr.id]="'paint6_radial-' + uid"
-        cx="0"
-        cy="0"
-        r="1"
-        gradientUnits="userSpaceOnUse"
-        [attr.gradientTransform]="centerBackgroundGradientTransform()"
-      >
-        <stop stop-opacity="0.25" />
-        <stop offset="1" stop-opacity="0" />
-      </radialGradient>
+      @for (subplate of centerSubplates(); track $index) {
+        <radialGradient
+          [attr.id]="'paint6_radial-' + uid + '-' + $index"
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          [attr.gradientTransform]="centerSubplateGradientTransform(subplate)"
+        >
+          <stop stop-opacity="0.25" />
+          <stop offset="1" stop-opacity="0" />
+        </radialGradient>
+      }
       <linearGradient [attr.id]="'paint7_linear-' + uid" x1="643.255" y1="46.5" x2="543.25" y2="46.5" gradientUnits="userSpaceOnUse">
         <stop stop-color="#F8ECB2" />
         <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
@@ -309,8 +322,10 @@
     @for (segment of segments(); track $index) {
       <span
         class="day-row__segment"
-        [style.flex]="segmentFlex(segment)"
+        [style.left.px]="segmentBoxes()[$index].x"
+        [style.width.px]="segmentBoxes()[$index].width"
         [style.textAlign]="segment.align ?? 'left'"
+        [style.justifyContent]="segmentJustifyContent(segment.align)"
         [style.color]="segment.color ?? '#F9F9F9'"
       >{{ segment.text }}</span>
     }

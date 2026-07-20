@@ -15,23 +15,25 @@ const RIGHT_SUBPLATE_ANCHOR_X = 643.75;
 const RIGHT_SUBPLATE_WIDTH = RIGHT_SUBPLATE_ANCHOR_X - 542.75;
 const RIGHT_BORDER_ANCHOR_X = 643.75;
 const RIGHT_BORDER_STRAIGHT_WIDTH = RIGHT_BORDER_ANCHOR_X - 552.75;
+const FIRST_BASELINE = 48;
+const LAST_BASELINE = 56;
+// Текстовый бокс = бокс подложки, та же формула, что и START_TEXT_LEFT/
+// END_TEXT_RIGHT/BOUNDARY_GAP в list-item.ts — продублированы здесь по тому
+// же принципу, что и anchoredScale() ниже: считать ожидаемые значения ТОЙ
+// ЖЕ формулой, не хардкодить округлённые вручную десятичные.
+const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_BASELINE;
+const END_TEXT_RIGHT = RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_BASELINE;
+const BOUNDARY_GAP = 54;
+const LEFT_ORNAMENT_CENTER_X = 115.75 + 38 / 2;
+const RIGHT_ORNAMENT_CENTER_X = 543.75 - 38 / 2;
 
 function anchoredScale(anchor: number, scale: number): string {
   return `translate(${anchor} 0) scale(${scale} 1) translate(${-anchor} 0)`;
 }
 
-// Та же арифметика, что segmentWidthsPx()/boundaryPositions() в list-item.ts
-// (продублирована по тому же принципу, что и anchoredScale() выше — считать
-// ожидаемые значения той же формулой, не хардкодить округлённые вручную
-// десятичные).
-const CONTENT_LEFT_INSET = 30;
-const CONTENT_GAP = 16;
-const CONTENT_AVAILABLE_WIDTH = 644 - CONTENT_LEFT_INSET - 24;
-const RIGHT_ORNAMENT_CENTER_X = 543.75 - 38 / 2;
-
-function computeBoundaryPositions(widths: (number | string | undefined)[]): number[] {
-  const gapTotal = Math.max(widths.length - 1, 0) * CONTENT_GAP;
-  const available = CONTENT_AVAILABLE_WIDTH - gapTotal;
+function computeSegmentBoxes(widths: (number | string | undefined)[]): { x: number; width: number }[] {
+  const gapTotal = (widths.length - 1) * BOUNDARY_GAP;
+  const available = END_TEXT_RIGHT - START_TEXT_LEFT - gapTotal;
   let fixedTotal = 0;
   let flexTotal = 0;
   const parsed = widths.map((width) => {
@@ -48,14 +50,23 @@ function computeBoundaryPositions(widths: (number | string | undefined)[]): numb
     return { flex };
   });
   const flexUnitPx = flexTotal > 0 ? (available - fixedTotal) / flexTotal : 0;
-  const px = parsed.map((entry) => ('fixedPx' in entry ? entry.fixedPx : entry.flex * flexUnitPx));
+  const logicalWidths = parsed.map((entry) => ('fixedPx' in entry ? entry.fixedPx : entry.flex * flexUnitPx));
 
+  const boxes: { x: number; width: number }[] = [];
+  let cursor = START_TEXT_LEFT;
+  for (const width of logicalWidths) {
+    const boxWidth = width ?? 0;
+    boxes.push({ x: cursor, width: boxWidth });
+    cursor += boxWidth + BOUNDARY_GAP;
+  }
+  return boxes;
+}
+
+function computeDividerPositions(widths: (number | string | undefined)[]): number[] {
+  const boxes = computeSegmentBoxes(widths);
   const positions: number[] = [];
-  let x = CONTENT_LEFT_INSET;
-  for (let i = 0; i < px.length - 1; i++) {
-    x += px[i] ?? 0;
-    positions.push(x + CONTENT_GAP / 2);
-    x += CONTENT_GAP;
+  for (let i = 0; i < boxes.length - 1; i++) {
+    positions.push(boxes[i].x + boxes[i].width + BOUNDARY_GAP / 2);
   }
   return positions;
 }
@@ -91,33 +102,99 @@ describe('ListItem', () => {
     expect(texts).toEqual(['Пн', 'Стрим на движке', '20:00']);
   });
 
-  it('width() строкой — фиксированная CSS-длина (flex: 0 0 <width>)', () => {
+  it('текстовый бокс каждого сегмента совпадает с боксом его подложки (единая геометрия — segmentBoxes())', () => {
     const fixture = TestBed.createComponent(ListItemHost);
+    fixture.detectChanges(); // host default: 60px / flex(1) / 60px
+
+    const el: HTMLElement = fixture.nativeElement;
+    const spans = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    const boxes = computeSegmentBoxes(['60px', 1, '60px']);
+    spans.forEach((span, i) => {
+      expect(span.style.left).toBe(`${boxes[i].x}px`);
+      expect(span.style.width).toBe(`${boxes[i].width}px`);
+    });
+  });
+
+  it('текстовый бокс первого/последнего сегмента точно стыкуется правым/левым краем с реальным краем подложки при любой ширине (subplateBodyTransform()/rightSubplateTransform())', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Четверг', width: '100px' },
+      { text: 'Турнир', width: 1 },
+      { text: '18:00', width: '90px' },
+    ]);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const [first] = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
-    expect(first.style.flex).toBe('0 0 60px');
+    const [first, , last] = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    const firstShift = 100 - FIRST_BASELINE;
+    const lastShift = 90 - LAST_BASELINE;
+    // Правый край текстового бокса первого сегмента = правый край растянутой подложки.
+    expect(Number.parseFloat(first.style.left) + Number.parseFloat(first.style.width)).toBeCloseTo(
+      SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH + firstShift,
+    );
+    // Левый край текстового бокса последнего сегмента = левый край растянутой подложки.
+    expect(Number.parseFloat(last.style.left)).toBeCloseTo(
+      RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH - lastShift,
+    );
   });
 
-  it('width() числом — пропорциональный flex-grow (flex: <n> <n> 0)', () => {
+  it('текстовый бокс среднего сегмента совпадает с центральной подложкой и не зависит от собственного width() — геометрия целиком идёт от соседних сегментов', () => {
     const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Пн', width: '60px' },
+      { text: 'Стрим', width: 1 },
+      { text: '20:00', width: '60px' },
+    ]);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const [, middle] = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
-    expect(middle.style.flex).toBe('1 1 0px');
+    const middleWithFlex1 = (Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[])[1];
+    const leftWidthFlex1 = [middleWithFlex1.style.left, middleWithFlex1.style.width];
+
+    fixture.componentInstance.segments.set([
+      { text: 'Пн', width: '60px' },
+      { text: 'Стрим', width: 5 },
+      { text: '20:00', width: '60px' },
+    ]);
+    fixture.detectChanges();
+
+    const middleWithFlex5 = (Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[])[1];
+    expect([middleWithFlex5.style.left, middleWithFlex5.style.width]).toEqual(leftWidthFlex1);
   });
 
-  it('без width() — дефолт flex: 1 1 0 (равная доля)', () => {
+  it('без width() у первого/последнего сегмента — текстовый бокс на базовой (нерастянутой) позиции подложки', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([{ text: 'A' }, { text: 'B' }]);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const segments = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
-    expect(segments[0].style.flex).toBe('1 1 0px');
-    expect(segments[1].style.flex).toBe('1 1 0px');
+    const [first, last] = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    const boxes = computeSegmentBoxes([undefined, undefined]);
+    expect(first.style.left).toBe(`${boxes[0].x}px`);
+    expect(first.style.width).toBe(`${boxes[0].width}px`);
+    expect(last.style.left).toBe(`${boxes[1].x}px`);
+    expect(last.style.width).toBe(`${boxes[1].width}px`);
+  });
+
+  it('регрессия: последний сегмент "резиновый" (как первый фиксированный + последний flex) — получает широкий бокс без наложения на первый', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Сб', width: '48px' },
+      { text: 'Кастомная игра', width: 1 },
+    ]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const [first, last] = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    const boxes = computeSegmentBoxes(['48px', 1]);
+    expect(first.style.left).toBe(`${boxes[0].x}px`);
+    expect(first.style.width).toBe(`${boxes[0].width}px`);
+    expect(last.style.left).toBe(`${boxes[1].x}px`);
+    expect(last.style.width).toBe(`${boxes[1].width}px`);
+    // Не пересекаются и не оставляют неожиданно широкий разрыв.
+    expect(Number.parseFloat(last.style.left)).toBeCloseTo(
+      Number.parseFloat(first.style.left) + Number.parseFloat(first.style.width) + BOUNDARY_GAP,
+    );
   });
 
   it('align() — управляет text-align каждого сегмента независимо, дефолт "left"', () => {
@@ -138,6 +215,26 @@ describe('ListItem', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect((el.querySelector('.day-row__segment') as HTMLElement).style.textAlign).toBe('left');
+  });
+
+  it('align() — управляет justify-content (не только text-align): .day-row__segment — flex-контейнер (вертикальное центрирование), text-align в нём не позиционирует содержимое', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const segments = Array.from(el.querySelectorAll('.day-row__segment')) as HTMLElement[];
+    expect(segments[0].style.justifyContent).toBe('flex-start');
+    expect(segments[1].style.justifyContent).toBe('center');
+    expect(segments[2].style.justifyContent).toBe('flex-end');
+  });
+
+  it('без align() — дефолтный justify-content "flex-start"', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([{ text: 'A' }]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect((el.querySelector('.day-row__segment') as HTMLElement).style.justifyContent).toBe('flex-start');
   });
 
   it('без color() у сегмента — дефолтный цвет #F9F9F9, с color() — используется он', () => {
@@ -197,14 +294,16 @@ describe('ListItem', () => {
     expect(borderCurl.getAttribute('transform')).toBe('translate(0 0)');
   });
 
-  it('width() первого сегмента не задан фиксированным px (число/%/отсутствует) — сдвига/растяжения нет', () => {
+  it('width() первого сегмента не задан фиксированным px (число/%/отсутствует) — подложка всё равно растягивается по фактически вычисленной (резиновой) ширине, а не остаётся на базовой', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([{ text: 'Пн', width: 1 }, { text: 'X' }, { text: 'Y' }]);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     const [, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
-    expect(subplateBody.getAttribute('transform')).toBe(anchoredScale(SUBPLATE_ANCHOR_X, 1));
+    const boxes = computeSegmentBoxes([1, undefined, undefined]);
+    const expectedScale = (SUBPLATE_BODY_WIDTH + (boxes[0].width - FIRST_BASELINE)) / SUBPLATE_BODY_WIDTH;
+    expect(subplateBody.getAttribute('transform')).toBe(anchoredScale(SUBPLATE_ANCHOR_X, expectedScale));
   });
 
   it('lastSegmentShiftPx() ≠ 0 — правая подложка/прямая часть границы растягиваются влево анкором в фиксированном правом крае, «крючок» границы сдвигается влево', () => {
@@ -244,7 +343,7 @@ describe('ListItem', () => {
     expect(rightSubplate?.getAttribute('transform')).toBe(anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, 1));
   });
 
-  it('подложка резинового сегмента растягивается за оба края вместе с первым/последним сегментом, отступ от разделителей не меняется', () => {
+  it('подложка резинового сегмента совпадает с его текстовым боксом при любой ширине соседних сегментов', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([
       { text: 'Четверг', width: '100px' },
@@ -255,13 +354,12 @@ describe('ListItem', () => {
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     const centerRect = svg.querySelector('rect[fill^="url(#paint6_radial"]');
-
-    // firstSegmentShiftPx = 100 - 48 = 52, lastSegmentShiftPx = 100 - 56 = 44
-    expect(centerRect?.getAttribute('x')).toBe(`${169.75 + 52}`);
-    expect(centerRect?.getAttribute('width')).toBe(`${320 - 52 - 44}`);
+    const boxes = computeSegmentBoxes(['100px', 1, '100px']);
+    expect(Number(centerRect?.getAttribute('x'))).toBeCloseTo(boxes[1].x);
+    expect(Number(centerRect?.getAttribute('width'))).toBeCloseTo(boxes[1].width);
   });
 
-  it('width() первого/последнего сегментов = базовым — подложка резинового сегмента без сдвига/растяжения', () => {
+  it('width() первого/последнего сегментов = базовым — подложка резинового сегмента на том же месте, что и text-бокс, без искусственного сдвига', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([
       { text: 'Пн', width: '48px' },
@@ -272,11 +370,12 @@ describe('ListItem', () => {
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     const centerRect = svg.querySelector('rect[fill^="url(#paint6_radial"]');
-    expect(centerRect?.getAttribute('x')).toBe('169.75');
-    expect(centerRect?.getAttribute('width')).toBe('320');
+    const boxes = computeSegmentBoxes(['48px', 1, '56px']);
+    expect(Number(centerRect?.getAttribute('x'))).toBeCloseTo(boxes[1].x);
+    expect(Number(centerRect?.getAttribute('width'))).toBeCloseTo(boxes[1].width);
   });
 
-  it('первый разделитель сохраняет тот же зазор от левой подложки, что и раньше — сдвигается вместе с firstSegmentShiftPx(), а не по общей CSS-арифметике границ', () => {
+  it('первый разделитель следует за фактическим боксом первого сегмента — общая формула (box.right + BOUNDARY_GAP/2), единая для любой границы', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([
       { text: 'Четверг', width: '100px' },
@@ -288,11 +387,11 @@ describe('ListItem', () => {
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     const [leftInstance] = Array.from(svg.querySelectorAll('g[mask^="url(#mask-left-"]'));
-    // 100 - 48 = 52 (firstSegmentShiftPx) — тот же сдвиг, что у подложки/границы.
-    expect(leftInstance.getAttribute('transform')).toBe('translate(52 0)');
+    const [firstBoundary] = computeDividerPositions(['100px', 1, '56px']);
+    expect(leftInstance.getAttribute('transform')).toBe(`translate(${firstBoundary - LEFT_ORNAMENT_CENTER_X} 0)`);
   });
 
-  it('последний разделитель сохраняет тот же зазор от правой подложки, что и раньше — сдвигается вместе с lastSegmentShiftPx()', () => {
+  it('последний разделитель следует за фактическим боксом последнего сегмента — та же общая формула', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([
       { text: 'Пн', width: '48px' },
@@ -304,28 +403,11 @@ describe('ListItem', () => {
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     const [rightInstance] = Array.from(svg.querySelectorAll('g[mask^="url(#mask-right-"]'));
-    // 100 - 56 = 44 (lastSegmentShiftPx)
-    expect(rightInstance.getAttribute('transform')).toBe('translate(-44 0)');
+    const [, lastBoundary] = computeDividerPositions(['48px', 1, '100px']);
+    expect(rightInstance.getAttribute('transform')).toBe(`translate(${lastBoundary - RIGHT_ORNAMENT_CENTER_X} 0)`);
   });
 
-  it('width() первого/последнего сегментов = базовым — оба разделителя без сдвига (identity-transform), как в исходном Schedule.svg', () => {
-    const fixture = TestBed.createComponent(ListItemHost);
-    fixture.componentInstance.dividers.set(['left', 'right']);
-    fixture.componentInstance.segments.set([
-      { text: 'Пн', width: '48px' },
-      { text: 'Стрим', width: 1 },
-      { text: '20:00', width: '56px' },
-    ]);
-    fixture.detectChanges();
-
-    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
-    const [leftInstance] = Array.from(svg.querySelectorAll('g[mask^="url(#mask-left-"]'));
-    const [rightInstance] = Array.from(svg.querySelectorAll('g[mask^="url(#mask-right-"]'));
-    expect(leftInstance.getAttribute('transform')).toBe('translate(0 0)');
-    expect(rightInstance.getAttribute('transform')).toBe('translate(0 0)');
-  });
-
-  it('строго внутренний разделитель (между 2-м и 3-м сегментом, только при 4 сегментах) — нет эталона в исходнике, позиция считается общей CSS-арифметикой границ', () => {
+  it('строго внутренний разделитель (между 2-м и 3-м сегментом, только при 4 сегментах) — та же общая формула, что и у крайних', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([
       { text: 'Ср', width: '48px' },
@@ -339,7 +421,7 @@ describe('ListItem', () => {
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     // Индекс 1 (граница между сегментом 1 и 2) — тип 'right' по dividers(), единственный right-инстанс.
     const [rightInstance] = Array.from(svg.querySelectorAll('g[mask^="url(#mask-right-"]'));
-    const [, interiorBoundary] = computeBoundaryPositions(['48px', 1, '40px', '56px']);
+    const [, interiorBoundary] = computeDividerPositions(['48px', 1, '40px', '56px']);
     expect(rightInstance.getAttribute('transform')).toBe(`translate(${interiorBoundary - RIGHT_ORNAMENT_CENTER_X} 0)`);
   });
 
@@ -388,7 +470,7 @@ describe('ListItem', () => {
     expect(svg.querySelectorAll('g[mask^="url(#mask-right-"]')).toHaveLength(1);
   });
 
-  it('2 сегмента (не только 3) — рендерится без ошибок, декор слева/справа по-прежнему завязан на первый/последний сегмент', () => {
+  it('2 сегмента (не только 3) — рендерится без ошибок, декор слева/справа завязан на фактическую (в т.ч. резиновую) ширину первого/последнего сегмента', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([
       { text: 'Сб', width: '100px' },
@@ -401,12 +483,17 @@ describe('ListItem', () => {
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
     const [, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
-    // 100 - 48 = 52 (firstSegmentShiftPx, второй/последний сегмент без фикс. px-ширины не сдвигает правый декор)
+    // 100 - 48 = 52 (firstSegmentShiftPx)
     expect(subplateBody.getAttribute('transform')).toBe(
       anchoredScale(SUBPLATE_ANCHOR_X, (SUBPLATE_BODY_WIDTH + 52) / SUBPLATE_BODY_WIDTH),
     );
+    // Второй сегмент ("Кастомная игра", резиновый) — тоже растягивает свою подложку по факту
+    // вычисленной ширины (регрессия: раньше резиновый последний сегмент игнорировался, подложка
+    // оставалась узкой на базовой ширине, а текст залезал за её пределы).
     const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
-    expect(rightSubplate?.getAttribute('transform')).toBe(anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, 1));
+    const boxes = computeSegmentBoxes(['100px', 1]);
+    const expectedScale = (RIGHT_SUBPLATE_WIDTH + (boxes[1].width - LAST_BASELINE)) / RIGHT_SUBPLATE_WIDTH;
+    expect(rightSubplate?.getAttribute('transform')).toBe(anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, expectedScale));
   });
 
   it('без direction() — дефолт "left", класс day-row--mirrored не применяется', () => {
@@ -435,7 +522,7 @@ describe('ListItem', () => {
     expect(el.querySelectorAll('.day-row__segment')).toHaveLength(2);
   });
 
-  it('поддерживаемый диапазон 1..4 сегмента — 1 сегмент рендерится без ошибок, декор слева/справа завязан на него же', () => {
+  it('1 сегмент — только центральная подложка (по прямому запросу пользователя), начальной/конечной нет вовсе', () => {
     const fixture = TestBed.createComponent(ListItemHost);
     fixture.componentInstance.segments.set([{ text: 'Единственный', width: '100px' }]);
     fixture.detectChanges();
@@ -444,16 +531,52 @@ describe('ListItem', () => {
     expect(el.querySelectorAll('.day-row__segment')).toHaveLength(1);
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
-    const [, subplateBody] = Array.from(svg.querySelectorAll('path[fill^="url(#paint3_radial"]'));
-    const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
-    // Один и тот же сегмент — одновременно и первый (база 48px), и последний
-    // (база 56px): 100-48=52 слева, 100-56=44 справа — разные сдвиги у общего сегмента.
-    expect(subplateBody.getAttribute('transform')).toBe(
-      anchoredScale(SUBPLATE_ANCHOR_X, (SUBPLATE_BODY_WIDTH + 52) / SUBPLATE_BODY_WIDTH),
-    );
-    expect(rightSubplate?.getAttribute('transform')).toBe(
-      anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, (RIGHT_SUBPLATE_WIDTH + 44) / RIGHT_SUBPLATE_WIDTH),
-    );
+    expect(svg.querySelectorAll('path[fill^="url(#paint3_radial"]')).toHaveLength(0);
+    expect(svg.querySelector('path[fill^="url(#paint5_radial"]')).toBeNull();
+    const centerRects = svg.querySelectorAll('rect[fill^="url(#paint6_radial"]');
+    expect(centerRects).toHaveLength(1);
+    expect(centerRects[0].getAttribute('x')).toBe('169.75');
+    expect(centerRects[0].getAttribute('width')).toBe('320');
+  });
+
+  it('2 сегмента — начальная/конечная подложка есть, центральной нет вовсе (нет сегмента между ними)', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Сб', width: '48px' },
+      { text: 'Кастомная игра', width: 1 },
+    ]);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    expect(svg.querySelectorAll('path[fill^="url(#paint3_radial"]')).toHaveLength(2);
+    expect(svg.querySelector('path[fill^="url(#paint5_radial"]')).not.toBeNull();
+    expect(svg.querySelectorAll('rect[fill^="url(#paint6_radial"]')).toHaveLength(0);
+  });
+
+  it('4 сегмента — начальная, конечная и 2 центральные подложки (по одной на каждый сегмент между ними), с одинаковым зазором от соседних разделителей', () => {
+    const fixture = TestBed.createComponent(ListItemHost);
+    fixture.componentInstance.segments.set([
+      { text: 'Ср', width: '48px' },
+      { text: 'Игра', width: 1 },
+      { text: '2ч', width: '40px' },
+      { text: '19:00', width: '56px' },
+    ]);
+    fixture.componentInstance.dividers.set(['left', 'right', 'left']);
+    fixture.detectChanges();
+
+    const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+    expect(svg.querySelectorAll('path[fill^="url(#paint3_radial"]')).toHaveLength(2);
+    expect(svg.querySelector('path[fill^="url(#paint5_radial"]')).not.toBeNull();
+    const centerRects = Array.from(svg.querySelectorAll('rect[fill^="url(#paint6_radial"]')) as SVGRectElement[];
+    expect(centerRects).toHaveLength(2);
+
+    // Центральные подложки — ровно боксы сегментов 1 и 2 (segmentBoxes().slice(1,-1)),
+    // та же единая геометрия, что и у текста — не отдельная формула с 35px-зазором.
+    const boxes = computeSegmentBoxes(['48px', 1, '40px', '56px']);
+    expect(Number(centerRects[0].getAttribute('x'))).toBeCloseTo(boxes[1].x);
+    expect(Number(centerRects[0].getAttribute('width'))).toBeCloseTo(boxes[1].width);
+    expect(Number(centerRects[1].getAttribute('x'))).toBeCloseTo(boxes[2].x);
+    expect(Number(centerRects[1].getAttribute('width'))).toBeCloseTo(boxes[2].width);
   });
 
   it('поддерживаемый диапазон 1..4 сегмента — 4 сегмента рендерятся без ошибок', () => {

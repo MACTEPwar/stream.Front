@@ -32,22 +32,24 @@
   overflow: visible;
 }
 
-// Зоны сегментов — визуальное приближение (баковый текст исходника не даёт
-// точных координат/кегля, см. комментарий в list-item.ts).
+// Typography общая для всех сегментов — сама раскладка (позиция/ширина)
+// теперь на каждом .day-row__segment отдельно (left/width — inline style
+// из segmentBoxes(), см. list-item.ts), не здесь: тот же бокс, что и у
+// соответствующей подложки, единый источник геометрии для обоих слоёв.
 .day-row__content {
   position: absolute;
-  inset: 0 24px 0 30px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  inset: 0;
   font-family: vars.$font-family-nunito-sans;
   font-size: vars.$font-size-14;
   font-weight: vars.$font-weight-700;
 }
 
-// flex и text-align — целиком из segment.width()/segment.align() (см.
-// list-item.ts: segmentFlex()), никакой позиционной "умной" логики тут нет.
 .day-row__segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
