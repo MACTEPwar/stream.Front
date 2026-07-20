@@ -31,6 +31,24 @@ const RIGHT_SUBPLATE_WIDTH = RIGHT_SUBPLATE_ANCHOR_X - 542.75;
 const RIGHT_BORDER_ANCHOR_X = 643.75;
 const RIGHT_BORDER_STRAIGHT_WIDTH = RIGHT_BORDER_ANCHOR_X - 552.75;
 
+// Геометрия content-слоя (.day-row__content в list-item.scss) — нужна, чтобы
+// считать пиксельные границы МЕЖДУ сегментами (boundaryPositions() ниже) в
+// тех же координатах, что и SVG-декор (оба слоя — абсолютные поверх одного
+// 644px .day-row, так что CSS-px в content и SVG userSpace — одно и то же
+// число). Должны оставаться синхронными с .day-row__content в list-item.scss.
+const CONTENT_LEFT_INSET = 30;
+const CONTENT_RIGHT_INSET = 24;
+const CONTENT_GAP = 16;
+const CONTENT_AVAILABLE_WIDTH = 644 - CONTENT_LEFT_INSET - CONTENT_RIGHT_INSET;
+
+// Собственный центр каждого варианта орнамента-разделителя в его исходных
+// координатах из Schedule.svg (mask-rect'ы filter2_d/filter1_d) — тот же
+// принцип анкора, что у anchoredScale(), но без масштаба: разделитель не
+// растягивается, только переносится в вычисленную точку между сегментами
+// (targetX - ORNAMENT_CENTER_X).
+const LEFT_ORNAMENT_CENTER_X = 115.75 + 38 / 2;
+const RIGHT_ORNAMENT_CENTER_X = 543.75 - 38 / 2;
+
 // Тёмная подложка (paint6_radial) под «резиновым» (width: 1 и т.п.) средним
 // сегментом — в исходнике статична (x=169.75, width=320), т.е. её левый/
 // правый край НЕ следует за левым/правым разделителем при изменении ширины
@@ -49,22 +67,27 @@ function anchoredScale(anchor: number, scale: number): string {
 
 export type ListItemSegmentAlign = 'left' | 'center' | 'right';
 
-/** `'ornament'` — декоративный завиток из Schedule.svg (как сейчас, дефолт); `'none'` — разделитель скрыт. */
-export type ListItemDividerType = 'ornament' | 'none';
+/**
+ * `'left'`/`'right'` — какой из двух вариантов орнамента-разделителя из
+ * Schedule.svg использовать (`filter2_d`/`paint2_linear` и `filter1_d`/
+ * `paint1_linear` — зеркальные друг другу узоры, не абсолютная сторона
+ * строки: любой можно поставить в любую позицию, что визуально красивее в
+ * конкретном месте); `'none'` — разделитель в этой позиции скрыт.
+ */
+export type ListItemDividerType = 'left' | 'right' | 'none';
 
 /**
- * Тип разделителей у левого/правого декоративного узла строки (`filter2_d`/
- * `filter1_d` в шаблоне) — по прямому запросу пользователя настройка НЕ на
- * сегменте (позиция обоих узлов и так жёстко привязана к ширине первого и
- * последнего сегмента через firstSegmentShiftPx()/lastSegmentShiftPx(), от
- * количества сегментов не зависит), а отдельным объектом, чтобы работало
- * одинаково что при 2 сегментах, что при 3+. Без значения — оба `'ornament'`
- * (текущее поведение, обратная совместимость).
+ * Разделитель — после КАЖДОГО сегмента, кроме последнего (по прямому
+ * запросу пользователя: "после каждого элемента идёт разделитель... нет
+ * только если 1 элемент"), т.е. `dividers()[i]` — тип разделителя между
+ * `segments()[i]` и `segments()[i + 1]`, длина массива до `segments().length
+ * - 1`. Без значения на конкретном индексе — `'left'`. Позиция каждого
+ * разделителя считается арифметически от фактической ширины сегментов
+ * (boundaryPositions() ниже) — НЕ от DOM-измерения (ResizeObserver), так
+ * что при нескольких "резиновых" (`width: number`) сегментах их доля
+ * расчитывается той же пропорцией, что и настоящий CSS `flex-grow`.
  */
-export interface ListItemDividers {
-  left?: ListItemDividerType;
-  right?: ListItemDividerType;
-}
+export type ListItemDividers = ListItemDividerType[];
 
 /**
  * `'left'` (дефолт) — остриё-«стрелка» подложки смотрит влево, как в
@@ -128,11 +151,99 @@ export class ListItem {
   protected readonly uid = `listitem${nextListItemUid++}`;
 
   readonly segments = input.required<ListItemSegment[]>();
-  readonly dividers = input<ListItemDividers>({});
+  readonly dividers = input<ListItemDividers>([]);
   readonly direction = input<ListItemDirection>('left');
 
-  protected readonly leftDividerType = computed(() => this.dividers().left ?? 'ornament');
-  protected readonly rightDividerType = computed(() => this.dividers().right ?? 'ornament');
+  // Пиксельная ширина каждого сегмента — для фиксированной px-строки
+  // (`'48px'`) берётся напрямую; для "резиновых" (`number`/без width) делит
+  // оставшееся после вычета всех фиксированных ширин и зазоров место
+  // пропорционально своим числам (та же арифметика, что настоящий CSS
+  // `flex-grow` — по прямому уточнению пользователя обычно "резиновый"
+  // сегмент только один, но формула корректна и для нескольких).
+  protected readonly segmentWidthsPx = computed(() => {
+    const segments = this.segments();
+    const gapTotal = Math.max(segments.length - 1, 0) * CONTENT_GAP;
+    const available = CONTENT_AVAILABLE_WIDTH - gapTotal;
+
+    let fixedTotal = 0;
+    let flexTotal = 0;
+    const parsed = segments.map((segment) => {
+      const width = segment.width;
+      if (typeof width === 'string') {
+        const match = /^(-?\d*\.?\d+)px$/.exec(width.trim());
+        if (match) {
+          const px = Number(match[1]);
+          fixedTotal += px;
+          return { fixedPx: px };
+        }
+      }
+      const flex = typeof width === 'number' ? width : 1;
+      flexTotal += flex;
+      return { flex };
+    });
+
+    const flexUnitPx = flexTotal > 0 ? (available - fixedTotal) / flexTotal : 0;
+    return parsed.map((entry) => ('fixedPx' in entry ? entry.fixedPx : entry.flex * flexUnitPx));
+  });
+
+  // x-координата (в тех же единицах, что и SVG userSpace — оба слоя абсолютные
+  // поверх одного 644px .day-row) середины зазора после сегмента i, для
+  // i = 0..segments().length-2 — ровно там, где рисуется разделитель dividers()[i].
+  // Длина массива = segments().length - 1: 0 сегментов зазоров у строки из 1
+  // элемента (по прямому запросу пользователя — "разделителя нет только если 1 элемент").
+  protected readonly boundaryPositions = computed(() => {
+    const widths = this.segmentWidthsPx();
+    const positions: number[] = [];
+    let x = CONTENT_LEFT_INSET;
+    for (let i = 0; i < widths.length - 1; i++) {
+      x += widths[i] ?? 0;
+      positions.push(x + CONTENT_GAP / 2);
+      x += CONTENT_GAP;
+    }
+    return positions;
+  });
+
+  // x каждого разделителя — НЕ напрямую boundaryPositions() (та арифметика
+  // живёт в системе координат CSS-content-слоя, 30px/16px и т.п., которая
+  // на баллвом значении НЕ совпадает с тем, где реально нарисован узор в
+  // Schedule.svg — при подстановке давала неправильный, слишком маленький
+  // зазор от подложки). Первый и последний разделитель обязаны сохранять
+  // тот же зазор от левой/правой подложки, что и раньше (задача, которую
+  // уже решают firstSegmentShiftPx()/lastSegmentShiftPx() для самой
+  // подложки) — переиспользуем ИХ, а не общую арифметику по границам:
+  // 0-й разделитель = собственный центр узора + firstSegmentShiftPx() (тот
+  // же сдвиг, что у подложки), последний (индекс segments().length-2) =
+  // собственный центр + (−lastSegmentShiftPx()). Только СТРОГО внутренние
+  // границы (существуют начиная с 4 сегментов, между 2-м и 3-м) — не имеют
+  // такого эталона в исходнике, для них используется общая арифметика
+  // boundaryPositions(). При 2 сегментах единственная граница — она же и
+  // первая, и последняя одновременно: приоритет отдаётся «первой» ветке
+  // (реже расходится с ожиданием — тот же принцип, что уже был откалиброван
+  // для одного сегмента в firstSegmentShiftPx()/lastSegmentShiftPx()).
+  protected readonly dividerInstances = computed(() => {
+    const count = this.segments().length;
+    if (count < 2) return [];
+    const generic = this.boundaryPositions();
+    const dividers = this.dividers();
+    const lastIndex = count - 2;
+    return Array.from({ length: count - 1 }, (_, i) => {
+      const x =
+        i === 0
+          ? LEFT_ORNAMENT_CENTER_X + this.firstSegmentShiftPx()
+          : i === lastIndex
+            ? RIGHT_ORNAMENT_CENTER_X - this.lastSegmentShiftPx()
+            : (generic[i] ?? 0);
+      return { x, type: dividers[i] ?? 'left' };
+    });
+  });
+
+  protected leftOrnamentTransform(x: number): string {
+    return `translate(${x - LEFT_ORNAMENT_CENTER_X} 0)`;
+  }
+
+  protected rightOrnamentTransform(x: number): string {
+    return `translate(${x - RIGHT_ORNAMENT_CENTER_X} 0)`;
+  }
 
   // Декор в левой части строки (подложка-«стрелка» под первым сегментом,
   // её граница, орнамент-разделитель между 1-м и 2-м сегментом) в исходнике

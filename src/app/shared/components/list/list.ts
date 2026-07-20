@@ -17,7 +17,7 @@ export type ListItemWidth = 'stretch' | 'auto';
 export interface ListItemData {
   id: string | number;
   segments: ListItemSegment[];
-  /** Тип левого/правого декоративного разделителя этого item'а — см. `ListItemDividers`, без значения — оба `'ornament'`. */
+  /** Тип разделителя после каждого сегмента этого item'а (кроме последнего) — см. `ListItemDividers`, без значения на индексе — `'left'`. */
   dividers?: ListItemDividers;
   /** Направление декора этого item'а — см. `ListItemDirection`, без значения — `'left'`. */
   direction?: ListItemDirection;
