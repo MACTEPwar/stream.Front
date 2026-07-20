@@ -1,0 +1,10 @@
+<a
+  class="social-link-item"
+  [href]="link().url"
+  target="_blank"
+  rel="noopener noreferrer"
+  [attr.aria-label]="link().handle"
+>
+  <img class="social-link-item__icon" [src]="link().icon" alt="" />
+  <span class="social-link-item__handle">{{ link().handle }}</span>
+</a>

@@ -1,0 +1,9 @@
+<div class="social-links-block">
+  <app-section-title text="Соц. сети" />
+
+  <div class="social-links-block__list">
+    @for (link of links; track link.handle) {
+      <app-social-link-item [link]="link" />
+    }
+  </div>
+</div>
