@@ -18,6 +18,12 @@ export class AuthService {
       .pipe(tap((user) => this.currentUserSignal.set(user)));
   }
 
+  register(login: string, password: string): Observable<CurrentUser> {
+    return this.api
+      .post<CurrentUser>('/auth/register', { login, password }, { withCredentials: true })
+      .pipe(tap((user) => this.currentUserSignal.set(user)));
+  }
+
   loginWithGoogle(googleIdToken: string): Observable<CurrentUser> {
     return this.api
       .post<CurrentUser>('/auth/google', { googleIdToken }, { withCredentials: true })
