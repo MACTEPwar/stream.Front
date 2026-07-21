@@ -15,10 +15,19 @@ body {
   height: 100%;
 }
 
+// Базовый фон сайта — тот же радиальный градиент, что у MainCarousel
+// (см. main-carousel.scss), глобально на html, чтобы страницы без
+// собственного полноэкранного фона (заглушки Новости/Турниры и т.п.) не
+// оставались белыми под прозрачным `Shell`.
+html {
+  background: radial-gradient(circle, variables.$color-1e00b2 0%, variables.$color-0d004d 100%);
+}
+
 body {
   line-height: 1.5;
   font-family: variables.$font-family-nunito-sans;
   -webkit-font-smoothing: antialiased;
+  color: variables.$color-ffffff;
 }
 
 img,
