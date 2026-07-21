@@ -58,7 +58,8 @@ const SOLO_CENTER_SUBPLATE_WIDTH = 320;
 // раскладка совпадала с исходным нерастянутым положением подложек в
 // Schedule.svg (104.75 − 48 = 56.75 слева, 542.75 + 56 = 598.75 справа).
 const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_SEGMENT_BASELINE_WIDTH_PX;
-const END_TEXT_RIGHT = RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_SEGMENT_BASELINE_WIDTH_PX;
+const END_TEXT_RIGHT =
+  RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_SEGMENT_BASELINE_WIDTH_PX;
 
 // Зазор между соседними боксами — единый на любую границу (крайнюю или
 // внутреннюю), а не унаследованный из Schedule.svg асимметричный (там левый/
@@ -66,6 +67,17 @@ const END_TEXT_RIGHT = RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_SEG
 // было больше одной внутренней границы). Ширины хватает, чтобы вместить сам
 // орнамент-разделитель (38px) плюс отступ по ~8px с каждой стороны.
 const BOUNDARY_GAP = 54;
+
+// Ширина `.day-row` (CSS) — ось зеркалирования для `direction: 'right'`
+// (`transform: scaleX(-1)` на всём ряду, ось — центр элемента, т.е. ROW_WIDTH_PX / 2).
+// Декор (подложки/разделители) рисуется в тех же ЛОКАЛЬНЫХ координатах, что и текст,
+// но, в отличие от текста (см. .day-row__content — двойное зеркалирование отменяет
+// видимый эффект целиком), у декора зеркалирование ОДИНАРНОЕ — его экранная позиция
+// физически меняется на `ROW_WIDTH_PX - x`, а текст остаётся на месте. Без поправки
+// декор (подложка/разделитель), рассчитанный на бокс сегмента N, после зеркалирования
+// экранно уезжает под текст ДРУГОГО сегмента — см. startBoxIndex()/endBoxIndex()/
+// dividerInstances()/centerSubplates() ниже, где эта поправка вносится явно.
+const ROW_WIDTH_PX = 644;
 
 /** `scale`-затем-`shift`, анкорится в `anchor` (та же формула, что у `Button`). */
 function anchoredScale(anchor: number, scale: number): string {
@@ -235,9 +247,11 @@ export class ListItem {
     if (count < 2) return [];
     const boxes = this.segmentBoxes();
     const dividers = this.dividers();
+    const mirrored = this.direction() === 'right';
     return Array.from({ length: count - 1 }, (_, i) => {
       const box = boxes[i];
-      const x = (box?.x ?? 0) + (box?.width ?? 0) + BOUNDARY_GAP / 2;
+      const rawX = (box?.x ?? 0) + (box?.width ?? 0) + BOUNDARY_GAP / 2;
+      const x = mirrored ? ROW_WIDTH_PX - rawX : rawX;
       return { x, type: dividers[i] ?? 'left' };
     });
   });
@@ -250,19 +264,28 @@ export class ListItem {
     return `translate(${x - RIGHT_ORNAMENT_CENTER_X} 0)`;
   }
 
-  // Декор в левой части строки (подложка-«стрелка» под первым сегментом,
-  // её граница) в исходнике рассчитан на конкретную ширину первого
-  // сегмента — по прямому запросу пользователя эти элементы двигаются
-  // вместе с фактическим боксом первого сегмента (segmentBoxes()[0]),
-  // чтобы отступ между концом подложки и началом разделителя оставался
-  // визуально таким же независимо от заданной ширины. Правый край бокса
-  // (START_TEXT_LEFT + box.width) алгебраически совпадает с правым краем
-  // растянутой подложки (SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH + shift)
-  // при ЛЮБОМ box.width — тождество за счёт того, как выведен START_TEXT_LEFT
-  // (см. константу выше), поправка на роль сегмента не нужна.
+  // Подложка-«стрелка» (декор) в исходнике всегда рисуется в ЛОКАЛЬНЫХ
+  // координатах у левого края строки (под сегментом с индексом 0) — при
+  // direction: 'right' весь декор (в т.ч. эта подложка) физически зеркалится
+  // на экран (см. ROW_WIDTH_PX выше), и после зеркалирования экранно
+  // оказывается под сегментом с ПОСЛЕДНИМ индексом (текст, в отличие от
+  // декора, зеркалирование не затрагивает — .day-row__content). Поэтому
+  // "какой бокс задаёт её растяжение" — это не всегда segmentBoxes()[0], а
+  // именно тот бокс, что реально окажется под ней на экране после
+  // зеркалирования (startBoxIndex()) — без этой поправки при несимметричных
+  // сегментах подложка растягивалась под ширину ЧУЖОГО (левого) сегмента,
+  // а не того, что физически под ней (баг, найденный пользователем на
+  // DonatorsWidget: ник — резиновый, сумма — 90px).
+  protected readonly startBoxIndex = computed(() =>
+    this.direction() === 'right' ? this.segmentBoxes().length - 1 : 0,
+  );
+  protected readonly endBoxIndex = computed(() =>
+    this.direction() === 'right' ? 0 : this.segmentBoxes().length - 1,
+  );
+
   protected readonly firstSegmentShiftPx = computed(() => {
     if (this.segments().length < 2) return 0;
-    return this.segmentBoxes()[0].width - FIRST_SEGMENT_BASELINE_WIDTH_PX;
+    return this.segmentBoxes()[this.startBoxIndex()].width - FIRST_SEGMENT_BASELINE_WIDTH_PX;
   });
 
   // Подложка и её граница не просто сдвигаются — растягиваются (левый край,
@@ -271,20 +294,30 @@ export class ListItem {
   // «Крючок» границы (borderCurlTransform()) — просто сдвигается вместе, он
   // не часть растягиваемой прямой, а фиксированный декор на её конце.
   protected readonly subplateBodyTransform = computed(() =>
-    anchoredScale(SUBPLATE_ANCHOR_X, (SUBPLATE_BODY_WIDTH + this.firstSegmentShiftPx()) / SUBPLATE_BODY_WIDTH),
+    anchoredScale(
+      SUBPLATE_ANCHOR_X,
+      (SUBPLATE_BODY_WIDTH + this.firstSegmentShiftPx()) / SUBPLATE_BODY_WIDTH,
+    ),
   );
   protected readonly borderStraightTransform = computed(() =>
-    anchoredScale(BORDER_ANCHOR_X, (BORDER_STRAIGHT_WIDTH + this.firstSegmentShiftPx()) / BORDER_STRAIGHT_WIDTH),
+    anchoredScale(
+      BORDER_ANCHOR_X,
+      (BORDER_STRAIGHT_WIDTH + this.firstSegmentShiftPx()) / BORDER_STRAIGHT_WIDTH,
+    ),
   );
-  protected readonly borderCurlTransform = computed(() => `translate(${this.firstSegmentShiftPx()} 0)`);
+  protected readonly borderCurlTransform = computed(
+    () => `translate(${this.firstSegmentShiftPx()} 0)`,
+  );
 
-  // Зеркало firstSegmentShiftPx() — но от бокса ПОСЛЕДНЕГО сегмента, сам
-  // сдвиг декора при использовании направлен влево (отрицательный x),
+  // Зеркало firstSegmentShiftPx() — тот же принцип с endBoxIndex() (по
+  // умолчанию последний бокс, при direction: 'right' — первый, т.к. ЭТА
+  // подложка после зеркалирования экранно уезжает под сегмент с индексом 0).
+  // Сам сдвиг декора при использовании направлен влево (отрицательный x),
   // см. rightBorderHookTransform() ниже.
   protected readonly lastSegmentShiftPx = computed(() => {
     const boxes = this.segmentBoxes();
     if (boxes.length < 2) return 0;
-    return boxes[boxes.length - 1].width - LAST_SEGMENT_BASELINE_WIDTH_PX;
+    return boxes[this.endBoxIndex()].width - LAST_SEGMENT_BASELINE_WIDTH_PX;
   });
 
   // Правая подложка/граница растягиваются влево (анкор — фиксированный правый
@@ -292,7 +325,10 @@ export class ListItem {
   // borderStraightTransform()); «крючок» границы — просто сдвигается влево
   // вместе (rightBorderHookTransform()).
   protected readonly rightSubplateTransform = computed(() =>
-    anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, (RIGHT_SUBPLATE_WIDTH + this.lastSegmentShiftPx()) / RIGHT_SUBPLATE_WIDTH),
+    anchoredScale(
+      RIGHT_SUBPLATE_ANCHOR_X,
+      (RIGHT_SUBPLATE_WIDTH + this.lastSegmentShiftPx()) / RIGHT_SUBPLATE_WIDTH,
+    ),
   );
   protected readonly rightBorderStraightTransform = computed(() =>
     anchoredScale(
@@ -300,7 +336,9 @@ export class ListItem {
       (RIGHT_BORDER_STRAIGHT_WIDTH + this.lastSegmentShiftPx()) / RIGHT_BORDER_STRAIGHT_WIDTH,
     ),
   );
-  protected readonly rightBorderHookTransform = computed(() => `translate(${-this.lastSegmentShiftPx()} 0)`);
+  protected readonly rightBorderHookTransform = computed(
+    () => `translate(${-this.lastSegmentShiftPx()} 0)`,
+  );
 
   // Роль сегмента определяет, какая у него подложка: 1-й (при >=2 сегментах)
   // — «начальная» (стрелка, subplateBodyTransform() и т.п. выше), последний
@@ -317,7 +355,14 @@ export class ListItem {
     const count = this.segments().length;
     if (count === 1) return this.segmentBoxes();
     if (count < 3) return [];
-    return this.segmentBoxes().slice(1, -1);
+    const boxes = this.segmentBoxes().slice(1, -1);
+    if (this.direction() !== 'right') return boxes;
+    // Как и у dividerInstances() выше — эти подложки декоративные (зеркалятся
+    // вместе с остальным декором), а не текстовые, поэтому при direction:
+    // 'right' их бокс переносится в зеркальную позицию (ROW_WIDTH_PX - правый
+    // край = новый левый край), иначе они физически рисуются не под своим
+    // сегментом текста, а под соседним.
+    return boxes.map((box) => ({ x: ROW_WIDTH_PX - box.x - box.width, width: box.width }));
   });
   // paint6_radial задан в userSpaceOnUse со своим gradientTransform (не
   // objectBoundingBox) — она не следует за x/width рекста автоматически,

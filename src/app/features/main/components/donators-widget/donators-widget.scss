@@ -1,0 +1,20 @@
+.donators-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// margin-left компенсирует $content-offset (64px) слота mainCarouselSlide1BottomLeft
+// в MainCarousel — список прижат к левому краю слайда, заголовок остаётся на месте.
+.donators-widget__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-left: -64px;
+}
+
+.donators-widget__empty {
+  color: #f9f9f9;
+  opacity: 0.7;
+}
