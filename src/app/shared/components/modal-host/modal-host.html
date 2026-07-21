@@ -1,0 +1,25 @@
+@if (modalService.activeComponent(); as component) {
+  <div
+    class="modal-host__backdrop"
+    role="button"
+    tabindex="0"
+    (click)="onBackdropClick($event)"
+    (keydown.enter)="close()"
+    (keydown.space)="close()"
+  >
+    <div class="modal-host__panel" role="dialog">
+      <button
+        type="button"
+        class="modal-host__close"
+        aria-label="Закрыть окно"
+        (click)="close()"
+      >
+        &times;
+      </button>
+      <ng-container
+        [ngComponentOutlet]="component"
+        [ngComponentOutletInputs]="{ data: modalService.activeData() }"
+      />
+    </div>
+  </div>
+}
