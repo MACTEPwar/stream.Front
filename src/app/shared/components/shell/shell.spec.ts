@@ -19,7 +19,16 @@ describe('Shell', () => {
     });
   });
 
-  it('рендерит nav-ссылки на главную/новости/турниры', () => {
+  it('рендерит лого «Belochka» картинкой', () => {
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const logoImg = (fixture.nativeElement as HTMLElement).querySelector('.shell__logo img');
+    expect(logoImg?.getAttribute('src')).toBe('/images/Logo.png');
+    expect(logoImg?.getAttribute('alt')).toBe('Belochka');
+  });
+
+  it('рендерит nav-ссылки на все 5 разделов сайта', () => {
     const fixture = TestBed.createComponent(ShellHost);
     fixture.detectChanges();
 
@@ -27,15 +36,21 @@ describe('Shell', () => {
     const links = Array.from(el.querySelectorAll('.shell__nav-link')).map((a) =>
       a.textContent?.trim(),
     );
-    expect(links).toEqual(['Главная', 'Новости', 'Турниры']);
+    expect(links).toEqual(['Главная', 'Новости', 'Турниры', 'Видео', 'О себе']);
   });
 
-  it('рендерит гостевую кнопку входа без auth-состояния', () => {
+  it('рендерит кнопку входа (secondary Button, без auth-состояния) и кнопку поддержки (primary Button с иконкой)', () => {
     const fixture = TestBed.createComponent(ShellHost);
     fixture.detectChanges();
 
-    const button = (fixture.nativeElement as HTMLElement).querySelector('.shell__auth-button');
-    expect(button?.textContent?.trim()).toBe('Войти');
+    const el: HTMLElement = fixture.nativeElement;
+
+    const authButton = el.querySelector('.shell__auth-button');
+    expect(authButton?.textContent?.trim()).toContain('Войти');
+
+    const supportButton = el.querySelector('.shell__support-button');
+    expect(supportButton?.textContent?.trim()).toContain('Поддержать');
+    expect(supportButton?.querySelector('img[icon]')).not.toBeNull();
   });
 
   it('рендерит спроецированный контент внутри shell__content', () => {

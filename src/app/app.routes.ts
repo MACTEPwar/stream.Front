@@ -21,6 +21,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'video',
+    loadComponent: () => import('./features/video/pages/video-page/video-page').then((m) => m.VideoPage),
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./features/about/pages/about-page/about-page').then((m) => m.AboutPage),
+  },
+  {
     path: 'kit',
     loadComponent: () => import('./features/kit/pages/kit-page/kit-page').then((m) => m.KitPage),
   },

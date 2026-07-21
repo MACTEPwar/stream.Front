@@ -1,6 +1,9 @@
 <div class="shell">
   <header class="shell__header">
-    <a routerLink="/main" class="shell__logo">steramer.io</a>
+    <a routerLink="/main" class="shell__logo">
+      <img src="/images/Logo.png" alt="Belochka" />
+    </a>
+    <span class="shell__divider" aria-hidden="true">|</span>
 
     <nav class="shell__nav">
       @for (item of navItems; track item.path; let i = $index) {
@@ -19,7 +22,10 @@
       }
     </nav>
 
-    <button type="button" class="shell__auth-button">Войти</button>
+    <app-button text="Поддержать" [width]="'content'" class="shell__support-button">
+      <img icon src="/icons/button-support-icon.svg" alt="" />
+    </app-button>
+    <app-button text="Войти" type="secondary" [width]="'content'" class="shell__auth-button" />
   </header>
 
   <main class="shell__content">

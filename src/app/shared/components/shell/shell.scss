@@ -1,4 +1,5 @@
 @use 'variables' as vars;
+@use 'mixins';
 
 // Минимальная базовая стилизация — точный вид main-nav подгонят,
 // когда Figma-контент компонента станет доступен (см. shell.ts).
@@ -12,7 +13,8 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 12px 24px;
+  // Горизонтальные отступы 48px — по прямому запросу пользователя.
+  padding: 12px 48px;
   // Прозрачный фон — по макету главной страницы (stream.Front#28) меню лежит
   // поверх полноэкранной карусели, а не на сплошной подложке; применяется
   // глобально, т.к. Shell подключён один раз на все страницы.
@@ -23,9 +25,18 @@
 }
 
 .shell__logo {
-  font-family: vars.$font-family-montserrat;
-  font-size: vars.$font-size-22;
-  font-weight: vars.$font-weight-700;
+  display: block;
+
+  img {
+    display: block;
+    height: 40px;
+    width: auto;
+  }
+}
+
+.shell__divider {
+  color: vars.$color-ffffff;
+  opacity: 0.4;
 }
 
 .shell__nav {
@@ -35,9 +46,15 @@
 }
 
 .shell__nav-link {
+  @include mixins.mainNav;
   position: relative;
-  font-family: vars.$font-family-nunito-sans;
-  font-size: vars.$font-size-16;
+  color: inherit;
+
+  // По прямому запросу пользователя — тот же золотистый, что у
+  // NavActiveIndicator (#F7ECB3), а не отдельный hover-токен.
+  &:hover {
+    color: vars.$color-f7ecb3;
+  }
 }
 
 // inline-block, не inline — ResizeObserver не измеряет строчные элементы
@@ -56,16 +73,11 @@
   transform: translateX(-50%);
 }
 
-.shell__auth-button {
-  background: transparent;
-  border: 1px solid vars.$color-ffffff;
-  border-radius: 4px;
-  padding: 8px 16px;
-  color: inherit;
-  font-family: vars.$font-family-nunito-sans;
-  font-size: vars.$font-size-14;
-  cursor: pointer;
-}
+// Кнопки входа/поддержки — общий переиспользуемый Button (stream.Front#39),
+// без собственных стилей: по прямому запросу пользователя любая кнопка в
+// проекте использует этот компонент, а не строится с нуля. `.shell__nav`
+// уже имеет `margin-right: auto`, поэтому обе кнопки естественно уходят
+// вправо общей группой (обычный `gap` шапки между ними).
 
 .shell__content {
   flex: 1;
