@@ -89,4 +89,15 @@
       <app-list [items]="scheduleListItems" [settings]="{ gap: 8 }" />
     </div>
   </section>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">
+      loading() (stream.Front#52) — тот же декор ListItem, что и в обычном списке, только без текста
+      (loaderSettings().itemsCount плейсхолдеров); у каждой строки своя гифка-бегун, бежит горизонтально до конца
+      строки и обратно, бесконечно
+    </h2>
+    <div class="kit-page__list-demo">
+      <app-list [items]="[]" [settings]="{ gap: 8 }" [loading]="true" [loaderSettings]="{ itemsCount: 5 }" />
+    </div>
+  </section>
 </div>

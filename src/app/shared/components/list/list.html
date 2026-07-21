@@ -1,3 +1,19 @@
-@for (item of items(); track item.id) {
-  <app-list-item [segments]="item.segments" [dividers]="item.dividers ?? []" [direction]="item.direction ?? 'left'" />
+@if (loading()) {
+  @for (i of loaderPlaceholders(); track i) {
+    <div class="list__loader-row">
+      <app-list-item [segments]="loaderSegments" [dividers]="[]" direction="left" />
+      <img
+        class="list__runner"
+        src="/images/list-loader-runner.gif"
+        alt=""
+        aria-hidden="true"
+        [style.left.%]="runnerLeftPercent(i)"
+        [style.transform]="runnerTransform(i)"
+      />
+    </div>
+  }
+} @else {
+  @for (item of items(); track item.id) {
+    <app-list-item [segments]="item.segments" [dividers]="item.dividers ?? []" [direction]="item.direction ?? 'left'" />
+  }
 }
