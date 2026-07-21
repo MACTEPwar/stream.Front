@@ -11,3 +11,15 @@
   line-height: vars.$line-height-36;
   letter-spacing: vars.$letter-spacing-8;
 }
+
+// Figma text-стиль «Main Nav» (stream.Front#48) — пункты меню в Shell.
+// Капс — по прямому запросу пользователя (`text-transform`, не хардкод
+// заглавных букв в самих лейблах `navItems`).
+@mixin mainNav {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-500;
+  line-height: vars.$line-height-24;
+  letter-spacing: vars.$letter-spacing-8;
+  text-transform: uppercase;
+}

@@ -1,6 +1,7 @@
 import { Component, ElementRef, effect, signal, viewChildren } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { Button } from '../button/button';
 import { NavActiveIndicator } from '../nav-active-indicator/nav-active-indicator';
 
 /** Совпадает с дефолтом `NavActiveIndicator.width()` — до первого измерения ResizeObserver'ом (или в jsdom-тестах). */
@@ -38,7 +39,7 @@ interface NavItem {
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, NavActiveIndicator],
+  imports: [RouterLink, RouterLinkActive, NavActiveIndicator, Button],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
@@ -47,6 +48,8 @@ export class Shell {
     { path: '/main', label: 'Главная', exact: true },
     { path: '/news', label: 'Новости', exact: false },
     { path: '/tournaments', label: 'Турниры', exact: false },
+    { path: '/video', label: 'Видео', exact: false },
+    { path: '/about', label: 'О себе', exact: false },
   ];
 
   private readonly navLinkTextEls = viewChildren<ElementRef<HTMLSpanElement>>('navLinkText');
