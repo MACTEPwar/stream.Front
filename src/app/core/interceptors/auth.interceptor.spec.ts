@@ -58,6 +58,21 @@ describe('authInterceptor', () => {
     expect(TestBed.inject(NotificationService).notifications()).toHaveLength(0);
   });
 
+  it('409 от /auth/register не триггерит logout() — ошибка пробрасывается вызывающему коду', () => {
+    let receivedError: HttpErrorResponse | undefined;
+
+    http.post(`${environment.apiUrl}/auth/register`, {}).subscribe({
+      error: (error) => (receivedError = error),
+    });
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/auth/register`)
+      .flush('Conflict', { status: 409, statusText: 'Conflict' });
+
+    httpMock.expectNone(`${environment.apiUrl}/auth/logout`);
+    expect(receivedError?.status).toBe(409);
+  });
+
   it('401 от /auth/logout не триггерит повторный logout() (защита от цикла)', () => {
     http.post(`${environment.apiUrl}/auth/logout`, {}).subscribe({ error: () => undefined });
 

@@ -47,6 +47,38 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(true);
   });
 
+  it('register() бьёт в POST /auth/register с withCredentials и обновляет currentUser', () => {
+    service.register('streamer', 'secret').subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/register`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.withCredentials).toBe(true);
+    expect(req.request.body).toEqual({ login: 'streamer', password: 'secret' });
+    req.flush(mockUser);
+
+    expect(service.currentUser()).toEqual(mockUser);
+    expect(service.isAuthenticated()).toBe(true);
+  });
+
+  it('register() эмиттит ошибку и не меняет currentUser при конфликте логина (409)', () => {
+    service.register('streamer', 'secret').subscribe({ error: () => undefined });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/register`);
+    req.flush(
+      {
+        statusCode: 409,
+        message: 'Login already taken',
+        error: 'Conflict',
+        timestamp: new Date().toISOString(),
+        path: '/auth/register',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(service.currentUser()).toBeNull();
+    expect(service.isAuthenticated()).toBe(false);
+  });
+
   it('loginWithGoogle() бьёт в POST /auth/google с withCredentials и обновляет currentUser', () => {
     service.loginWithGoogle('google-id-token').subscribe();
 
