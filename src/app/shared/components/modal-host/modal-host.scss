@@ -1,0 +1,37 @@
+@use 'variables' as vars;
+
+// Минимальная базовая стилизация — финальный вид подгонят по макапам.
+.modal-host__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-host__panel {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px;
+  border-radius: 8px;
+  background: vars.$color-1e00b2;
+  color: vars.$color-ffffff;
+  font-family: vars.$font-family-nunito-sans;
+}
+
+.modal-host__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: vars.$font-size-18;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
