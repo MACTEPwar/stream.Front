@@ -31,12 +31,16 @@ describe('DonatorsWidget', () => {
     httpMock.verify();
   });
 
-  it('пока запрос не завершён — показывает 5 app-skeleton вместо списка', async () => {
+  it('пока запрос не завершён — показывает встроенный скелетон-прелоадер List (5 строк без текста)', async () => {
     await fixture.whenStable();
 
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelectorAll('app-skeleton')).toHaveLength(5);
-    expect(el.querySelector('app-list')).toBeNull();
+    const list = el.querySelector('app-list');
+    expect(list).not.toBeNull();
+    const rows = el.querySelectorAll('app-list-item');
+    expect(rows).toHaveLength(5);
+    rows.forEach((row) => expect(row.querySelector('.day-row__segment')?.textContent?.trim()).toBe(''));
+    expect(el.querySelectorAll('.list__runner')).toHaveLength(5);
 
     httpMock.expectOne(`${environment.apiUrl}/donators/top`).flush(mockDonators);
   });

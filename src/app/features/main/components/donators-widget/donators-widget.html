@@ -1,17 +1,17 @@
 <div class="donators-widget">
   <app-section-title text="Топ донатеров" />
 
-  @if (isLoading()) {
-    <div class="donators-widget__list">
-      @for (row of skeletonRows; track row) {
-        <app-skeleton height="56px" radius="12px" />
-      }
-    </div>
-  } @else if (hasError()) {
+  @if (hasError()) {
     <app-error-message />
-  } @else if (items().length === 0) {
+  } @else if (!isLoading() && items().length === 0) {
     <p class="donators-widget__empty">Пока никто не поддержал стрим</p>
   } @else {
-    <app-list class="donators-widget__list" [items]="items()" [settings]="{ gap: 8 }" />
+    <app-list
+      class="donators-widget__list"
+      [items]="items()"
+      [settings]="{ gap: 8 }"
+      [loading]="isLoading()"
+      [loaderSettings]="{ itemsCount: skeletonRowsCount }"
+    />
   }
 </div>
