@@ -3,7 +3,10 @@
     <a routerLink="/" class="shell__logo">steramer.io</a>
 
     <nav class="shell__nav">
-      <a routerLink="/" class="shell__nav-link">Главная</a>
+      <a routerLink="/" class="shell__nav-link shell__nav-link--active">
+        Главная
+        <app-nav-active-indicator class="shell__nav-link-indicator" />
+      </a>
       <a routerLink="/news" class="shell__nav-link">Новости</a>
       <a routerLink="/tournaments" class="shell__nav-link">Турниры</a>
     </nav>

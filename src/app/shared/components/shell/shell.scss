@@ -35,8 +35,18 @@
 }
 
 .shell__nav-link {
+  position: relative;
   font-family: vars.$font-family-nunito-sans;
   font-size: vars.$font-size-16;
+}
+
+// Подложка активного пункта (NavActiveIndicator, stream.Front#49) — по
+// центру под текстом, вне потока (position: relative у самой ссылки).
+.shell__nav-link-indicator {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .shell__auth-button {
