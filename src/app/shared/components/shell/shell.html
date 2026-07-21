@@ -1,11 +1,22 @@
 <div class="shell">
   <header class="shell__header">
-    <a routerLink="/" class="shell__logo">steramer.io</a>
+    <a routerLink="/main" class="shell__logo">steramer.io</a>
 
     <nav class="shell__nav">
-      <a routerLink="/" class="shell__nav-link">Главная</a>
-      <a routerLink="/news" class="shell__nav-link">Новости</a>
-      <a routerLink="/tournaments" class="shell__nav-link">Турниры</a>
+      @for (item of navItems; track item.path; let i = $index) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="shell__nav-link--active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          (isActiveChange)="onNavLinkActiveChange(i, $event)"
+          class="shell__nav-link"
+        >
+          <span #navLinkText class="shell__nav-link-text">{{ item.label }}</span>
+          @if (activeIndex() === i) {
+            <app-nav-active-indicator class="shell__nav-link-indicator" [width]="navIndicatorWidth()" />
+          }
+        </a>
+      }
     </nav>
 
     <button type="button" class="shell__auth-button">Войти</button>
