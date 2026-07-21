@@ -138,11 +138,11 @@ $transition-duration: 0.4s;
 }
 
 .main-carousel__arrow--prev {
-  left: $content-offset;
+  left: 0;
 }
 
 .main-carousel__arrow--next {
-  right: $content-offset;
+  right: 0;
 }
 
 .main-carousel__arrow--next img {
