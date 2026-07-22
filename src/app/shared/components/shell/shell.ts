@@ -1,6 +1,8 @@
-import { Component, ElementRef, effect, signal, viewChildren } from '@angular/core';
+import { Component, ElementRef, effect, inject, signal, viewChildren } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { ModalService } from '@core/services/modal.service';
+import { LoginModal } from '@features/auth/components/login-modal/login-modal';
 import { Button } from '../button/button';
 import { NavActiveIndicator } from '../nav-active-indicator/nav-active-indicator';
 
@@ -22,8 +24,8 @@ interface NavItem {
  * турниры, судя по составу docs/figma/*.json), требуют подтверждения,
  * когда лимит Figma API снимется и main-nav получится прочитать целиком.
  *
- * Кнопка входа — статичный гостевой вид, без привязки к AuthService
- * (`stream.Front#4`) — привязка отложена в отдельную follow-up задачу.
+ * Кнопка входа (`stream.Front#60`) открывает `LoginModal` через `ModalService`
+ * (`ModalHost` подключён в `app.html`, рендерит активный компонент модалки).
  *
  * `NavActiveIndicator` (`stream.Front#49`) — декоративная подложка под
  * текстом активного пункта меню, привязана к реальному роуту через
@@ -44,6 +46,8 @@ interface NavItem {
   styleUrl: './shell.scss',
 })
 export class Shell {
+  private readonly modalService = inject(ModalService);
+
   protected readonly navItems: readonly NavItem[] = [
     { path: '/main', label: 'Главная', exact: true },
     { path: '/news', label: 'Новости', exact: false },
@@ -58,6 +62,10 @@ export class Shell {
 
   protected onNavLinkActiveChange(index: number, isActive: boolean): void {
     if (isActive) this.activeIndex.set(index);
+  }
+
+  protected onLoginClick(): void {
+    this.modalService.open(LoginModal);
   }
 
   constructor() {

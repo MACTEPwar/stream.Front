@@ -1,0 +1,66 @@
+<div class="text-field">
+  @if (label(); as labelText) {
+    <label class="text-field__label" [for]="uid">
+      {{ labelText }}
+      @if (required()) {
+        <span class="text-field__required">*</span>
+      }
+    </label>
+  }
+
+  <div class="text-field__control" [class.text-field__control--invalid]="errorText()">
+    <span class="text-field__prefix-icon" aria-hidden="true">
+      @if (type() === 'password') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.5" />
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5" />
+          <path
+            d="M4.5 20c1.2-3.5 4-5.5 7.5-5.5s6.3 2 7.5 5.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+      }
+    </span>
+
+    <input
+      [id]="uid"
+      class="text-field__input"
+      [type]="inputType()"
+      [placeholder]="placeholder() ?? ''"
+      [value]="value()"
+      (input)="onInput($any($event.target).value)"
+    />
+
+    @if (type() === 'password') {
+      <button
+        type="button"
+        class="text-field__toggle"
+        [attr.aria-label]="toggleButtonLabel()"
+        (click)="togglePasswordVisibility()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+          />
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" />
+          @if (!isPasswordVisible()) {
+            <line x1="2" y1="22" x2="22" y2="2" stroke="currentColor" stroke-width="1.5" />
+          }
+        </svg>
+      </button>
+    }
+  </div>
+
+  @if (errorText(); as error) {
+    <span class="text-field__error">{{ error }}</span>
+  }
+</div>

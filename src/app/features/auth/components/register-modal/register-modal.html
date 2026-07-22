@@ -1,0 +1,43 @@
+<app-auth-modal-shell
+  title="Регистрация"
+  footerText="Уже есть аккаунт?"
+  footerLinkText="Вход"
+  (footerLinkClick)="onLoginLinkClick()"
+>
+  <form class="register-modal__form" (submit)="$event.preventDefault(); onSubmit()">
+    <app-text-field label="Логин" [required]="true" placeholder="Введите логин" [(value)]="login" />
+    <app-text-field
+      label="Пароль"
+      type="password"
+      [required]="true"
+      placeholder="Введите пароль"
+      [(value)]="password"
+    />
+    <app-text-field
+      label="Подтвердить пароль"
+      type="password"
+      [required]="true"
+      placeholder="Повторите пароль"
+      [(value)]="confirmPassword"
+    />
+
+    <app-button text="Подтвердить" type="primary" [width]="'parent'" (click)="onSubmit()" />
+
+    <div class="register-modal__social-section">
+      <div class="register-modal__divider">
+        <span class="register-modal__divider-line"></span>
+        <span class="register-modal__divider-text">авторизация с помощью</span>
+        <span class="register-modal__divider-line"></span>
+      </div>
+
+      <div class="register-modal__social">
+        <button type="button" class="register-modal__social-button" (click)="onGoogleClick()">
+          <img src="/icons/google_btn.svg" alt="Google" />
+        </button>
+        <button type="button" class="register-modal__social-button" (click)="onFacebookClick()">
+          <img src="/icons/facebook_btn.svg" alt="Facebook" />
+        </button>
+      </div>
+    </div>
+  </form>
+</app-auth-modal-shell>

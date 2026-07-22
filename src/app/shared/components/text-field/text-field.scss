@@ -1,0 +1,118 @@
+@use 'variables' as vars;
+
+.text-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+// Стиль "Body" из Figma-текстовых стилей (Nunito Sans Regular 16,
+// line-height 24, letter-spacing 3%); цвет — через $color-black
+// (алиас $color-1e1e1e, по прямому запросу пользователя), не литерал.
+.text-field__label {
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-24;
+  letter-spacing: vars.$letter-spacing-3;
+  color: vars.$color-black;
+}
+
+.text-field__required {
+  color: vars.$color-cf1717;
+}
+
+// public/icons/User_input.svg (референс, прислан пользователем) — общая
+// концепция для ВСЕХ инпутов на auth-формах: бордер `$color-e4e4e4`,
+// иконка-префикс в отдельном 40×40 компартменте со своим разделителем
+// справа (та же техника скруглённого левого угла + прямого правого края,
+// что в `google_btn.svg`/`facebook_btn.svg`), сама иконка — `$color-black`
+// на 50% непрозрачности.
+// Высота контрола зафиксирована = ширине иконки-компартмента (40px,
+// см. User_input.svg — компартмент там 39.5×39.5, ровно во всю высоту
+// поля) — иначе .text-field__prefix-icon растягивался бы под фактическую
+// высоту инпута (которая больше 40px из-за паддингов) и получался не
+// квадрат, а вытянутый прямоугольник.
+.text-field__control {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: 40px;
+  border: 1px solid vars.$color-e4e4e4;
+  border-radius: 5px;
+  background: vars.$color-ffffff;
+  overflow: hidden;
+
+  &--invalid {
+    border-color: vars.$color-cf1717;
+  }
+}
+
+.text-field__prefix-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid vars.$color-e4e4e4;
+  color: vars.$color-black;
+  opacity: 0.5;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.text-field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  padding: 0 12px;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-16;
+  color: vars.$color-1e1e1e;
+
+  &::placeholder {
+    color: vars.$color-b2b2b2;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.text-field__toggle {
+  flex: 0 0 auto;
+  // .text-field__control — align-items: stretch; сам toggle задаёт явную
+  // height:24px (меньше строки в 40px), поэтому без align-self он не
+  // растягивается, но и не центрируется — падает к верхнему краю (spec:
+  // stretch не применяется к элементу с явным cross-size, откат на flex-start).
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: vars.$color-b2b2b2;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.text-field__error {
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  color: vars.$color-cf1717;
+}

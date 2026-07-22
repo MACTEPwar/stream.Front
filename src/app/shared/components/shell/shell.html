@@ -25,7 +25,13 @@
     <app-button text="Поддержать" [width]="'content'" class="shell__support-button">
       <img icon src="/icons/button-support-icon.svg" alt="" />
     </app-button>
-    <app-button text="Войти" type="secondary" [width]="'content'" class="shell__auth-button" />
+    <app-button
+      text="Войти"
+      type="secondary"
+      [width]="'content'"
+      class="shell__auth-button"
+      (click)="onLoginClick()"
+    />
   </header>
 
   <main class="shell__content">

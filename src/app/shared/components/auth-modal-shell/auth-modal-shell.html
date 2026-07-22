@@ -1,0 +1,26 @@
+<div class="auth-modal-shell">
+  <div class="auth-modal-shell__image">
+    <img src="/images/login_bg.png" alt="" />
+  </div>
+
+  <div class="auth-modal-shell__form">
+    <div class="auth-modal-shell__header">
+      <h2 class="auth-modal-shell__title">{{ title() }}</h2>
+
+      @if (footerText()) {
+        <p class="auth-modal-shell__footer">
+          <span class="auth-modal-shell__footer-text">{{ footerText() }}</span>
+          <button
+            type="button"
+            class="auth-modal-shell__footer-link"
+            (click)="footerLinkClick.emit()"
+          >
+            {{ footerLinkText() }}
+          </button>
+        </p>
+      }
+    </div>
+
+    <ng-content />
+  </div>
+</div>

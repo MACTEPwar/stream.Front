@@ -1,6 +1,5 @@
 @use 'variables' as vars;
 
-// Минимальная базовая стилизация — финальный вид подгонят по макапам.
 .modal-host__backdrop {
   position: fixed;
   inset: 0;
@@ -11,27 +10,35 @@
   background: rgba(0, 0, 0, 0.6);
 }
 
+// Рамку/фон/паддинг задаёт сам контент (см. AuthModalShell) — панель только
+// клипует углы под border-radius и накидывает тень (designTokens.effects.shadow-4-4
+// из docs/figma/registration-structure.json).
 .modal-host__panel {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
   overflow: auto;
-  padding: 24px;
-  border-radius: 8px;
-  background: vars.$color-1e00b2;
-  color: vars.$color-ffffff;
+  border-radius: 12px;
+  background: vars.$color-ffffff;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
   font-family: vars.$font-family-nunito-sans;
 }
 
 .modal-host__close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+  display: block;
   background: transparent;
   border: none;
-  color: inherit;
-  font-size: vars.$font-size-18;
-  line-height: 1;
   cursor: pointer;
   padding: 0;
+  line-height: 0;
+
+  img {
+    display: block;
+    width: 24px;
+    height: 24px;
+  }
 }
