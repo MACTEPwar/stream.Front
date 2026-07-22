@@ -22,6 +22,13 @@ $color-47be61: #47be61;
 $color-00001c: #00001c;
 $color-c61718: #c61718;
 $color-9119e6: #9119e6;
+// registration/login-модалка (docs/figma/registration-structure.json, designTokens.colors) —
+// цвет ссылок ("Вход"/"Регистрация") и фон кнопки Facebook в OAuth-заглушках.
+$color-003399: #003399;
+// Семантический алиас на $color-1e1e1e — единственное исключение из
+// "без выдуманных семантических ролей" выше, по прямому запросу пользователя
+// (лэйблы инпутов auth-формы, stream.Front#58/#59).
+$color-black: $color-1e1e1e;
 // Ниже — не из designTokens JSON-экспорта, а из скриншота Figma-пикера
 // (радиальный градиент фона главной страницы / day_schedule, stream.Front#28).
 $color-1e00b2: #1e00b2;
@@ -48,4 +55,5 @@ $font-weight-700: 700;
 $line-height-24: 24px;
 $line-height-36: 36px;
 
+$letter-spacing-3: 0.03em;
 $letter-spacing-8: 0.08em;

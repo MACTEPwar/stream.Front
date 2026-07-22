@@ -1,0 +1,64 @@
+@use 'variables' as vars;
+
+// flex:1 — форма растягивается на всю оставшуюся высоту панели (640px,
+// см. AuthModalShell), иначе .register-modal__social-section не от чего
+// было бы отталкивать margin-top: auto вниз.
+.register-modal__form {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Прижат к низу формы (по прямому запросу пользователя) — разделитель +
+// OAuth-кнопки держатся вместе как один блок.
+.register-modal__social-section {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.register-modal__divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.register-modal__divider-line {
+  flex: 1 1 auto;
+  height: 1px;
+  background: vars.$color-1e1e1e;
+}
+
+.register-modal__divider-text {
+  flex: 0 0 auto;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-600;
+  color: vars.$color-1e1e1e;
+  white-space: nowrap;
+}
+
+// Кнопки — готовые SVG (public/icons/google_btn.svg/facebook_btn.svg,
+// присланы пользователем как референс 1:1), фон/иконка/текст уже внутри
+// самого файла — обёртка тут только кликабельная область.
+.register-modal__social {
+  display: flex;
+  gap: 16px;
+}
+
+.register-modal__social-button {
+  display: block;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+
+  img {
+    display: block;
+    width: 182px;
+    height: 40px;
+  }
+}

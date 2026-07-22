@@ -5,7 +5,10 @@
   position: fixed;
   top: 16px;
   right: 16px;
-  z-index: 1000;
+  // Выше ModalHost (z-index: 2000, modal-host.scss) — тосты должны быть
+  // видны поверх модалок (backdrop/тень иначе перекрывали их), по прямому
+  // запросу пользователя.
+  z-index: 2100;
   display: flex;
   flex-direction: column;
   gap: 8px;

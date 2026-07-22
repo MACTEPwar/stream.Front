@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 
+import { ModalService } from '@core/services/modal.service';
+import { LoginModal } from '@features/auth/components/login-modal/login-modal';
 import { Shell } from './shell';
 
 @Component({
@@ -51,6 +53,19 @@ describe('Shell', () => {
     const supportButton = el.querySelector('.shell__support-button');
     expect(supportButton?.textContent?.trim()).toContain('Поддержать');
     expect(supportButton?.querySelector('img[icon]')).not.toBeNull();
+  });
+
+  it('клик по кнопке «Войти» открывает LoginModal через ModalService', () => {
+    const modalService = TestBed.inject(ModalService);
+    const openSpy = vi.spyOn(modalService, 'open');
+
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    el.querySelector<HTMLButtonElement>('.shell__auth-button button.button')?.click();
+
+    expect(openSpy).toHaveBeenCalledWith(LoginModal);
   });
 
   it('рендерит спроецированный контент внутри shell__content', () => {
