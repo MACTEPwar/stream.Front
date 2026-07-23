@@ -1,0 +1,28 @@
+<div class="add-social-link-modal">
+  <h2 class="add-social-link-modal__title">Добавить соц. сеть</h2>
+
+  <form class="add-social-link-modal__form" (submit)="$event.preventDefault(); onSubmit()">
+    <div class="add-social-link-modal__field">
+      <label class="add-social-link-modal__label" for="social-link-type">Тип</label>
+      <select
+        id="social-link-type"
+        class="add-social-link-modal__select"
+        [value]="type()"
+        #typeSelect
+        (change)="onTypeChange(typeSelect.value)"
+      >
+        <option value="" disabled>Выберите тип</option>
+        @for (entry of typeLabels; track entry[0]) {
+          <option [value]="entry[0]">{{ entry[1] }}</option>
+        }
+      </select>
+    </div>
+
+    <app-text-field label="Значение" [required]="true" placeholder="Введите значение" [(value)]="value" />
+
+    <div class="add-social-link-modal__actions">
+      <app-button text="Добавить" type="primary" [width]="'content'" (click)="onSubmit()" />
+      <app-button text="Отмена" type="secondary" [width]="'content'" (click)="onCancel()" />
+    </div>
+  </form>
+</div>

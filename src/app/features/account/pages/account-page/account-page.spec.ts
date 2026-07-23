@@ -25,6 +25,7 @@ describe('AccountPage', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
     httpMock.expectOne(`${environment.apiUrl}/profile/game-accounts`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/profile/social-links`).flush([]);
 
     const el: HTMLElement = fixture.nativeElement;
     const sections = el.querySelectorAll('.account-page__section');
@@ -35,16 +36,14 @@ describe('AccountPage', () => {
 
     expect(el.querySelector('app-profile-section')).not.toBeNull();
     expect(el.querySelector('app-game-accounts-section')).not.toBeNull();
-
-    const placeholders = el.querySelectorAll('.account-page__placeholder');
-    expect(placeholders.length).toBe(1);
-    placeholders.forEach((p) => expect(p.textContent).toContain('Здесь будет'));
+    expect(el.querySelector('app-social-links-section')).not.toBeNull();
   });
 
   it('рендерит кнопку «Выйти»', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
     httpMock.expectOne(`${environment.apiUrl}/profile/game-accounts`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/profile/social-links`).flush([]);
 
     const el: HTMLElement = fixture.nativeElement;
     const logoutButton = el.querySelector('.account-page__logout-button');
@@ -58,6 +57,7 @@ describe('AccountPage', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
     httpMock.expectOne(`${environment.apiUrl}/profile/game-accounts`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/profile/social-links`).flush([]);
 
     const el: HTMLElement = fixture.nativeElement;
     el.querySelector<HTMLButtonElement>('.account-page__logout-button button.button')?.click();

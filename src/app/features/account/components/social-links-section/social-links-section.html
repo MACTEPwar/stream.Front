@@ -1,0 +1,60 @@
+<div class="social-links-section">
+  @if (hasError()) {
+    <app-error-message />
+  } @else if (isLoading()) {
+    <div class="social-links-section__list">
+      @for (i of [1, 2, 3]; track i) {
+        <app-skeleton height="72px" radius="8px" />
+      }
+    </div>
+  } @else {
+    @if (links().length === 0) {
+      <p class="social-links-section__empty">Соц. сети ещё не добавлены.</p>
+    } @else {
+      <div class="social-links-section__list">
+        @for (link of links(); track link.id) {
+          <div class="social-links-section__card">
+            @if (editingId() === link.id) {
+              <select
+                class="social-links-section__select"
+                [value]="editType()"
+                #editTypeSelect
+                (change)="onEditTypeChange(editTypeSelect.value)"
+              >
+                <option value="" disabled>Выберите тип</option>
+                @for (entry of typeLabels; track entry[0]) {
+                  <option [value]="entry[0]">{{ entry[1] }}</option>
+                }
+              </select>
+              <app-text-field label="Значение" placeholder="Введите значение" [(value)]="editValue" />
+              <div class="social-links-section__card-actions">
+                <app-button
+                  text="Сохранить"
+                  type="primary"
+                  [width]="'content'"
+                  (click)="onEditSave(link.id)"
+                />
+                <app-button text="Отмена" type="secondary" [width]="'content'" (click)="onEditCancel()" />
+              </div>
+            } @else {
+              <div class="social-links-section__row">
+                <span class="social-links-section__label">{{ labelFor(link) }}</span>
+                <div class="social-links-section__card-actions">
+                  <app-button
+                    text="Редактировать"
+                    type="secondary"
+                    [width]="'content'"
+                    (click)="onEditStart(link)"
+                  />
+                  <app-button text="Удалить" type="secondary" [width]="'content'" (click)="onDelete(link)" />
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <app-button text="Добавить" type="primary" [width]="'content'" (click)="onAddClick()" />
+</div>

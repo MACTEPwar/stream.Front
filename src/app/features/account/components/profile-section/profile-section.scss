@@ -4,8 +4,17 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 24px;
   max-width: 400px;
+}
+
+.profile-section__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .profile-section__avatar-row {
