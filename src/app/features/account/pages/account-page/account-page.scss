@@ -1,0 +1,27 @@
+@use 'variables' as vars;
+
+// Фон — глобальный (см. src/styles/_reset.scss), собственного не задаёт
+// (тот же паттерн, что у заглушек Новости/Турниры, stream.Front#49).
+.account-page {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding: 48px;
+}
+
+// Действие уровня страницы (не относится ни к одной из секций-заглушек) —
+// внизу layout'а, под всеми тремя секциями, прижато к левому краю.
+.account-page__logout-button {
+  align-self: flex-start;
+}
+
+.account-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-page__placeholder {
+  color: vars.$color-ffffff;
+  opacity: 0.7;
+}

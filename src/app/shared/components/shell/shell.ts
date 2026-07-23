@@ -1,6 +1,7 @@
 import { Component, ElementRef, effect, inject, signal, viewChildren } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { LoginModal } from '@features/auth/components/login-modal/login-modal';
 import { Button } from '../button/button';
@@ -27,6 +28,14 @@ interface NavItem {
  * Кнопка входа (`stream.Front#60`) открывает `LoginModal` через `ModalService`
  * (`ModalHost` подключён в `app.html`, рендерит активный компонент модалки).
  *
+ * Точка входа в «Личный кабинет» (`stream.Front#64`): реактивно подписан на
+ * `AuthService.isAuthenticated()`/`currentUser()` — гость видит кнопку
+ * «Войти», залогиненный вместо неё видит аватар+имя (ссылка на `/account`).
+ * Мигания при hard refresh нет — `initializeAuth` (`stream.Front#14`,
+ * `provideAppInitializer`) блокирует первый рендер роутов/этого компонента
+ * до завершения `fetchCurrentUser()`, так что `isAuthenticated()` уже
+ * определено к моменту первой отрисовки шаблона.
+ *
  * `NavActiveIndicator` (`stream.Front#49`) — декоративная подложка под
  * текстом активного пункта меню, привязана к реальному роуту через
  * `routerLinkActive`/`(isActiveChange)` (изначально в этой задаче было
@@ -47,6 +56,7 @@ interface NavItem {
 })
 export class Shell {
   private readonly modalService = inject(ModalService);
+  protected readonly authService = inject(AuthService);
 
   protected readonly navItems: readonly NavItem[] = [
     { path: '/main', label: 'Главная', exact: true },

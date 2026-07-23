@@ -12,6 +12,8 @@ const mockUser: CurrentUser = {
   login: 'streamer',
   role: 'USER',
   email: 'streamer@example.com',
+  name: null,
+  avatarUrl: null,
 };
 
 describe('GoogleAuthService', () => {

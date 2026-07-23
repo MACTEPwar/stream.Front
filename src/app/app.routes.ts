@@ -1,11 +1,19 @@
 import { Routes } from '@angular/router';
 
+import { authGuard } from '@core/guards/auth.guard';
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'main' },
   {
     path: 'main',
     loadComponent: () =>
       import('./features/main/pages/main-page/main-page').then((m) => m.MainPage),
+  },
+  {
+    path: 'account',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/pages/account-page/account-page').then((m) => m.AccountPage),
   },
   // Заглушки (stream.Front#49) — для ручной проверки роутинга/активного
   // пункта nav, реальные страницы «Новости»/«Турниры» не входят в задачу.

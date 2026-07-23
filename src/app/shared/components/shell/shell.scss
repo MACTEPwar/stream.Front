@@ -79,6 +79,39 @@
 // уже имеет `margin-right: auto`, поэтому обе кнопки естественно уходят
 // вправо общей группой (обычный `gap` шапки между ними).
 
+// Точка входа в «Личный кабинет» (stream.Front#64) — заменяет кнопку «Войти»
+// для залогиненного пользователя.
+.shell__account-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+}
+
+.shell__account-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+// Плейсхолдер, пока avatarUrl не задан — не пустое место и не падение <img>.
+.shell__account-avatar--placeholder {
+  display: block;
+  background: vars.$color-808080;
+}
+
+// Не переиспользует mixins.mainNav — тот принудительно капсит текст
+// (уместно для пунктов меню, не для имени пользователя); нет отдельного
+// Figma text-стиля под этот блок (см. shell.ts).
+.shell__account-name {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-500;
+  line-height: vars.$line-height-24;
+}
+
 .shell__content {
   flex: 1;
 }

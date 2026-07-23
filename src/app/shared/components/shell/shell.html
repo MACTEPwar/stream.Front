@@ -25,13 +25,25 @@
     <app-button text="Поддержать" [width]="'content'" class="shell__support-button">
       <img icon src="/icons/button-support-icon.svg" alt="" />
     </app-button>
-    <app-button
-      text="Войти"
-      type="secondary"
-      [width]="'content'"
-      class="shell__auth-button"
-      (click)="onLoginClick()"
-    />
+
+    @if (authService.isAuthenticated()) {
+      <a routerLink="/account" class="shell__account-link">
+        @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
+          <img [src]="avatarUrl" alt="" class="shell__account-avatar" />
+        } @else {
+          <span class="shell__account-avatar shell__account-avatar--placeholder" aria-hidden="true"></span>
+        }
+        <span class="shell__account-name">{{ authService.currentUser()?.name ?? authService.currentUser()?.login }}</span>
+      </a>
+    } @else {
+      <app-button
+        text="Войти"
+        type="secondary"
+        [width]="'content'"
+        class="shell__auth-button"
+        (click)="onLoginClick()"
+      />
+    }
   </header>
 
   <main class="shell__content">

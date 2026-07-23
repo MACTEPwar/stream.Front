@@ -12,6 +12,8 @@ const mockUser: CurrentUser = {
   login: 'streamer',
   role: 'USER',
   email: null,
+  name: null,
+  avatarUrl: null,
 };
 
 describe('initializeAuth', () => {

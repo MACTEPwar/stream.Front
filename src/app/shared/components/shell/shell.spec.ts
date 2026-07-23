@@ -1,10 +1,23 @@
 import { Component } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 
+import { AuthService } from '@core/services/auth.service';
+import { CurrentUser } from '@core/models/current-user.model';
 import { ModalService } from '@core/services/modal.service';
 import { LoginModal } from '@features/auth/components/login-modal/login-modal';
 import { Shell } from './shell';
+
+const mockUser: CurrentUser = {
+  id: '1',
+  login: 'streamer',
+  role: 'USER',
+  email: 'streamer@example.com',
+  name: 'Иван',
+  avatarUrl: null,
+};
 
 @Component({
   selector: 'app-shell-host',
@@ -17,8 +30,65 @@ describe('Shell', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ShellHost],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
+  });
+
+  it('гость: рендерит кнопку «Войти», не рендерит аватар/имя', () => {
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.shell__auth-button')).not.toBeNull();
+    expect(el.querySelector('.shell__account-link')).toBeNull();
+  });
+
+  it('залогинен: кнопка «Войти» исчезает, вместо неё аватар+имя со ссылкой на /account', () => {
+    const authService = TestBed.inject(AuthService);
+    (authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }).currentUserSignal.set(
+      mockUser,
+    );
+
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.shell__auth-button')).toBeNull();
+
+    const accountLink = el.querySelector('.shell__account-link');
+    expect(accountLink).not.toBeNull();
+    expect(accountLink?.getAttribute('href')).toBe('/account');
+    expect(accountLink?.querySelector('.shell__account-name')?.textContent).toBe('Иван');
+  });
+
+  it('залогинен без avatarUrl: рендерит плейсхолдер-заглушку вместо <img>', () => {
+    const authService = TestBed.inject(AuthService);
+    (authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }).currentUserSignal.set(
+      mockUser,
+    );
+
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.shell__account-avatar--placeholder')).not.toBeNull();
+    expect(el.querySelector('img.shell__account-avatar')).toBeNull();
+  });
+
+  it('залогинен с avatarUrl: рендерит <img> с этим src, без плейсхолдера', () => {
+    const authService = TestBed.inject(AuthService);
+    (authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }).currentUserSignal.set({
+      ...mockUser,
+      avatarUrl: '/uploads/avatar.png',
+    });
+
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const img = el.querySelector<HTMLImageElement>('img.shell__account-avatar');
+    expect(img?.getAttribute('src')).toBe('/uploads/avatar.png');
+    expect(el.querySelector('.shell__account-avatar--placeholder')).toBeNull();
   });
 
   it('рендерит лого «Belochka» картинкой', () => {
