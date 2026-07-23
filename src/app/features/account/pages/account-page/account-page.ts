@@ -4,13 +4,14 @@ import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { Button } from '@shared/components/button/button';
 import { SectionTitle } from '@shared/components/section-title/section-title';
+import { GameAccountsSection } from '../../components/game-accounts-section/game-accounts-section';
 import { ProfileSection } from '../../components/profile-section/profile-section';
 
 /**
- * Личный кабинет (stream.Front#64) — layout-контейнер с тремя
- * секциями-заглушками под будущие задачи: профиль (#65), игровые аккаунты
- * (#66), соц. сети (#67). Реальное содержимое секций не входит в #64 —
- * только заголовок (`SectionTitle`) и текст-плейсхолдер.
+ * Личный кабинет (stream.Front#64) — layout-контейнер с тремя секциями:
+ * профиль (`ProfileSection`, `#65`), игровые аккаунты (`GameAccountsSection`,
+ * `#66`) и соц. сети (пока секция-заглушка, `#67`). `SectionTitle` каждой
+ * секции остаётся здесь, реальное содержимое — в собственных компонентах.
  *
  * Кнопка «Выйти» — действие уровня страницы (не относится ни к одной из
  * трёх секций), поэтому вынесена отдельно под все секции, в самый низ
@@ -25,7 +26,7 @@ import { ProfileSection } from '../../components/profile-section/profile-section
  */
 @Component({
   selector: 'app-account-page',
-  imports: [SectionTitle, Button, ProfileSection],
+  imports: [SectionTitle, Button, ProfileSection, GameAccountsSection],
   templateUrl: './account-page.html',
   styleUrl: './account-page.scss',
 })

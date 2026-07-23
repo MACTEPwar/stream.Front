@@ -1,0 +1,48 @@
+<div class="game-accounts-section">
+  @if (hasError()) {
+    <app-error-message />
+  } @else if (isLoading()) {
+    <div class="game-accounts-section__list">
+      @for (i of [1, 2, 3]; track i) {
+        <app-skeleton height="72px" radius="8px" />
+      }
+    </div>
+  } @else {
+    @if (accounts().length === 0) {
+      <p class="game-accounts-section__empty">Игровые аккаунты ещё не добавлены.</p>
+    } @else {
+      <div class="game-accounts-section__list">
+        @for (account of accounts(); track account.id) {
+          <div class="game-accounts-section__card">
+            @if (editingId() === account.id) {
+              <app-text-field label="Ник" placeholder="Введите ник" [(value)]="editNickname" />
+              <app-text-field label="Id аккаунта" placeholder="Введите id аккаунта" [(value)]="editExternalId" />
+              <div class="game-accounts-section__card-actions">
+                <app-button
+                  text="Сохранить"
+                  type="primary"
+                  [width]="'content'"
+                  (click)="onEditSave(account.id)"
+                />
+                <app-button text="Отмена" type="secondary" [width]="'content'" (click)="onEditCancel()" />
+              </div>
+            } @else {
+              <span class="game-accounts-section__label">{{ account.nickname }} ({{ account.externalId }})</span>
+              <div class="game-accounts-section__card-actions">
+                <app-button
+                  text="Редактировать"
+                  type="secondary"
+                  [width]="'content'"
+                  (click)="onEditStart(account)"
+                />
+                <app-button text="Удалить" type="secondary" [width]="'content'" (click)="onDelete(account)" />
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <app-button text="Добавить" type="primary" [width]="'content'" (click)="onAddClick()" />
+</div>
