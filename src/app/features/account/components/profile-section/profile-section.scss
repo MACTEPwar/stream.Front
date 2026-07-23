@@ -1,0 +1,39 @@
+@use 'variables' as vars;
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  max-width: 400px;
+}
+
+.profile-section__avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-section__avatar-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.profile-section__avatar-preview--placeholder {
+  width: 100%;
+  height: 100%;
+  background: vars.$color-808080;
+}
+
+.profile-section__actions {
+  display: flex;
+  gap: 12px;
+}
