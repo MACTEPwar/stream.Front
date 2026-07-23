@@ -1,0 +1,57 @@
+@use 'variables' as vars;
+@use 'mixins';
+
+.add-social-link-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  min-width: 360px;
+}
+
+.add-social-link-modal__title {
+  @include mixins.h1;
+  color: vars.$color-black;
+}
+
+.add-social-link-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-social-link-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.add-social-link-modal__label {
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-24;
+  letter-spacing: vars.$letter-spacing-3;
+  color: vars.$color-black;
+}
+
+.add-social-link-modal__select {
+  height: 40px;
+  border: 1px solid vars.$color-e4e4e4;
+  border-radius: 5px;
+  background: vars.$color-ffffff;
+  padding: 0 12px;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-16;
+  color: vars.$color-1e1e1e;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.add-social-link-modal__actions {
+  display: flex;
+  gap: 12px;
+}

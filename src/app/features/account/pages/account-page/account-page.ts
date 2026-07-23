@@ -6,11 +6,12 @@ import { Button } from '@shared/components/button/button';
 import { SectionTitle } from '@shared/components/section-title/section-title';
 import { GameAccountsSection } from '../../components/game-accounts-section/game-accounts-section';
 import { ProfileSection } from '../../components/profile-section/profile-section';
+import { SocialLinksSection } from '../../components/social-links-section/social-links-section';
 
 /**
  * Личный кабинет (stream.Front#64) — layout-контейнер с тремя секциями:
  * профиль (`ProfileSection`, `#65`), игровые аккаунты (`GameAccountsSection`,
- * `#66`) и соц. сети (пока секция-заглушка, `#67`). `SectionTitle` каждой
+ * `#66`) и соц. сети (`SocialLinksSection`, `#67`). `SectionTitle` каждой
  * секции остаётся здесь, реальное содержимое — в собственных компонентах.
  *
  * Кнопка «Выйти» — действие уровня страницы (не относится ни к одной из
@@ -26,7 +27,7 @@ import { ProfileSection } from '../../components/profile-section/profile-section
  */
 @Component({
   selector: 'app-account-page',
-  imports: [SectionTitle, Button, ProfileSection, GameAccountsSection],
+  imports: [SectionTitle, Button, ProfileSection, GameAccountsSection, SocialLinksSection],
   templateUrl: './account-page.html',
   styleUrl: './account-page.scss',
 })
