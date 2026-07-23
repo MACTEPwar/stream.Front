@@ -1,0 +1,13 @@
+<div class="confirm-modal">
+  <p class="confirm-modal__message">{{ data()?.message }}</p>
+
+  <div class="confirm-modal__actions">
+    <app-button
+      [text]="data()?.confirmText ?? 'Подтвердить'"
+      type="primary"
+      [width]="'content'"
+      (click)="onConfirm()"
+    />
+    <app-button text="Отмена" type="secondary" [width]="'content'" (click)="onCancel()" />
+  </div>
+</div>
