@@ -1,19 +1,21 @@
 <div class="profile-section">
-  <div class="profile-section__avatar-row">
-    <div class="profile-section__avatar-preview">
-      @if (pendingAvatarUrl(); as url) {
-        <img [src]="url" alt="Аватар" />
-      } @else {
-        <div class="profile-section__avatar-preview--placeholder"></div>
-      }
+  <div class="profile-section__card">
+    <div class="profile-section__avatar-row">
+      <div class="profile-section__avatar-preview">
+        @if (pendingAvatarUrl(); as url) {
+          <img [src]="url" alt="Аватар" />
+        } @else {
+          <div class="profile-section__avatar-preview--placeholder"></div>
+        }
+      </div>
+      <app-button text="Поменять" type="secondary" [width]="'content'" (click)="onChangeAvatarClick()" />
     </div>
-    <app-button text="Поменять" type="secondary" [width]="'content'" (click)="onChangeAvatarClick()" />
-  </div>
 
-  <app-text-field label="Отображаемое имя" placeholder="Введите имя" [(value)]="name" />
+    <app-text-field label="Отображаемое имя" placeholder="Введите имя" [(value)]="name" />
 
-  <div class="profile-section__actions">
-    <app-button text="Сохранить" type="primary" [width]="'content'" (click)="onSave()" />
-    <app-button text="Сменить пароль" type="secondary" [width]="'content'" (click)="onChangePasswordClick()" />
+    <div class="profile-section__actions">
+      <app-button text="Сохранить" type="primary" [width]="'content'" (click)="onSave()" />
+      <app-button text="Сменить пароль" type="secondary" [width]="'content'" (click)="onChangePasswordClick()" />
+    </div>
   </div>
 </div>
