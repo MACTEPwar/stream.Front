@@ -1,0 +1,24 @@
+<div class="account-page">
+  <section class="account-page__section">
+    <app-section-title text="Профиль" />
+    <p class="account-page__placeholder">Здесь будет редактирование имени, фото и пароля.</p>
+  </section>
+
+  <section class="account-page__section">
+    <app-section-title text="Игровые аккаунты" />
+    <p class="account-page__placeholder">Здесь будет управление привязанными игровыми аккаунтами.</p>
+  </section>
+
+  <section class="account-page__section">
+    <app-section-title text="Соц. сети" />
+    <p class="account-page__placeholder">Здесь будет управление привязанными соц. сетями.</p>
+  </section>
+
+  <app-button
+    text="Выйти"
+    type="secondary"
+    [width]="'content'"
+    class="account-page__logout-button"
+    (click)="onLogoutClick()"
+  />
+</div>
