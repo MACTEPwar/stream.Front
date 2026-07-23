@@ -10,6 +10,8 @@ const mockProfile: Profile = {
   id: 'cly1a2b3c0001abcd1234efgh',
   userId: 'cly1a2b3c0000abcd1234efgh',
   email: 'streamer@example.com',
+  name: 'Streamer',
+  avatarUrl: null,
 };
 
 describe('ProfileService', () => {
@@ -46,5 +48,14 @@ describe('ProfileService', () => {
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ email: 'new@example.com' });
     req.flush({ ...mockProfile, email: 'new@example.com' });
+  });
+
+  it('updateAvatar() бьёт в PATCH /profile/avatar с телом UpdateAvatarDto', () => {
+    service.updateAvatar({ avatarUrl: '/images/avatar-presets/preset-1.svg' }).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/profile/avatar`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ avatarUrl: '/images/avatar-presets/preset-1.svg' });
+    req.flush({ ...mockProfile, avatarUrl: '/images/avatar-presets/preset-1.svg' });
   });
 });

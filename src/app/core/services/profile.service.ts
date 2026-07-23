@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Profile, UpdateProfileDto } from '../models/profile.model';
+import { Profile, UpdateAvatarDto, UpdateProfileDto } from '../models/profile.model';
 import { ApiService } from './api.service';
 
 @Injectable({ providedIn: 'root' })
@@ -14,5 +14,9 @@ export class ProfileService {
 
   updateProfile(dto: UpdateProfileDto): Observable<Profile> {
     return this.api.patch<Profile>('/profile', dto);
+  }
+
+  updateAvatar(dto: UpdateAvatarDto): Observable<Profile> {
+    return this.api.patch<Profile>('/profile/avatar', dto);
   }
 }

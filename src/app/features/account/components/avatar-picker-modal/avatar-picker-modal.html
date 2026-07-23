@@ -1,0 +1,26 @@
+<div class="avatar-picker-modal">
+  <h2 class="avatar-picker-modal__title">Выбор аватара</h2>
+
+  <div class="avatar-picker-modal__gallery">
+    @for (preset of avatarPresets; track preset) {
+      <button
+        type="button"
+        class="avatar-picker-modal__preset"
+        [class.avatar-picker-modal__preset--active]="selectedUrl() === preset"
+        (click)="onPresetSelect(preset)"
+      >
+        <img [src]="preset" alt="Пресет аватара" />
+      </button>
+    }
+  </div>
+
+  <label class="avatar-picker-modal__upload-label">
+    Загрузить своё фото
+    <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+  </label>
+
+  <div class="avatar-picker-modal__actions">
+    <app-button text="Выбрать" type="primary" [width]="'content'" (click)="onConfirm()" />
+    <app-button text="Отмена" type="secondary" [width]="'content'" (click)="onCancel()" />
+  </div>
+</div>

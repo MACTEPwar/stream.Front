@@ -21,7 +21,7 @@ describe('AccountPage', () => {
     httpMock.verify();
   });
 
-  it('рендерит 3 секции-заглушки (профиль/игровые аккаунты/соц. сети)', () => {
+  it('рендерит 3 секции (профиль/игровые аккаунты/соц. сети)', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
 
@@ -32,8 +32,10 @@ describe('AccountPage', () => {
     const titles = Array.from(el.querySelectorAll('h2.section-title__text')).map((h) => h.textContent);
     expect(titles).toEqual(['Профиль', 'Игровые аккаунты', 'Соц. сети']);
 
+    expect(el.querySelector('app-profile-section')).not.toBeNull();
+
     const placeholders = el.querySelectorAll('.account-page__placeholder');
-    expect(placeholders.length).toBe(3);
+    expect(placeholders.length).toBe(2);
     placeholders.forEach((p) => expect(p.textContent).toContain('Здесь будет'));
   });
 

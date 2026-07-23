@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { Button } from '@shared/components/button/button';
 import { SectionTitle } from '@shared/components/section-title/section-title';
+import { ProfileSection } from '../../components/profile-section/profile-section';
 
 /**
  * Личный кабинет (stream.Front#64) — layout-контейнер с тремя
@@ -24,7 +25,7 @@ import { SectionTitle } from '@shared/components/section-title/section-title';
  */
 @Component({
   selector: 'app-account-page',
-  imports: [SectionTitle, Button],
+  imports: [SectionTitle, Button, ProfileSection],
   templateUrl: './account-page.html',
   styleUrl: './account-page.scss',
 })
