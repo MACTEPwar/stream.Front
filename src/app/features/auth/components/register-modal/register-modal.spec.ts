@@ -1,8 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
 
 import { environment } from '@env/environment';
+import { CurrentUser } from '@core/models/current-user.model';
+import { GoogleAuthService } from '@core/services/google-auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { LoginModal } from '../login-modal/login-modal';
@@ -18,11 +21,20 @@ describe('RegisterModal', () => {
   let httpMock: HttpTestingController;
   let modalService: ModalService;
   let notificationService: NotificationService;
+  let googleAuthService: {
+    renderButton: ReturnType<typeof vi.fn<(el: HTMLElement) => Observable<CurrentUser>>>;
+  };
 
   beforeEach(() => {
+    googleAuthService = { renderButton: vi.fn().mockReturnValue(new Observable<CurrentUser>()) };
+
     TestBed.configureTestingModule({
       imports: [RegisterModal],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: GoogleAuthService, useValue: googleAuthService },
+      ],
     });
     httpMock = TestBed.inject(HttpTestingController);
     modalService = TestBed.inject(ModalService);
@@ -177,22 +189,53 @@ describe('RegisterModal', () => {
     expect(showSpy).toHaveBeenCalledWith('Что-то пошло не так, попробуйте позже', 'error');
   });
 
-  it('клик по Google/Facebook — показывает уведомление-заглушку, без обращения к API', () => {
+  it('рендерит невидимую Google-кнопку поверх стилизованной оверлеем', async () => {
+    const fixture = TestBed.createComponent(RegisterModal);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const overlay = el.querySelector<HTMLDivElement>('.register-modal__google-button-overlay');
+    expect(overlay).not.toBeNull();
+    expect(googleAuthService.renderButton).toHaveBeenCalledWith(overlay);
+  });
+
+  it('успешный вход через renderButton() — закрывает модалку через ModalService', async () => {
+    const closeSpy = vi.spyOn(modalService, 'close');
+    googleAuthService.renderButton.mockReturnValue(
+      of({ id: '1', login: 'streamer', role: 'USER', email: null, name: null, avatarUrl: null }),
+    );
+    const fixture = TestBed.createComponent(RegisterModal);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(closeSpy).toHaveBeenCalled();
+    httpMock.expectNone(`${environment.apiUrl}/auth/google`);
+  });
+
+  it('ошибка renderButton() — показывает toast, модалка остаётся открытой', async () => {
+    const closeSpy = vi.spyOn(modalService, 'close');
+    const showSpy = vi.spyOn(notificationService, 'show');
+    googleAuthService.renderButton.mockReturnValue(throwError(() => new Error('Ошибка Google')));
+    const fixture = TestBed.createComponent(RegisterModal);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(showSpy).toHaveBeenCalledWith('Не удалось войти через Google, попробуйте снова', 'error');
+    expect(closeSpy).not.toHaveBeenCalled();
+  });
+
+  it('клик по Facebook — показывает уведомление-заглушку, без обращения к API', () => {
     const showSpy = vi.spyOn(notificationService, 'show');
     const fixture = TestBed.createComponent(RegisterModal);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const [googleButton, facebookButton] = Array.from(
+    const [, facebookButton] = Array.from(
       el.querySelectorAll<HTMLButtonElement>('.register-modal__social-button'),
     );
-    googleButton.click();
-    expect(showSpy).toHaveBeenCalledWith('Регистрация через Google пока не реализована', 'info');
-
     facebookButton.click();
     expect(showSpy).toHaveBeenCalledWith('Регистрация через Facebook пока не реализована', 'info');
-
-    httpMock.expectNone(`${environment.apiUrl}/auth/google`);
   });
 
   it('клик по футер-ссылке открывает LoginModal', () => {

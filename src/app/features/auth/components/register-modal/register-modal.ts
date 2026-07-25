@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 
 import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { AuthService } from '@core/services/auth.service';
+import { GoogleAuthService } from '@core/services/google-auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AuthModalShell } from '@shared/components/auth-modal-shell/auth-modal-shell';
@@ -37,6 +38,7 @@ export class RegisterModal {
   readonly data = input<unknown>();
 
   private readonly authService = inject(AuthService);
+  private readonly googleAuthService = inject(GoogleAuthService);
   private readonly modalService = inject(ModalService);
   private readonly notificationService = inject(NotificationService);
 
@@ -44,12 +46,29 @@ export class RegisterModal {
   protected readonly password = signal('');
   protected readonly confirmPassword = signal('');
 
+  private readonly googleButtonOverlay =
+    viewChild<ElementRef<HTMLDivElement>>('googleButtonOverlay');
+
   protected readonly canSubmit = computed(
     () =>
       this.login().trim().length >= MIN_LOGIN_LENGTH &&
       this.password().length >= MIN_PASSWORD_LENGTH &&
       this.confirmPassword() === this.password(),
   );
+
+  constructor() {
+    effect((onCleanup) => {
+      const el = this.googleButtonOverlay()?.nativeElement;
+      if (!el) return;
+
+      const subscription = this.googleAuthService.renderButton(el).subscribe({
+        next: () => this.modalService.close(),
+        error: () =>
+          this.notificationService.show('Не удалось войти через Google, попробуйте снова', 'error'),
+      });
+      onCleanup(() => subscription.unsubscribe());
+    });
+  }
 
   protected onSubmit(): void {
     if (!this.canSubmit()) {
@@ -80,10 +99,6 @@ export class RegisterModal {
       return `Пароль должен быть не короче ${MIN_PASSWORD_LENGTH} символов`;
     }
     return 'Пароли не совпадают';
-  }
-
-  protected onGoogleClick(): void {
-    this.notificationService.show('Регистрация через Google пока не реализована', 'info');
   }
 
   protected onFacebookClick(): void {

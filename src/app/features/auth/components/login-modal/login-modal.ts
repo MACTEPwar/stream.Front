@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 
 import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { AuthService } from '@core/services/auth.service';
+import { GoogleAuthService } from '@core/services/google-auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AuthModalShell } from '@shared/components/auth-modal-shell/auth-modal-shell';
@@ -32,15 +33,33 @@ export class LoginModal {
   readonly data = input<unknown>();
 
   private readonly authService = inject(AuthService);
+  private readonly googleAuthService = inject(GoogleAuthService);
   private readonly modalService = inject(ModalService);
   private readonly notificationService = inject(NotificationService);
 
   protected readonly login = signal('');
   protected readonly password = signal('');
 
+  private readonly googleButtonOverlay =
+    viewChild<ElementRef<HTMLDivElement>>('googleButtonOverlay');
+
   protected readonly canSubmit = computed(
     () => this.login().trim().length > 0 && this.password().length > 0,
   );
+
+  constructor() {
+    effect((onCleanup) => {
+      const el = this.googleButtonOverlay()?.nativeElement;
+      if (!el) return;
+
+      const subscription = this.googleAuthService.renderButton(el).subscribe({
+        next: () => this.modalService.close(),
+        error: () =>
+          this.notificationService.show('Не удалось войти через Google, попробуйте снова', 'error'),
+      });
+      onCleanup(() => subscription.unsubscribe());
+    });
+  }
 
   protected onSubmit(): void {
     if (!this.canSubmit()) {
@@ -61,10 +80,6 @@ export class LoginModal {
         );
       },
     });
-  }
-
-  protected onGoogleClick(): void {
-    this.notificationService.show('Вход через Google пока не реализован', 'info');
   }
 
   protected onFacebookClick(): void {

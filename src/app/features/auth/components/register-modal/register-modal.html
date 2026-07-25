@@ -31,9 +31,12 @@
       </div>
 
       <div class="register-modal__social">
-        <button type="button" class="register-modal__social-button" (click)="onGoogleClick()">
-          <img src="/icons/google_btn.svg" alt="Google" />
-        </button>
+        <div class="register-modal__google-button-container">
+          <button type="button" class="register-modal__social-button">
+            <img src="/icons/google_btn.svg" alt="Google" />
+          </button>
+          <div #googleButtonOverlay class="register-modal__google-button-overlay"></div>
+        </div>
         <button type="button" class="register-modal__social-button" (click)="onFacebookClick()">
           <img src="/icons/facebook_btn.svg" alt="Facebook" />
         </button>
