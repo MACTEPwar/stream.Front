@@ -1,0 +1,66 @@
+@use 'variables' as vars;
+
+// Нет Figma-мокапа для админ-панели (stream.Front#74, чисто функциональный
+// layout) — размеры/цвета подобраны по существующим токенам, не выведены
+// из designTokens JSON-экспорта.
+.admin-page {
+  display: flex;
+  min-height: 100%;
+}
+
+.admin-page__sidebar {
+  flex: 0 0 240px;
+  padding: 32px 16px;
+  background: rgba(vars.$color-000000, 0.2);
+}
+
+.admin-page__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-page__nav-link {
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: vars.$color-ffffff;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-500;
+
+  &:hover {
+    background: rgba(vars.$color-ffffff, 0.1);
+  }
+}
+
+.admin-page__nav-link--active {
+  background: rgba(vars.$color-ffffff, 0.15);
+  font-weight: vars.$font-weight-700;
+}
+
+.admin-page__main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 48px;
+  min-width: 0;
+}
+
+.admin-page__breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  color: vars.$color-ffffff;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  opacity: 0.7;
+}
+
+.admin-page__breadcrumb-separator {
+  opacity: 0.5;
+}
+
+.admin-page__content {
+  flex: 1 1 auto;
+}

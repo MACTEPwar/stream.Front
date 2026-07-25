@@ -1,0 +1,30 @@
+<div class="admin-page">
+  <aside class="admin-page__sidebar">
+    <nav class="admin-page__nav">
+      @for (item of menuItems; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="admin-page__nav-link--active"
+          class="admin-page__nav-link"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <div class="admin-page__main">
+    <nav class="admin-page__breadcrumbs" aria-label="breadcrumb">
+      @for (crumb of breadcrumbService.crumbs(); track $index; let last = $last) {
+        <span class="admin-page__breadcrumb">{{ crumb }}</span>
+        @if (!last) {
+          <span class="admin-page__breadcrumb-separator" aria-hidden="true">/</span>
+        }
+      }
+    </nav>
+
+    <div class="admin-page__content">
+      <router-outlet />
+    </div>
+  </div>
+</div>

@@ -91,6 +91,43 @@ describe('Shell', () => {
     expect(el.querySelector('.shell__account-avatar--placeholder')).toBeNull();
   });
 
+  it('гость: не рендерит пункт «Панель управления»', () => {
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.shell__admin-link')).toBeNull();
+  });
+
+  it('USER: не рендерит пункт «Панель управления»', () => {
+    const authService = TestBed.inject(AuthService);
+    (authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }).currentUserSignal.set(
+      mockUser,
+    );
+
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.shell__admin-link')).toBeNull();
+  });
+
+  it('ADMIN: рендерит пункт «Панель управления» со ссылкой на /admin', () => {
+    const authService = TestBed.inject(AuthService);
+    (authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }).currentUserSignal.set({
+      ...mockUser,
+      role: 'ADMIN',
+    });
+
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const adminLink = el.querySelector('.shell__admin-link');
+    expect(adminLink).not.toBeNull();
+    expect(adminLink?.getAttribute('href')).toBe('/admin');
+  });
+
   it('рендерит лого «Belochka» картинкой', () => {
     const fixture = TestBed.createComponent(ShellHost);
     fixture.detectChanges();

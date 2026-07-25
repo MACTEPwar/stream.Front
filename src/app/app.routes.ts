@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { adminGuard } from '@core/guards/admin.guard';
 import { authGuard } from '@core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -15,11 +16,42 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/account/pages/account-page/account-page').then((m) => m.AccountPage),
   },
+  // RBAC (stream.Front#74): доступен только роли ADMIN, adminGuard сам не
+  // проверяет факт авторизации — идёт после authGuard в цепочке. Дочерние
+  // роуты — заглушки, реальное содержимое разделов идёт отдельными задачами
+  // поверх этих же путей (schedule → #76, users → #77).
+  {
+    path: 'admin',
+    canActivate: [authGuard, adminGuard],
+    data: { breadcrumb: 'Панель управления' },
+    loadComponent: () =>
+      import('./features/admin/pages/admin-page/admin-page').then((m) => m.AdminPage),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'schedule' },
+      {
+        path: 'schedule',
+        data: { breadcrumb: 'Расписание' },
+        loadComponent: () =>
+          import('./features/admin/pages/admin-schedule-page/admin-schedule-page').then(
+            (m) => m.AdminSchedulePage,
+          ),
+      },
+      {
+        path: 'users',
+        data: { breadcrumb: 'Пользователи' },
+        loadComponent: () =>
+          import('./features/admin/pages/admin-users-page/admin-users-page').then(
+            (m) => m.AdminUsersPage,
+          ),
+      },
+    ],
+  },
   // Заглушки (stream.Front#49) — для ручной проверки роутинга/активного
   // пункта nav, реальные страницы «Новости»/«Турниры» не входят в задачу.
   {
     path: 'news',
-    loadComponent: () => import('./features/news/pages/news-page/news-page').then((m) => m.NewsPage),
+    loadComponent: () =>
+      import('./features/news/pages/news-page/news-page').then((m) => m.NewsPage),
   },
   {
     path: 'tournaments',
@@ -30,11 +62,13 @@ export const routes: Routes = [
   },
   {
     path: 'video',
-    loadComponent: () => import('./features/video/pages/video-page/video-page').then((m) => m.VideoPage),
+    loadComponent: () =>
+      import('./features/video/pages/video-page/video-page').then((m) => m.VideoPage),
   },
   {
     path: 'about',
-    loadComponent: () => import('./features/about/pages/about-page/about-page').then((m) => m.AboutPage),
+    loadComponent: () =>
+      import('./features/about/pages/about-page/about-page').then((m) => m.AboutPage),
   },
   {
     path: 'kit',
