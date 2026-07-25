@@ -62,3 +62,19 @@
     height: 40px;
   }
 }
+
+// Оверлей — реальная (невидимая) Google-кнопка от GoogleAuthService.renderButton()
+// поверх нашей стилизованной .login-modal__social-button: клик уходит в
+// Google-iframe (accounts.google.com), не в подложку под ним. См. PROJECT_MAP.md.
+.login-modal__google-button-container {
+  position: relative;
+  line-height: 0;
+}
+
+.login-modal__google-button-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  overflow: hidden;
+}
