@@ -71,7 +71,7 @@ describe('GoogleAuthService', () => {
     callback({ credential: 'google-id-token' });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/google`);
-    expect(req.request.body).toEqual({ googleIdToken: 'google-id-token' });
+    expect(req.request.body).toEqual({ idToken: 'google-id-token' });
     req.flush(mockUser);
 
     expect(result).toEqual(mockUser);

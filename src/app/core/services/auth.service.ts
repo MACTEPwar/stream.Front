@@ -27,7 +27,7 @@ export class AuthService {
 
   loginWithGoogle(googleIdToken: string): Observable<CurrentUser> {
     return this.api
-      .post<CurrentUser>('/auth/google', { googleIdToken }, { withCredentials: true })
+      .post<CurrentUser>('/auth/google', { idToken: googleIdToken }, { withCredentials: true })
       .pipe(tap((user) => this.currentUserSignal.set(user)));
   }
 
