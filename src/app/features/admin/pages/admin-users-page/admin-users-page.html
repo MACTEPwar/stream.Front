@@ -1,0 +1,166 @@
+<div class="admin-users-page">
+  <div class="admin-users-page__filters">
+    <input
+      type="text"
+      pInputText
+      placeholder="Поиск по логину"
+      [(ngModel)]="loginFilter"
+      (keyup.enter)="onFilterChange()"
+    />
+    <p-select
+      [options]="roleFilterOptions"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="roleFilter"
+      (ngModelChange)="onFilterChange()"
+    />
+    <button pButton size="small" (click)="onFilterChange()">Найти</button>
+  </div>
+
+  @if (hasError()) {
+    <app-error-message message="Не удалось загрузить пользователей" />
+  } @else {
+    <p-table
+      [value]="users()"
+      [loading]="isLoading()"
+      dataKey="id"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      (onLazyLoad)="onLazyLoad($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th>Логин</th>
+          <th>Роль</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-user>
+        <tr>
+          <td>{{ user.login }}</td>
+          <td>{{ user.role }}</td>
+          <td>
+            <button pButton size="small" (click)="onViewClick(user)">Просмотр</button>
+            @if (!isOwnRow(user)) {
+              <button
+                pButton
+                size="small"
+                (click)="onEditRoleClick(user)"
+                class="admin-users-page__delete-button"
+              >
+                Изменить роль
+              </button>
+              <button
+                pButton
+                size="small"
+                severity="danger"
+                (click)="onDeleteClick(user)"
+                class="admin-users-page__delete-button"
+              >
+                Удалить
+              </button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+
+  <p-drawer
+    [(visible)]="drawerVisible"
+    position="right"
+    header="Изменить роль"
+    styleClass="admin-users-page__drawer"
+  >
+    <div class="admin-users-page__form">
+      <div class="admin-users-page__field">
+        <label for="admin-users-role">Роль</label>
+        <p-select
+          id="admin-users-role"
+          [options]="roleOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="editingRole"
+        />
+      </div>
+
+      <button
+        pButton
+        [disabled]="isSaving()"
+        (click)="onSaveRoleClick()"
+        class="admin-users-page__save-button"
+      >
+        Сохранить
+      </button>
+    </div>
+  </p-drawer>
+
+  <p-drawer
+    [(visible)]="detailDrawerVisible"
+    position="right"
+    header="Карточка пользователя"
+    styleClass="admin-users-page__drawer"
+    [style]="{ width: '480px', 'max-width': '90vw' }"
+  >
+    @if (isDetailLoading()) {
+      <p>Загрузка…</p>
+    } @else if (detailUser(); as user) {
+      <div class="admin-users-page__detail">
+        <section class="admin-users-page__detail-section">
+          <h3>Профиль</h3>
+          <dl class="admin-users-page__detail-list">
+            <dt>Логин</dt>
+            <dd>{{ user.login }}</dd>
+            <dt>Роль</dt>
+            <dd>{{ user.role }}</dd>
+            <dt>Email</dt>
+            <dd>{{ user.email || '—' }}</dd>
+            <dt>Имя</dt>
+            <dd>{{ user.name || '—' }}</dd>
+            <dt>Провайдер</dt>
+            <dd>{{ user.provider || 'local' }}</dd>
+            <dt>Регистрация</dt>
+            <dd>{{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}</dd>
+          </dl>
+        </section>
+
+        <section class="admin-users-page__detail-section">
+          <h3>Игровые аккаунты</h3>
+          @if (user.gameAccounts.length === 0) {
+            <p class="admin-users-page__detail-empty">Нет игровых аккаунтов</p>
+          } @else {
+            <ul class="admin-users-page__detail-list-items">
+              @for (account of user.gameAccounts; track account.id) {
+                <li>{{ account.nickname }} ({{ account.externalId }})</li>
+              }
+            </ul>
+          }
+        </section>
+
+        <section class="admin-users-page__detail-section">
+          <h3>Соц. сети</h3>
+          @if (user.socialLinks.length === 0) {
+            <p class="admin-users-page__detail-empty">Нет соц. сетей</p>
+          } @else {
+            <ul class="admin-users-page__detail-list-items">
+              @for (link of user.socialLinks; track link.id) {
+                <li>{{ link.type }}: {{ link.value }}</li>
+              }
+            </ul>
+          }
+        </section>
+
+        @if (!isOwnRow(user)) {
+          <div class="admin-users-page__detail-actions">
+            <button pButton size="small" (click)="onEditRoleClick(user)">Изменить роль</button>
+            <button pButton size="small" severity="danger" (click)="onDeleteClick(user)">
+              Удалить
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </p-drawer>
+</div>
