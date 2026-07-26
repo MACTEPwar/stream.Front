@@ -73,4 +73,22 @@ describe('AdminPage', () => {
     const el: HTMLElement = harness.routeNativeElement!;
     expect(el.querySelector('.admin-page__content app-admin-schedule-page')).not.toBeNull();
   });
+
+  it('группа «Справочники» развёрнута по умолчанию и сворачивается по клику (stream.Front#77)', async () => {
+    await harness.navigateByUrl('/admin/schedule');
+
+    const el: HTMLElement = harness.routeNativeElement!;
+    expect(el.querySelector('.admin-page__nav-group-header')?.textContent).toContain('Справочники');
+    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(2);
+
+    el.querySelector<HTMLButtonElement>('.admin-page__nav-group-header')?.click();
+    harness.detectChanges();
+
+    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(0);
+
+    el.querySelector<HTMLButtonElement>('.admin-page__nav-group-header')?.click();
+    harness.detectChanges();
+
+    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(2);
+  });
 });

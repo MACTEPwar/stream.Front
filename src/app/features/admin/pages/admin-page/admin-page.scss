@@ -17,6 +17,46 @@
 .admin-page__nav {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.admin-page__nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// Заголовок группы — <button>, не текст: сворачивание/разворачивание
+// (stream.Front#77) кликабельно по всей ширине, не только по шеврону.
+.admin-page__nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: vars.$color-ffffff;
+  opacity: 0.7;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-600;
+  text-transform: uppercase;
+  letter-spacing: vars.$letter-spacing-3;
+}
+
+.admin-page__nav-group-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.admin-page__nav-group-chevron--expanded {
+  transform: rotate(90deg);
+}
+
+.admin-page__nav-group-items {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 

@@ -1,14 +1,36 @@
 <div class="admin-page">
   <aside class="admin-page__sidebar">
     <nav class="admin-page__nav">
-      @for (item of menuItems; track item.path) {
-        <a
-          [routerLink]="item.path"
-          routerLinkActive="admin-page__nav-link--active"
-          class="admin-page__nav-link"
-        >
-          {{ item.label }}
-        </a>
+      @for (group of menuGroups; track group.label) {
+        <div class="admin-page__nav-group">
+          <button
+            type="button"
+            class="admin-page__nav-group-header"
+            (click)="toggleGroup(group.label)"
+          >
+            <span
+              class="admin-page__nav-group-chevron"
+              [class.admin-page__nav-group-chevron--expanded]="isGroupExpanded(group.label)"
+              aria-hidden="true"
+              >›</span
+            >
+            {{ group.label }}
+          </button>
+
+          @if (isGroupExpanded(group.label)) {
+            <div class="admin-page__nav-group-items">
+              @for (item of group.items; track item.path) {
+                <a
+                  [routerLink]="item.path"
+                  routerLinkActive="admin-page__nav-link--active"
+                  class="admin-page__nav-link"
+                >
+                  {{ item.label }}
+                </a>
+              }
+            </div>
+          }
+        </div>
       }
     </nav>
   </aside>
