@@ -1,20 +1,37 @@
 import { Component } from '@angular/core';
+import { TableModule } from 'primeng/table';
 
 import { Button } from '../../../../shared/components/button/button';
 import { List, ListItemData } from '../../../../shared/components/list/list';
 import { SectionTitle } from '../../../../shared/components/section-title/section-title';
 
+interface KitTableRow {
+  login: string;
+  role: string;
+}
+
 /**
  * Служебная страница-каталог UI-kit компонентов (stream.Front#39) — не часть
  * пользовательского сайта, только для ручной сверки вариантов при вёрстке.
+ *
+ * Секция PrimeNG (`stream.Front#75`) — demo/проверка `AdminPreset`
+ * (`core/primeng/admin-preset.ts`), не реальное использование: PrimeNG-
+ * компоненты в проекте применяются только внутри админ-панели
+ * (`stream.Front#76`/`#77`), не на пользовательском сайте.
  */
 @Component({
   selector: 'app-kit-page',
-  imports: [Button, SectionTitle, List],
+  imports: [Button, SectionTitle, List, TableModule],
   templateUrl: './kit-page.html',
   styleUrl: './kit-page.scss',
 })
 export class KitPage {
+  protected readonly primeTableRows: KitTableRow[] = [
+    { login: 'admin', role: 'ADMIN' },
+    { login: 'streamer', role: 'USER' },
+    { login: 'moderator1', role: 'MODERATOR' },
+  ];
+
   // Сегменты (текст/ширина/цвет/выравнивание) собираются вызывающим кодом
   // (здесь — демо-страницей, в реальном использовании — фичей вроде
   // Schedule): weekday — узкий фиксированный слева, event — растягивается

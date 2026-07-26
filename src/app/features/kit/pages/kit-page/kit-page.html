@@ -100,4 +100,29 @@
       <app-list [items]="[]" [settings]="{ gap: 8 }" [loading]="true" [loaderSettings]="{ itemsCount: 5 }" />
     </div>
   </section>
+
+  <h1 class="kit-page__title">PrimeNG</h1>
+
+  <section class="kit-page__section">
+    <h2 class="kit-page__section-title">
+      p-table под темой AdminPreset (stream.Front#75) — demo/проверка темы, PrimeNG-компоненты в проекте
+      применяются только внутри админ-панели
+    </h2>
+    <div class="kit-page__row">
+      <p-table [value]="primeTableRows" styleClass="kit-page__prime-table">
+        <ng-template #header>
+          <tr>
+            <th>Логин</th>
+            <th>Роль</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-row>
+          <tr>
+            <td>{{ row.login }}</td>
+            <td>{{ row.role }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
 </div>
