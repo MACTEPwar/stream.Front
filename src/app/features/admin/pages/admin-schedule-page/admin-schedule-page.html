@@ -1,0 +1,73 @@
+<div class="admin-schedule-page">
+  @if (hasError()) {
+    <app-error-message message="Не удалось загрузить расписание" />
+  } @else {
+    <p-table [value]="days()" [loading]="isLoading()" dataKey="weekday">
+      <ng-template #header>
+        <tr>
+          <th>День</th>
+          <th>Статус</th>
+          <th>Событие</th>
+          <th>Время</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-day>
+        <tr>
+          <td>{{ weekdayLabelFor(day) }}</td>
+          <td>{{ day.isOnline ? 'Онлайн' : 'Оффлайн' }}</td>
+          <td>{{ day.eventTitle || '—' }}</td>
+          <td>{{ day.time || '—' }}</td>
+          <td>
+            <button pButton size="small" (click)="onEditClick(day)">Изменить</button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+
+  <p-drawer
+    [(visible)]="drawerVisible"
+    position="right"
+    header="Изменить день расписания"
+    styleClass="admin-schedule-page__drawer"
+  >
+    <div class="admin-schedule-page__form">
+      <div class="admin-schedule-page__field">
+        <label for="admin-schedule-online">Онлайн</label>
+        <p-toggleswitch id="admin-schedule-online" [(ngModel)]="isOnline" />
+      </div>
+
+      <div class="admin-schedule-page__field">
+        <label for="admin-schedule-event-title">Событие</label>
+        <input
+          id="admin-schedule-event-title"
+          type="text"
+          pInputText
+          [(ngModel)]="eventTitle"
+          maxlength="200"
+        />
+      </div>
+
+      <div class="admin-schedule-page__field">
+        <label for="admin-schedule-time">Время (ЧЧ:ММ)</label>
+        <input
+          id="admin-schedule-time"
+          type="text"
+          pInputText
+          [(ngModel)]="time"
+          placeholder="19:00"
+        />
+      </div>
+
+      <button
+        pButton
+        [disabled]="isSaving()"
+        (click)="onSaveClick()"
+        class="admin-schedule-page__save-button"
+      >
+        Сохранить
+      </button>
+    </div>
+  </p-drawer>
+</div>

@@ -1,0 +1,17 @@
+.admin-schedule-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+}
+
+.admin-schedule-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-schedule-page__save-button {
+  align-self: flex-start;
+  margin-top: 8px;
+}
