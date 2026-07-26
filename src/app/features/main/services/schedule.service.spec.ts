@@ -42,4 +42,29 @@ describe('ScheduleService', () => {
 
     expect(result).toEqual(mockSchedule);
   });
+
+  it('update() бьёт в PATCH /schedule/:weekday', () => {
+    const updated: ScheduleDay = {
+      id: '1',
+      weekday: 'MONDAY',
+      isOnline: true,
+      eventTitle: 'Совместный стрим',
+      time: '19:00',
+    };
+    let result: ScheduleDay | undefined;
+    service
+      .update('MONDAY', { isOnline: true, eventTitle: 'Совместный стрим', time: '19:00' })
+      .subscribe((day) => (result = day));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/schedule/MONDAY`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({
+      isOnline: true,
+      eventTitle: 'Совместный стрим',
+      time: '19:00',
+    });
+    req.flush(updated);
+
+    expect(result).toEqual(updated);
+  });
 });
