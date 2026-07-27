@@ -2,7 +2,7 @@
   <div class="profile-section__card">
     <div class="profile-section__avatar-row">
       <div class="profile-section__avatar-preview">
-        @if (pendingAvatarUrl(); as url) {
+        @if (resolvedAvatarUrl(); as url) {
           <img [src]="url" alt="Аватар" />
         } @else {
           <div class="profile-section__avatar-preview--placeholder"></div>

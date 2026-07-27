@@ -2,6 +2,7 @@ import { Component, ElementRef, effect, inject, signal, viewChildren } from '@an
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '@core/services/auth.service';
+import { ImageUrlService } from '@core/services/image-url.service';
 import { ModalService } from '@core/services/modal.service';
 import { LoginModal } from '@features/auth/components/login-modal/login-modal';
 import { Button } from '../button/button';
@@ -56,6 +57,7 @@ interface NavItem {
 })
 export class Shell {
   private readonly modalService = inject(ModalService);
+  private readonly imageUrlService = inject(ImageUrlService);
   protected readonly authService = inject(AuthService);
 
   protected readonly navItems: readonly NavItem[] = [
@@ -76,6 +78,10 @@ export class Shell {
 
   protected onLoginClick(): void {
     this.modalService.open(LoginModal);
+  }
+
+  protected resolveAvatarUrl(path: string): string {
+    return this.imageUrlService.resolve(path);
   }
 
   constructor() {
