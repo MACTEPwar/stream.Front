@@ -6,7 +6,7 @@ import { SOCIAL_LINK_TYPE_LABELS, SocialLink, SocialLinkType } from '@core/model
 import { SocialLinkService } from '@core/services/social-link.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { TextField } from '@shared/components/text-field/text-field';
 
 export interface AddSocialLinkModalData {
@@ -30,7 +30,7 @@ export interface AddSocialLinkModalData {
  */
 @Component({
   selector: 'app-add-social-link-modal',
-  imports: [TextField, Button],
+  imports: [TextField, DecorativeButton],
   templateUrl: './add-social-link-modal.html',
   styleUrl: './add-social-link-modal.scss',
 })

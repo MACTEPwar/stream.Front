@@ -22,7 +22,7 @@ function fillInput(el: HTMLElement, index: number, value: string): void {
 }
 
 function clickButton(el: HTMLElement, index: number): void {
-  el.querySelectorAll<HTMLButtonElement>('app-button button.button')[index].click();
+  el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[index].click();
 }
 
 const localOnlyUser: CurrentUser = {
@@ -91,7 +91,7 @@ describe('ProfileSection', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.profile-section__avatar-preview')).not.toBeNull();
     expect(el.querySelectorAll('app-text-field').length).toBe(1);
-    const buttons = Array.from(el.querySelectorAll('app-button')).map((b) => b.textContent?.trim());
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button')).map((b) => b.textContent?.trim());
     expect(buttons).toEqual(['Поменять', 'Сохранить', 'Сменить пароль']);
     expect(el.textContent).toContain('Способы входа');
     expect(el.textContent).toContain('Локальный вход');
@@ -104,7 +104,7 @@ describe('ProfileSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = Array.from(el.querySelectorAll('app-button')).map((b) => b.textContent?.trim());
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button')).map((b) => b.textContent?.trim());
     expect(buttons).toContain('Подключить локальный вход');
     expect(buttons).not.toContain('Сменить пароль');
   });
@@ -115,7 +115,7 @@ describe('ProfileSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = Array.from(el.querySelectorAll('app-button')).map((b) => b.textContent?.trim());
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button')).map((b) => b.textContent?.trim());
     expect(buttons.filter((t) => t === 'Отключить').length).toBe(2);
   });
 
@@ -125,7 +125,7 @@ describe('ProfileSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = Array.from(el.querySelectorAll('app-button')).map((b) => b.textContent?.trim());
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button')).map((b) => b.textContent?.trim());
     expect(buttons).not.toContain('Отключить');
   });
 
@@ -137,7 +137,7 @@ describe('ProfileSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = Array.from(el.querySelectorAll('app-button'));
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button'));
     const addLocalIndex = buttons.findIndex((b) => b.textContent?.trim() === 'Подключить локальный вход');
     buttons[addLocalIndex].querySelector('button')?.click();
 
@@ -157,7 +157,7 @@ describe('ProfileSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = Array.from(el.querySelectorAll('app-button'));
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button'));
     const disconnectIndex = buttons.findIndex((b) => b.textContent?.trim() === 'Отключить');
     buttons[disconnectIndex].querySelector('button')?.click();
 
@@ -184,7 +184,7 @@ describe('ProfileSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = Array.from(el.querySelectorAll('app-button'));
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button'));
     const disconnectIndex = buttons.findIndex((b) => b.textContent?.trim() === 'Отключить');
     buttons[disconnectIndex].querySelector('button')?.click();
 

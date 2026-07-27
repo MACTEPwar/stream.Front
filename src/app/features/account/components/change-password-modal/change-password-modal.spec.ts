@@ -38,7 +38,7 @@ describe('ChangePasswordModal', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('app-text-field').length).toBe(3);
-    const buttons = Array.from(el.querySelectorAll('app-button')).map((b) => b.textContent?.trim());
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button')).map((b) => b.textContent?.trim());
     expect(buttons).toEqual(['Сохранить', 'Отмена']);
   });
 
@@ -48,7 +48,7 @@ describe('ChangePasswordModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Заполните текущий и новый пароль', 'error');
     httpMock.expectNone(`${environment.apiUrl}/auth/methods/local/password`);
@@ -64,7 +64,7 @@ describe('ChangePasswordModal', () => {
     fillInput(el, 1, 'short');
     fillInput(el, 2, 'short');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Новый пароль должен быть не короче 8 символов', 'error');
     httpMock.expectNone(`${environment.apiUrl}/auth/methods/local/password`);
@@ -80,7 +80,7 @@ describe('ChangePasswordModal', () => {
     fillInput(el, 1, 'new-secret-1');
     fillInput(el, 2, 'new-secret-2');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Пароли не совпадают', 'error');
     httpMock.expectNone(`${environment.apiUrl}/auth/methods/local/password`);
@@ -97,7 +97,7 @@ describe('ChangePasswordModal', () => {
     fillInput(el, 1, 'new-secret');
     fillInput(el, 2, 'new-secret');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local/password`);
     expect(req.request.method).toBe('PATCH');
@@ -119,7 +119,7 @@ describe('ChangePasswordModal', () => {
     fillInput(el, 1, 'new-secret');
     fillInput(el, 2, 'new-secret');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local/password`);
     req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
@@ -138,7 +138,7 @@ describe('ChangePasswordModal', () => {
     fillInput(el, 1, 'new-secret');
     fillInput(el, 2, 'new-secret');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local/password`);
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
@@ -152,7 +152,7 @@ describe('ChangePasswordModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = el.querySelectorAll<HTMLButtonElement>('app-button button.button');
+    const buttons = el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button');
     buttons[1].click();
 
     expect(closeSpy).toHaveBeenCalled();

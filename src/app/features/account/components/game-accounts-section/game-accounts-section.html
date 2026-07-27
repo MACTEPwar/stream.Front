@@ -18,25 +18,25 @@
               <app-text-field label="Ник" placeholder="Введите ник" [(value)]="editNickname" />
               <app-text-field label="Id аккаунта" placeholder="Введите id аккаунта" [(value)]="editExternalId" />
               <div class="game-accounts-section__card-actions">
-                <app-button
+                <app-decorative-button
                   text="Сохранить"
                   type="primary"
                   [width]="'content'"
                   (click)="onEditSave(account.id)"
                 />
-                <app-button text="Отмена" type="secondary" [width]="'content'" (click)="onEditCancel()" />
+                <app-decorative-button text="Отмена" type="secondary" [width]="'content'" (click)="onEditCancel()" />
               </div>
             } @else {
               <div class="game-accounts-section__row">
                 <span class="game-accounts-section__label">{{ account.nickname }} ({{ account.externalId }})</span>
                 <div class="game-accounts-section__card-actions">
-                  <app-button
+                  <app-decorative-button
                     text="Редактировать"
                     type="secondary"
                     [width]="'content'"
                     (click)="onEditStart(account)"
                   />
-                  <app-button text="Удалить" type="secondary" [width]="'content'" (click)="onDelete(account)" />
+                  <app-decorative-button text="Удалить" type="secondary" [width]="'content'" (click)="onDelete(account)" />
                 </div>
               </div>
             }
@@ -46,5 +46,5 @@
     }
   }
 
-  <app-button text="Добавить" type="primary" [width]="'content'" (click)="onAddClick()" />
+  <app-decorative-button text="Добавить" type="primary" [width]="'content'" (click)="onAddClick()" />
 </div>

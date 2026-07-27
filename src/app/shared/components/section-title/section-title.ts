@@ -4,7 +4,7 @@ import { Component, ElementRef, computed, effect, input, signal, viewChild } fro
 // без этого несколько <app-section-title> на одной странице делили бы один
 // и тот же id, а url(#id) резолвился бы в первый попавшийся элемент в
 // документе, не в свой собственный <svg> (тот же баг, что был у Button,
-// см. frontend/src/app/shared/components/button/button.ts).
+// см. frontend/src/app/shared/components/decorative-button/decorative-button.ts).
 let nextSectionTitleUid = 0;
 
 /** Ширина «птички»-шеврона (98→112 в исходном SVG) — фиксирована, не зависит от totalWidth(). */

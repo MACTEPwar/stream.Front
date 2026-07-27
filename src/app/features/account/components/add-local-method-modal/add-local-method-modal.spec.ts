@@ -39,7 +39,7 @@ describe('AddLocalMethodModal', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('app-text-field').length).toBe(2);
-    const buttons = Array.from(el.querySelectorAll('app-button')).map((b) => b.textContent?.trim());
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button')).map((b) => b.textContent?.trim());
     expect(buttons).toEqual(['Подключить', 'Отмена']);
   });
 
@@ -53,7 +53,7 @@ describe('AddLocalMethodModal', () => {
     fillInput(el, 0, 'ab');
     fillInput(el, 1, 'secret12');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Логин должен быть не короче 3 символов', 'error');
     httpMock.expectNone(`${environment.apiUrl}/auth/methods/local`);
@@ -69,7 +69,7 @@ describe('AddLocalMethodModal', () => {
     fillInput(el, 0, 'streamer');
     fillInput(el, 1, 'short1');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Пароль должен быть не короче 8 символов', 'error');
     httpMock.expectNone(`${environment.apiUrl}/auth/methods/local`);
@@ -86,7 +86,7 @@ describe('AddLocalMethodModal', () => {
     fillInput(el, 0, 'streamer');
     fillInput(el, 1, 'secret12');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local`);
     expect(req.request.method).toBe('POST');
@@ -109,7 +109,7 @@ describe('AddLocalMethodModal', () => {
     fillInput(el, 0, 'streamer');
     fillInput(el, 1, 'secret12');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local`);
     req.flush('Conflict', { status: 409, statusText: 'Conflict' });
@@ -130,7 +130,7 @@ describe('AddLocalMethodModal', () => {
     fillInput(el, 0, 'streamer');
     fillInput(el, 1, 'secret12');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local`);
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
@@ -146,7 +146,7 @@ describe('AddLocalMethodModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = el.querySelectorAll<HTMLButtonElement>('app-button button.button');
+    const buttons = el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button');
     buttons[1].click();
 
     expect(closeSpy).toHaveBeenCalled();

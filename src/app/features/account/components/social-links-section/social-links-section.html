@@ -28,25 +28,25 @@
               </select>
               <app-text-field label="Значение" placeholder="Введите значение" [(value)]="editValue" />
               <div class="social-links-section__card-actions">
-                <app-button
+                <app-decorative-button
                   text="Сохранить"
                   type="primary"
                   [width]="'content'"
                   (click)="onEditSave(link.id)"
                 />
-                <app-button text="Отмена" type="secondary" [width]="'content'" (click)="onEditCancel()" />
+                <app-decorative-button text="Отмена" type="secondary" [width]="'content'" (click)="onEditCancel()" />
               </div>
             } @else {
               <div class="social-links-section__row">
                 <span class="social-links-section__label">{{ labelFor(link) }}</span>
                 <div class="social-links-section__card-actions">
-                  <app-button
+                  <app-decorative-button
                     text="Редактировать"
                     type="secondary"
                     [width]="'content'"
                     (click)="onEditStart(link)"
                   />
-                  <app-button text="Удалить" type="secondary" [width]="'content'" (click)="onDelete(link)" />
+                  <app-decorative-button text="Удалить" type="secondary" [width]="'content'" (click)="onDelete(link)" />
                 </div>
               </div>
             }
@@ -56,5 +56,5 @@
     }
   }
 
-  <app-button text="Добавить" type="primary" [width]="'content'" (click)="onAddClick()" />
+  <app-decorative-button text="Добавить" type="primary" [width]="'content'" (click)="onAddClick()" />
 </div>

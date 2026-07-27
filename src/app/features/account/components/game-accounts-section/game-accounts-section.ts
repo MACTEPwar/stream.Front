@@ -6,7 +6,7 @@ import { GameAccount } from '@core/models/game-account.model';
 import { GameAccountService } from '@core/services/game-account.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { ConfirmModal, ConfirmModalData } from '@shared/components/confirm-modal/confirm-modal';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { Skeleton } from '@shared/components/skeleton/skeleton';
@@ -38,7 +38,7 @@ const GENERIC_ERROR_MESSAGE = 'Что-то пошло не так, попроб�
  */
 @Component({
   selector: 'app-game-accounts-section',
-  imports: [TextField, Button, ErrorMessage, Skeleton],
+  imports: [TextField, DecorativeButton, ErrorMessage, Skeleton],
   templateUrl: './game-accounts-section.html',
   styleUrl: './game-accounts-section.scss',
 })

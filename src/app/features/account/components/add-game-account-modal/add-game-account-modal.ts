@@ -6,7 +6,7 @@ import { GameAccount } from '@core/models/game-account.model';
 import { GameAccountService } from '@core/services/game-account.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { TextField } from '@shared/components/text-field/text-field';
 
 export interface AddGameAccountModalData {
@@ -28,7 +28,7 @@ export interface AddGameAccountModalData {
  */
 @Component({
   selector: 'app-add-game-account-modal',
-  imports: [TextField, Button],
+  imports: [TextField, DecorativeButton],
   templateUrl: './add-game-account-modal.html',
   styleUrl: './add-game-account-modal.scss',
 })

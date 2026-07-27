@@ -6,7 +6,7 @@ import { ImageUrlService } from '@core/services/image-url.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { UploadService } from '@core/services/upload.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { AVATAR_PRESETS } from './avatar-presets';
 
 export interface AvatarPickerModalData {
@@ -34,7 +34,7 @@ export interface AvatarPickerModalData {
  */
 @Component({
   selector: 'app-avatar-picker-modal',
-  imports: [Button],
+  imports: [DecorativeButton],
   templateUrl: './avatar-picker-modal.html',
   styleUrl: './avatar-picker-modal.scss',
 })

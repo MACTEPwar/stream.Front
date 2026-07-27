@@ -95,7 +95,7 @@ describe('SocialLinksSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const addButton = Array.from(el.querySelectorAll<HTMLButtonElement>('app-button button.button')).find(
+    const addButton = Array.from(el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')).find(
       (b) => b.textContent?.trim() === 'Добавить',
     );
     addButton?.click();
@@ -130,7 +130,7 @@ describe('SocialLinksSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.social-links-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
     fixture.detectChanges();
 
     const select = firstCard.querySelector<HTMLSelectElement>('.social-links-section__select');
@@ -143,7 +143,7 @@ describe('SocialLinksSection', () => {
     valueInput!.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/profile/social-links/link-1`);
     expect(req.request.method).toBe('PATCH');
@@ -163,7 +163,7 @@ describe('SocialLinksSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.social-links-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
     fixture.detectChanges();
 
     const valueInput = firstCard.querySelector<HTMLInputElement>('.text-field__input');
@@ -171,7 +171,7 @@ describe('SocialLinksSection', () => {
     valueInput!.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
 
     expect(showSpy).toHaveBeenCalledWith('Выберите тип и заполните значение', 'error');
     httpMock.expectNone(`${environment.apiUrl}/profile/social-links/link-1`);
@@ -186,7 +186,7 @@ describe('SocialLinksSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.social-links-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[1].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[1].click();
 
     expect(openSpy).toHaveBeenCalled();
     const data = openSpy.mock.calls[0][1] as { message: string; onConfirm: () => void };
@@ -216,7 +216,7 @@ describe('SocialLinksSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.social-links-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[1].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[1].click();
 
     const data = openSpy.mock.calls[0][1] as { onConfirm: () => void };
     data.onConfirm();

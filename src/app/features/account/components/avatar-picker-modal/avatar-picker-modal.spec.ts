@@ -62,7 +62,7 @@ describe('AvatarPickerModal', () => {
     const el: HTMLElement = fixture.nativeElement;
     el.querySelectorAll<HTMLButtonElement>('.avatar-picker-modal__preset')[0].click();
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(onConfirm).toHaveBeenCalledWith(AVATAR_PRESETS[0]);
     expect(closeSpy).toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe('AvatarPickerModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = el.querySelectorAll<HTMLButtonElement>('app-button button.button');
+    const buttons = el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button');
     buttons[1].click();
 
     expect(onConfirm).not.toHaveBeenCalled();
@@ -100,7 +100,7 @@ describe('AvatarPickerModal', () => {
     req.flush({ url: '/uploads/avatar.png' });
     fixture.detectChanges();
 
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(onConfirm).toHaveBeenCalledWith('/uploads/avatar.png');
   });

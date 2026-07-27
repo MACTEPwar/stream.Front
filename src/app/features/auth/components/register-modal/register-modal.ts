@@ -7,7 +7,7 @@ import { GoogleAuthService } from '@core/services/google-auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AuthModalShell } from '@shared/components/auth-modal-shell/auth-modal-shell';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { TextField } from '@shared/components/text-field/text-field';
 import { LoginModal } from '../login-modal/login-modal';
 
@@ -30,7 +30,7 @@ const MIN_PASSWORD_LENGTH = 8;
  */
 @Component({
   selector: 'app-register-modal',
-  imports: [AuthModalShell, TextField, Button],
+  imports: [AuthModalShell, TextField, DecorativeButton],
   templateUrl: './register-modal.html',
   styleUrl: './register-modal.scss',
 })

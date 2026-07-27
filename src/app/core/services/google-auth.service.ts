@@ -56,7 +56,7 @@ export class GoogleAuthService {
   /**
    * Рендерит невидимую официальную Google-кнопку внутрь `container` (в UI
    * она накладывается прозрачным оверлеем поверх нашей стилизованной
-   * `app-button` — см. `LoginModal`/`RegisterModal`) и логинит через
+   * `app-decorative-button` — см. `LoginModal`/`RegisterModal`) и логинит через
    * `POST /auth/google`. См. `getIdToken()` — общая механика с
    * `connectButton()` (`stream.Front#82`), только конечное действие разное
    * (вход vs подключение метода к уже залогиненному аккаунту).

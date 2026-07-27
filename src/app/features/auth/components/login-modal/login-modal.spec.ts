@@ -51,7 +51,7 @@ describe('LoginModal', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('app-text-field').length).toBe(2);
-    expect(el.querySelector('app-button')).not.toBeNull();
+    expect(el.querySelector('app-decorative-button')).not.toBeNull();
   });
 
   it('сабмит с пустыми полями — показывает toast-ошибку и не бьёт в API', () => {

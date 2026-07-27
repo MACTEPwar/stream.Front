@@ -6,7 +6,7 @@ import { SOCIAL_LINK_TYPE_LABELS, SocialLink, SocialLinkType } from '@core/model
 import { SocialLinkService } from '@core/services/social-link.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { ConfirmModal, ConfirmModalData } from '@shared/components/confirm-modal/confirm-modal';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { Skeleton } from '@shared/components/skeleton/skeleton';
@@ -36,7 +36,7 @@ const GENERIC_ERROR_MESSAGE = 'Что-то пошло не так, попроб�
  */
 @Component({
   selector: 'app-social-links-section',
-  imports: [TextField, Button, ErrorMessage, Skeleton],
+  imports: [TextField, DecorativeButton, ErrorMessage, Skeleton],
   templateUrl: './social-links-section.html',
   styleUrl: './social-links-section.scss',
 })

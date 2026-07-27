@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TableModule } from 'primeng/table';
 
-import { Button } from '../../../../shared/components/button/button';
+import { DecorativeButton } from '../../../../shared/components/decorative-button/decorative-button';
 import { List, ListItemData } from '../../../../shared/components/list/list';
 import { SectionTitle } from '../../../../shared/components/section-title/section-title';
 
@@ -21,7 +21,7 @@ interface KitTableRow {
  */
 @Component({
   selector: 'app-kit-page',
-  imports: [Button, SectionTitle, List, TableModule],
+  imports: [DecorativeButton, SectionTitle, List, TableModule],
   templateUrl: './kit-page.html',
   styleUrl: './kit-page.scss',
 })

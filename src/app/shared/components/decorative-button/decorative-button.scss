@@ -2,7 +2,7 @@
 
 // Высота (viewBox 320×51 → 48px) — константа независимо от width(): px/unit
 // остаётся тем же, что и раньше (48/51), поэтому острые концы кнопки при
-// любой ширине рендерятся 1:1 с оригиналом (см. PX_PER_UNIT в button.ts).
+// любой ширине рендерятся 1:1 с оригиналом (см. PX_PER_UNIT в decorative-button.ts).
 // Ширина .button задаётся инлайново ([style.width.px]="widthPx()") — либо
 // точный эквивалент исходных 320 unit (без width()), либо то, что запросил
 // пользователь. Статично всё, кроме текста (.button__text), иконки
@@ -69,7 +69,7 @@ $svg-height: 48px;
 // Текст — живой оверлей поверх SVG (раньше был зашит как path с градиентной
 // заливкой). Typography — Figma-компонент "Button": Montserrat Bold 18/24,
 // letter-spacing 8%. Сам градиент (зависит от type()) — [style.background]
-// в button.html/textGradient() в button.ts, здесь только механика затекания
+// в decorative-button.html/textGradient() в button.ts, здесь только механика затекания
 // фона в текст.
 .button__text {
   flex: 0 0 auto;
