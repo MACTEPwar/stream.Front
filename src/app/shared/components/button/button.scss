@@ -14,6 +14,15 @@
 // пользователя переопределён отдельно от него, только для этого компонента.
 // Hover/active намеренно не тронуты (не запрашивались) — остаются
 // производными от палитры `AdminPreset`.
+// Текст кнопки — Montserrat (по прямому запросу пользователя), не дефолтный
+// Aura-шрифт `AdminPreset`-темы (сама тема шрифт не переопределяет, только
+// цветовую палитру, см. core/primeng/admin-preset.ts). `<button>` — прямой
+// элемент шаблона ЭТОГО компонента (не дочернего), обычная view-encapsulation
+// уже скоупит селектор — `::ng-deep` не нужен.
+button {
+  font-family: vars.$font-family-montserrat;
+}
+
 :host {
   --p-button-primary-background: #{vars.$color-f4d2a4};
   --p-button-primary-border-color: #{vars.$color-f8ecb3};
