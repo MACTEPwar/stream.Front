@@ -15,7 +15,60 @@
 
     <div class="profile-section__actions">
       <app-button text="Сохранить" type="primary" [width]="'content'" (click)="onSave()" />
-      <app-button text="Сменить пароль" type="secondary" [width]="'content'" (click)="onChangePasswordClick()" />
+    </div>
+  </div>
+
+  <div class="profile-section__card">
+    <h3 class="profile-section__auth-methods-title">Способы входа</h3>
+
+    <div class="profile-section__auth-method">
+      <span class="profile-section__auth-method-label">{{ authMethodLabel.LOCAL }}</span>
+      @if (hasLocal()) {
+        <div class="profile-section__auth-method-actions">
+          <app-button
+            text="Сменить пароль"
+            type="secondary"
+            [width]="'content'"
+            (click)="onChangePasswordClick()"
+          />
+          @if (canDisconnect()) {
+            <app-button
+              text="Отключить"
+              type="secondary"
+              [width]="'content'"
+              (click)="onDisconnectClick('LOCAL')"
+            />
+          }
+        </div>
+      } @else {
+        <app-button
+          text="Подключить локальный вход"
+          type="secondary"
+          [width]="'content'"
+          (click)="onAddLocalClick()"
+        />
+      }
+    </div>
+
+    <div class="profile-section__auth-method">
+      <span class="profile-section__auth-method-label">{{ authMethodLabel.GOOGLE }}</span>
+      @if (hasGoogle()) {
+        @if (canDisconnect()) {
+          <app-button
+            text="Отключить"
+            type="secondary"
+            [width]="'content'"
+            (click)="onDisconnectClick('GOOGLE')"
+          />
+        }
+      } @else {
+        <div class="profile-section__google-button-container">
+          <button type="button" class="profile-section__google-button">
+            <img src="/icons/google_btn.svg" alt="Google" />
+          </button>
+          <div #googleButtonOverlay class="profile-section__google-button-overlay"></div>
+        </div>
+      }
     </div>
   </div>
 </div>

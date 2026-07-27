@@ -3,6 +3,7 @@ import { Observable, Subject, from, switchMap, take } from 'rxjs';
 
 import { environment } from '@env/environment';
 import { CurrentUser } from '../models/current-user.model';
+import { AuthMethodsService } from './auth-methods.service';
 import { AuthService } from './auth.service';
 
 interface GoogleCredentialResponse {
@@ -46,6 +47,7 @@ const DEFAULT_BUTTON_WIDTH = 240;
 @Injectable({ providedIn: 'root' })
 export class GoogleAuthService {
   private readonly authService = inject(AuthService);
+  private readonly authMethodsService = inject(AuthMethodsService);
 
   private scriptLoadPromise: Promise<void> | null = null;
   private initialized = false;
@@ -54,17 +56,40 @@ export class GoogleAuthService {
   /**
    * Рендерит невидимую официальную Google-кнопку внутрь `container` (в UI
    * она накладывается прозрачным оверлеем поверх нашей стилизованной
-   * `app-button` — см. `LoginModal`/`RegisterModal`). Каждый вызов кладёт
-   * идентичный `renderButton()` в переданный контейнер и возвращает
-   * Observable, который эмитит ровно один раз при следующем успешном входе
-   * через ЛЮБОЙ отрендеренный этим сервисом Google-виджет (колбэк
-   * `initialize()` регистрируется глобально один раз, `take(1)` не даёт
-   * одной подписке подхватить чужой/старый эмит). Если пользователь просто
-   * закрыл попап Google — колбэк не вызывается, Observable не эмитит ничего
-   * (не ошибка) — это ожидаемое поведение `renderButton()`, GIS не даёт
-   * явного сигнала отмены для этого API.
+   * `app-button` — см. `LoginModal`/`RegisterModal`) и логинит через
+   * `POST /auth/google`. См. `getIdToken()` — общая механика с
+   * `connectButton()` (`stream.Front#82`), только конечное действие разное
+   * (вход vs подключение метода к уже залогиненному аккаунту).
    */
   renderButton(container: HTMLElement): Observable<CurrentUser> {
+    return this.getIdToken(container).pipe(
+      switchMap((idToken) => this.authService.loginWithGoogle(idToken)),
+    );
+  }
+
+  /**
+   * Тот же виджет, что `renderButton()`, но вместо входа подключает Google
+   * к уже залогиненному текущему пользователю (`POST /auth/methods/google`,
+   * `stream.Front#82`) — используется в `ProfileSection`, блок «Способы
+   * входа».
+   */
+  connectButton(container: HTMLElement): Observable<{ success: true }> {
+    return this.getIdToken(container).pipe(
+      switchMap((idToken) => this.authMethodsService.connectGoogle(idToken)),
+    );
+  }
+
+  /**
+   * Общая механика обоих виджетов: грузит SDK, рендерит Google-кнопку в
+   * `container`, возвращает Observable, эмитящий ID-токен ровно один раз при
+   * следующем успешном входе через ЛЮБОЙ отрендеренный этим сервисом
+   * Google-виджет (колбэк `initialize()` регистрируется глобально один раз,
+   * `take(1)` не даёт одной подписке подхватить чужой/старый эмит). Если
+   * пользователь просто закрыл попап Google — колбэк не вызывается,
+   * Observable не эмитит ничего (не ошибка) — это ожидаемое поведение
+   * `renderButton()` самого SDK, GIS не даёт явного сигнала отмены.
+   */
+  private getIdToken(container: HTMLElement): Observable<string> {
     return from(this.loadScript()).pipe(
       switchMap(() => {
         if (!window.google) {
@@ -80,7 +105,6 @@ export class GoogleAuthService {
         });
         return this.credentialSubject.pipe(take(1));
       }),
-      switchMap((idToken) => this.authService.loginWithGoogle(idToken)),
     );
   }
 

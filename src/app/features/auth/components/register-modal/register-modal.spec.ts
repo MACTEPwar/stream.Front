@@ -146,7 +146,13 @@ describe('RegisterModal', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/register`);
     expect(req.request.body).toEqual({ login: 'streamer', password: 'secret12' });
-    req.flush({ id: '1', login: 'streamer', role: 'USER', email: null });
+    req.flush({
+      id: '1',
+      role: 'USER',
+      name: 'streamer',
+      avatarUrl: null,
+      authMethods: [{ type: 'LOCAL' }],
+    });
 
     expect(closeSpy).toHaveBeenCalled();
   });
@@ -203,7 +209,7 @@ describe('RegisterModal', () => {
   it('успешный вход через renderButton() — закрывает модалку через ModalService', async () => {
     const closeSpy = vi.spyOn(modalService, 'close');
     googleAuthService.renderButton.mockReturnValue(
-      of({ id: '1', login: 'streamer', role: 'USER', email: null, name: null, avatarUrl: null }),
+      of({ id: '1', role: 'USER', name: null, avatarUrl: null, authMethods: [{ type: 'GOOGLE' }] }),
     );
     const fixture = TestBed.createComponent(RegisterModal);
     fixture.detectChanges();

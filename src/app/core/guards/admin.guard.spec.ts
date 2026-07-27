@@ -38,7 +38,7 @@ describe('adminGuard', () => {
     authService.login('admin', 'secret').subscribe();
     httpMock
       .expectOne(`${environment.apiUrl}/auth/login`)
-      .flush({ id: '1', login: 'admin', role: 'ADMIN', email: null, name: null, avatarUrl: null });
+      .flush({ id: '1', role: 'ADMIN', name: null, avatarUrl: null, authMethods: [{ type: 'LOCAL' }] });
 
     expect(runGuard()).toBe(true);
   });
@@ -49,11 +49,10 @@ describe('adminGuard', () => {
       .expectOne(`${environment.apiUrl}/auth/login`)
       .flush({
         id: '1',
-        login: 'streamer',
         role: 'USER',
-        email: null,
         name: null,
         avatarUrl: null,
+        authMethods: [{ type: 'LOCAL' }],
       });
 
     const result = runGuard();

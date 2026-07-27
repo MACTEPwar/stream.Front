@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, input, signal } from '@angular/core';
 
 import { extractApiErrorMessage } from '@core/models/api-error.model';
-import { AuthService } from '@core/services/auth.service';
+import { AuthMethodsService } from '@core/services/auth-methods.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { Button } from '@shared/components/button/button';
@@ -36,7 +36,7 @@ const MIN_PASSWORD_LENGTH = 8;
 export class ChangePasswordModal {
   readonly data = input<unknown>();
 
-  private readonly authService = inject(AuthService);
+  private readonly authMethodsService = inject(AuthMethodsService);
   private readonly modalService = inject(ModalService);
   private readonly notificationService = inject(NotificationService);
 
@@ -61,8 +61,11 @@ export class ChangePasswordModal {
       return;
     }
 
-    this.authService
-      .changePassword({ currentPassword: this.currentPassword(), newPassword: this.newPassword() })
+    this.authMethodsService
+      .changeLocalPassword({
+        currentPassword: this.currentPassword(),
+        newPassword: this.newPassword(),
+      })
       .subscribe({
         next: () => {
           this.notificationService.show('Пароль обновлён', 'success');

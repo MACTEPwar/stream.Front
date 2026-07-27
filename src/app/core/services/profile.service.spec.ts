@@ -9,7 +9,6 @@ import { ProfileService } from './profile.service';
 const mockProfile: Profile = {
   id: 'cly1a2b3c0001abcd1234efgh',
   userId: 'cly1a2b3c0000abcd1234efgh',
-  email: 'streamer@example.com',
   name: 'Streamer',
   avatarUrl: null,
 };
@@ -42,12 +41,12 @@ describe('ProfileService', () => {
   });
 
   it('updateProfile() бьёт в PATCH /profile с телом UpdateProfileDto', () => {
-    service.updateProfile({ email: 'new@example.com' }).subscribe();
+    service.updateProfile({ name: 'New Name' }).subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/profile`);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ email: 'new@example.com' });
-    req.flush({ ...mockProfile, email: 'new@example.com' });
+    expect(req.request.body).toEqual({ name: 'New Name' });
+    req.flush({ ...mockProfile, name: 'New Name' });
   });
 
   it('updateAvatar() бьёт в PATCH /profile/avatar с телом UpdateAvatarDto', () => {

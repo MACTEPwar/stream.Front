@@ -36,7 +36,7 @@
         } @else {
           <span class="shell__account-avatar shell__account-avatar--placeholder" aria-hidden="true"></span>
         }
-        <span class="shell__account-name">{{ authService.currentUser()?.name ?? authService.currentUser()?.login }}</span>
+        <span class="shell__account-name">{{ authService.currentUser()?.name }}</span>
       </a>
     } @else {
       <app-button

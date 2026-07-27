@@ -38,7 +38,7 @@ describe('authGuard', () => {
     authService.login('streamer', 'secret').subscribe();
     httpMock
       .expectOne(`${environment.apiUrl}/auth/login`)
-      .flush({ id: '1', login: 'streamer', role: 'USER', email: null });
+      .flush({ id: '1', role: 'USER', name: 'streamer', avatarUrl: null, authMethods: [{ type: 'LOCAL' }] });
 
     expect(runGuard()).toBe(true);
   });

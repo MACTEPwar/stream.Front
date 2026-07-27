@@ -12,11 +12,10 @@ import { Shell } from './shell';
 
 const mockUser: CurrentUser = {
   id: '1',
-  login: 'streamer',
   role: 'USER',
-  email: 'streamer@example.com',
   name: 'Иван',
   avatarUrl: null,
+  authMethods: [{ type: 'LOCAL' }],
 };
 
 @Component({

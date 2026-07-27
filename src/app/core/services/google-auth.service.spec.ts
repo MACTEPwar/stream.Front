@@ -9,11 +9,10 @@ import { GoogleAuthService } from './google-auth.service';
 
 const mockUser: CurrentUser = {
   id: '1',
-  login: 'streamer',
   role: 'USER',
-  email: 'streamer@example.com',
   name: null,
   avatarUrl: null,
+  authMethods: [{ type: 'GOOGLE' }],
 };
 
 describe('GoogleAuthService', () => {
@@ -124,5 +123,26 @@ describe('GoogleAuthService', () => {
     await Promise.resolve();
 
     expect(error).toBeInstanceOf(Error);
+  });
+
+  it('connectButton() рендерит тот же виджет, но подключает Google к текущему аккаунту (POST /auth/methods/google)', async () => {
+    let result: { success: true } | undefined;
+    service.connectButton(container).subscribe((response) => (result = response));
+    await Promise.resolve();
+
+    expect(renderButtonSpy).toHaveBeenCalledWith(
+      container,
+      expect.objectContaining({ type: 'standard' }),
+    );
+
+    const { callback } = initializeSpy.mock.calls[0][0];
+    callback({ credential: 'google-id-token' });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/google`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ idToken: 'google-id-token' });
+    req.flush({ success: true });
+
+    expect(result).toEqual({ success: true });
   });
 });

@@ -51,7 +51,7 @@ describe('ChangePasswordModal', () => {
     el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Заполните текущий и новый пароль', 'error');
-    httpMock.expectNone(`${environment.apiUrl}/auth/change-password`);
+    httpMock.expectNone(`${environment.apiUrl}/auth/methods/local/password`);
   });
 
   it('новый пароль короче минимума — toast-ошибка, без запроса', () => {
@@ -67,7 +67,7 @@ describe('ChangePasswordModal', () => {
     el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Новый пароль должен быть не короче 8 символов', 'error');
-    httpMock.expectNone(`${environment.apiUrl}/auth/change-password`);
+    httpMock.expectNone(`${environment.apiUrl}/auth/methods/local/password`);
   });
 
   it('новый пароль и повтор не совпадают — toast-ошибка, без запроса', () => {
@@ -83,10 +83,10 @@ describe('ChangePasswordModal', () => {
     el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Пароли не совпадают', 'error');
-    httpMock.expectNone(`${environment.apiUrl}/auth/change-password`);
+    httpMock.expectNone(`${environment.apiUrl}/auth/methods/local/password`);
   });
 
-  it('успешная смена пароля — POST /auth/change-password, toast успеха, закрывает модалку', () => {
+  it('успешная смена пароля — PATCH /auth/methods/local/password, toast успеха, закрывает модалку', () => {
     const showSpy = vi.spyOn(notificationService, 'show');
     const closeSpy = vi.spyOn(modalService, 'close');
     const fixture = TestBed.createComponent(ChangePasswordModal);
@@ -99,8 +99,8 @@ describe('ChangePasswordModal', () => {
     fixture.detectChanges();
     el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/auth/change-password`);
-    expect(req.request.method).toBe('POST');
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local/password`);
+    expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ currentPassword: 'old-secret', newPassword: 'new-secret' });
     req.flush({ success: true });
 
@@ -121,7 +121,7 @@ describe('ChangePasswordModal', () => {
     fixture.detectChanges();
     el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/auth/change-password`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local/password`);
     req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
     expect(showSpy).toHaveBeenCalledWith('Неверный текущий пароль', 'error');
@@ -140,7 +140,7 @@ describe('ChangePasswordModal', () => {
     fixture.detectChanges();
     el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/auth/change-password`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/methods/local/password`);
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
 
     expect(showSpy).toHaveBeenCalledWith('Что-то пошло не так, попробуйте позже', 'error');
@@ -156,6 +156,6 @@ describe('ChangePasswordModal', () => {
     buttons[1].click();
 
     expect(closeSpy).toHaveBeenCalled();
-    httpMock.expectNone(`${environment.apiUrl}/auth/change-password`);
+    httpMock.expectNone(`${environment.apiUrl}/auth/methods/local/password`);
   });
 });

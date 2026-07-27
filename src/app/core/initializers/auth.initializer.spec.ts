@@ -9,11 +9,10 @@ import { initializeAuth } from './auth.initializer';
 
 const mockUser: CurrentUser = {
   id: '1',
-  login: 'streamer',
   role: 'USER',
-  email: null,
   name: null,
   avatarUrl: null,
+  authMethods: [{ type: 'LOCAL' }],
 };
 
 describe('initializeAuth', () => {
