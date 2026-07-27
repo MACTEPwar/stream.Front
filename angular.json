@@ -30,7 +30,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"],
+            "styles": ["primeicons/primeicons.css", "src/styles.scss"],
             "stylePreprocessorOptions": {
               "includePaths": ["src/styles"]
             }

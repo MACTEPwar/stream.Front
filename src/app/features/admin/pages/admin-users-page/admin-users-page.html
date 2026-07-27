@@ -14,7 +14,7 @@
       [(ngModel)]="roleFilter"
       (ngModelChange)="onFilterChange()"
     />
-    <button pButton size="small" (click)="onFilterChange()">Найти</button>
+    <app-button text="Найти" size="small" (click)="onFilterChange()" />
   </div>
 
   @if (hasError()) {
@@ -42,25 +42,21 @@
           <td>{{ user.name || '—' }}</td>
           <td>{{ user.role }}</td>
           <td>
-            <button pButton size="small" (click)="onViewClick(user)">Просмотр</button>
+            <app-button text="Просмотр" size="small" (click)="onViewClick(user)" />
             @if (!isOwnRow(user)) {
-              <button
-                pButton
+              <app-button
+                text="Изменить роль"
                 size="small"
                 (click)="onEditRoleClick(user)"
                 class="admin-users-page__delete-button"
-              >
-                Изменить роль
-              </button>
-              <button
-                pButton
+              />
+              <app-button
+                text="Удалить"
                 size="small"
                 severity="danger"
                 (click)="onDeleteClick(user)"
                 class="admin-users-page__delete-button"
-              >
-                Удалить
-              </button>
+              />
             }
           </td>
         </tr>
@@ -86,14 +82,12 @@
         />
       </div>
 
-      <button
-        pButton
+      <app-button
+        text="Сохранить"
         [disabled]="isSaving()"
         (click)="onSaveRoleClick()"
         class="admin-users-page__save-button"
-      >
-        Сохранить
-      </button>
+      />
     </div>
   </p-drawer>
 
@@ -157,10 +151,13 @@
 
         @if (!isOwnRow(user)) {
           <div class="admin-users-page__detail-actions">
-            <button pButton size="small" (click)="onEditRoleClick(user)">Изменить роль</button>
-            <button pButton size="small" severity="danger" (click)="onDeleteClick(user)">
-              Удалить
-            </button>
+            <app-button text="Изменить роль" size="small" (click)="onEditRoleClick(user)" />
+            <app-button
+              text="Удалить"
+              size="small"
+              severity="danger"
+              (click)="onDeleteClick(user)"
+            />
           </div>
         }
       </div>

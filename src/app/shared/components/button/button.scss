@@ -1,0 +1,28 @@
+@use 'variables' as vars;
+
+// `AdminPreset` (core/primeng/admin-preset.ts) перекрашивает только
+// primary/surface — `severity="danger"` иначе рисуется дефолтным Aura-красным
+// (`{red.500}`/`{red.400}`), никак не связанным с палитрой проекта. Вместо
+// хардкода hex в разметке — переопределяем те же CSS-переменные, которые
+// генерирует PrimeNG dt()-токенами (`--p-button-danger-*`), значениями уже
+// существующего в проекте красного (`$color-cf1717`/`$color-c61718`, см.
+// `ErrorMessage`) — донастроить цвет позже можно будет прямо здесь, без
+// изменения структуры компонента/шаблона.
+// severity="primary" (дефолт, без явного severity) — та же логика: без
+// перекраски здесь рисуется цвет `AdminPreset`-палитры (`primary: palette(
+// '#e6c319')`, см. core/primeng/admin-preset.ts) — по прямому запросу
+// пользователя переопределён отдельно от него, только для этого компонента.
+// Hover/active намеренно не тронуты (не запрашивались) — остаются
+// производными от палитры `AdminPreset`.
+:host {
+  --p-button-primary-background: #{vars.$color-f4d2a4};
+  --p-button-primary-border-color: #{vars.$color-f8ecb3};
+  --p-button-primary-color: #{vars.$color-76511c};
+
+  --p-button-danger-background: #{vars.$color-cf1717};
+  --p-button-danger-hover-background: #{vars.$color-c61718};
+  --p-button-danger-active-background: #{vars.$color-c61718};
+  --p-button-danger-border-color: #{vars.$color-cf1717};
+  --p-button-danger-hover-border-color: #{vars.$color-c61718};
+  --p-button-danger-active-border-color: #{vars.$color-c61718};
+}

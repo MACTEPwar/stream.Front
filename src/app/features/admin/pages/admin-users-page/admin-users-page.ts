@@ -1,7 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -11,6 +10,7 @@ import { AUTH_METHOD_TYPE_LABELS } from '@core/models/auth-method.model';
 import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
+import { Button } from '@shared/components/button/button';
 import { ConfirmModal } from '@shared/components/confirm-modal/confirm-modal';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import {
@@ -53,7 +53,7 @@ const ROLE_FILTER_OPTIONS: { label: string; value: AdminUserAnyRole | null }[] =
   imports: [
     TableModule,
     DrawerModule,
-    ButtonModule,
+    Button,
     SelectModule,
     InputTextModule,
     FormsModule,

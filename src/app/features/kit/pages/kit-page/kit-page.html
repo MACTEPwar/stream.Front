@@ -15,8 +15,8 @@
   </aside>
 
   <div class="kit-page__content">
-    @if (selectedComponent() === 'button') {
-      <h1 class="kit-page__title">Button</h1>
+    @if (selectedComponent() === 'decorative-button') {
+      <h1 class="kit-page__title">DecorativeButton</h1>
 
       <section class="kit-page__section">
         <h2 class="kit-page__section-title">Поддержать — без иконки (текст по центру)</h2>
@@ -77,6 +77,55 @@
             <img icon src="/icons/button-support-icon.svg" alt="" />
           </app-decorative-button>
           <app-decorative-button text="Поддержать прямо сейчас" type="secondary" [width]="500" />
+        </div>
+      </section>
+    }
+
+    @if (selectedComponent() === 'button') {
+      <h1 class="kit-page__title">Button</h1>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          тонкая обёртка над PrimeNG pButton (stream.Front#89) — используется в админ-панели, не на пользовательском
+          сайте
+        </h2>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">Обычная кнопка с текстом</h2>
+        <div class="kit-page__row">
+          <app-button text="Сохранить" />
+        </div>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">severity() — типы (дефолт/`'danger'`, полная шкала PrimeNG вне скоупа #89)</h2>
+        <div class="kit-page__row">
+          <app-button text="Сохранить" />
+          <app-button text="Удалить" severity="danger" />
+        </div>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">size() — размеры (дефолт/`'small'`, полная шкала PrimeNG вне скоупа #89)</h2>
+        <div class="kit-page__row">
+          <app-button text="Сохранить" />
+          <app-button text="Сохранить" size="small" />
+        </div>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">disabled()</h2>
+        <div class="kit-page__row">
+          <app-button text="Недоступно" [disabled]="true" />
+        </div>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">icon() — опциональная (класс PrimeIcons), без пустого слота если не передана</h2>
+        <div class="kit-page__row">
+          <app-button text="Сохранить" icon="pi pi-check" />
+          <app-button text="Удалить" severity="danger" icon="pi pi-trash" />
         </div>
       </section>
     }

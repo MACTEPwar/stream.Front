@@ -7,15 +7,21 @@ describe('KitPage', () => {
     TestBed.configureTestingModule({ imports: [KitPage] });
   });
 
-  it('по умолчанию выбран первый компонент (Button) — сайдбар подсвечивает его, контент показан', () => {
+  it('по умолчанию выбран первый компонент (DecorativeButton) — сайдбар подсвечивает его, контент показан', () => {
     const fixture = TestBed.createComponent(KitPage);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
     const links = Array.from(el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link'));
-    expect(links.map((l) => l.textContent?.trim())).toEqual(['Button', 'SectionTitle', 'List', 'Таблица']);
+    expect(links.map((l) => l.textContent?.trim())).toEqual([
+      'DecorativeButton',
+      'Button',
+      'SectionTitle',
+      'List',
+      'Таблица',
+    ]);
     expect(links[0].classList).toContain('kit-page__nav-link--active');
-    expect(el.querySelector('.kit-page__title')?.textContent).toBe('Button');
+    expect(el.querySelector('.kit-page__title')?.textContent).toBe('DecorativeButton');
   });
 
   it('клик по пункту сайдбара переключает видимый контент, скрывая остальные компоненты', () => {
@@ -24,13 +30,28 @@ describe('KitPage', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const links = Array.from(el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link'));
-    links[2].click();
+    links[3].click();
     fixture.detectChanges();
 
-    expect(links[2].classList).toContain('kit-page__nav-link--active');
+    expect(links[3].classList).toContain('kit-page__nav-link--active');
     expect(links[0].classList).not.toContain('kit-page__nav-link--active');
     expect(el.querySelector('.kit-page__title')?.textContent).toBe('List');
     expect(el.querySelector('app-decorative-button')).toBeNull();
+  });
+
+  it('«Button» — рендерит демо прокси-Button (severity/size/disabled/icon)', () => {
+    const fixture = TestBed.createComponent(KitPage);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link')[1].click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.kit-page__title')?.textContent).toBe('Button');
+    const buttons = el.querySelectorAll('app-button');
+    expect(buttons.length).toBeGreaterThan(0);
+    expect(el.querySelector('button.p-button-danger')).not.toBeNull();
+    expect(el.querySelector('i.pi-trash')).not.toBeNull();
   });
 
   it('рендерит demo p-table (stream.Front#75) с тестовыми строками после выбора «Таблица» в сайдбаре', () => {
@@ -38,7 +59,7 @@ describe('KitPage', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link')[3].click();
+    el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link')[4].click();
     fixture.detectChanges();
 
     const rows = el.querySelectorAll('.p-datatable-tbody tr');
