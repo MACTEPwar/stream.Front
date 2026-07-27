@@ -2,7 +2,6 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, finalize, tap } from 'rxjs';
 
 import { ApiService } from './api.service';
-import { ChangePasswordDto } from '../models/change-password.model';
 import { CurrentUser } from '../models/current-user.model';
 
 @Injectable({ providedIn: 'root' })
@@ -35,10 +34,6 @@ export class AuthService {
     return this.api
       .post<void>('/auth/logout', undefined, { withCredentials: true })
       .pipe(finalize(() => this.currentUserSignal.set(null)));
-  }
-
-  changePassword(dto: ChangePasswordDto): Observable<{ success: true }> {
-    return this.api.post<{ success: true }>('/auth/change-password', dto, { withCredentials: true });
   }
 
   fetchCurrentUser(): Observable<CurrentUser> {

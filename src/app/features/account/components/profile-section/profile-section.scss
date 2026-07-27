@@ -46,3 +46,56 @@
   display: flex;
   gap: 12px;
 }
+
+.profile-section__auth-methods-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: vars.$color-ffffff;
+}
+
+.profile-section__auth-method {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-section__auth-method-label {
+  color: vars.$color-ffffff;
+}
+
+.profile-section__auth-method-actions {
+  display: flex;
+  gap: 8px;
+}
+
+// Тот же приём, что .login-modal__google-button-container/-overlay
+// (LoginModal/RegisterModal) — невидимая реальная Google-кнопка от
+// GoogleAuthService.connectButton() поверх стилизованной подложки.
+.profile-section__google-button {
+  display: block;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+
+  img {
+    display: block;
+    width: 182px;
+    height: 40px;
+  }
+}
+
+.profile-section__google-button-container {
+  position: relative;
+  line-height: 0;
+}
+
+.profile-section__google-button-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  overflow: hidden;
+}

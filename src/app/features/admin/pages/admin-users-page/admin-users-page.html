@@ -3,8 +3,8 @@
     <input
       type="text"
       pInputText
-      placeholder="Поиск по логину"
-      [(ngModel)]="loginFilter"
+      placeholder="Поиск по имени или логину"
+      [(ngModel)]="searchFilter"
       (keyup.enter)="onFilterChange()"
     />
     <p-select
@@ -32,14 +32,14 @@
     >
       <ng-template #header>
         <tr>
-          <th>Логин</th>
+          <th>Имя</th>
           <th>Роль</th>
           <th></th>
         </tr>
       </ng-template>
       <ng-template #body let-user>
         <tr>
-          <td>{{ user.login }}</td>
+          <td>{{ user.name || '—' }}</td>
           <td>{{ user.role }}</td>
           <td>
             <button pButton size="small" (click)="onViewClick(user)">Просмотр</button>
@@ -111,19 +111,22 @@
         <section class="admin-users-page__detail-section">
           <h3>Профиль</h3>
           <dl class="admin-users-page__detail-list">
-            <dt>Логин</dt>
-            <dd>{{ user.login }}</dd>
-            <dt>Роль</dt>
-            <dd>{{ user.role }}</dd>
-            <dt>Email</dt>
-            <dd>{{ user.email || '—' }}</dd>
             <dt>Имя</dt>
             <dd>{{ user.name || '—' }}</dd>
-            <dt>Провайдер</dt>
-            <dd>{{ user.provider || 'local' }}</dd>
+            <dt>Роль</dt>
+            <dd>{{ user.role }}</dd>
             <dt>Регистрация</dt>
             <dd>{{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}</dd>
           </dl>
+        </section>
+
+        <section class="admin-users-page__detail-section">
+          <h3>Способы входа</h3>
+          <ul class="admin-users-page__detail-list-items">
+            @for (method of user.authMethods; track method) {
+              <li>{{ authMethodLabel[method] }}</li>
+            }
+          </ul>
         </section>
 
         <section class="admin-users-page__detail-section">

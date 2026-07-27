@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 
+import { AUTH_METHOD_TYPE_LABELS } from '@core/models/auth-method.model';
 import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -36,16 +37,16 @@ const ROLE_FILTER_OPTIONS: { label: string; value: AdminUserAnyRole | null }[] =
 
 /**
  * Справочник «Пользователи» в админ-панели (`stream.Front#77`, поверх
- * `streamer.API#59`/`#61`) — `p-table` в lazy-режиме пагинации (сервер
- * отдаёт страницами, `AdminUsersService.getUsers()`), фильтры по логину
- * (contains) и роли (`#61`) — сбрасывают на страницу 1. «Изменить роль» —
- * `p-drawer` + `p-select` (только `USER`/`ADMIN`, `MODERATOR` backend
- * отклоняет `400`), «удалить» — переиспользованный `ConfirmModal`,
- * «просмотр» — отдельный `p-drawer` с полной карточкой (`getUser(id)`,
- * `#61`: профиль + игровые аккаунты + соц-сети, read-only) с теми же
- * кнопками действий, что и в таблице. Своя строка
- * (`row.id === currentUser.id`) — все три кнопки скрыты на UI, backend
- * `403` не единственная защита (AC).
+ * `streamer.API#59`/`#61`/`#63`) — `p-table` в lazy-режиме пагинации (сервер
+ * отдаёт страницами, `AdminUsersService.getUsers()`), фильтр `search`
+ * (матчит `Profile.name` ИЛИ `AuthMethod.identifier`, `#63`) и роль — сбрасывают
+ * на страницу 1. «Изменить роль» — `p-drawer` + `p-select` (только
+ * `USER`/`ADMIN`, `MODERATOR` backend отклоняет `400`), «удалить» —
+ * переиспользованный `ConfirmModal`, «просмотр» — отдельный `p-drawer` с
+ * полной карточкой (`getUser(id)`: профиль + игровые аккаунты + соц-сети +
+ * способы входа, read-only) с теми же кнопками действий, что и в таблице.
+ * Своя строка (`row.id === currentUser.id`) — все три кнопки скрыты на UI,
+ * backend `403` не единственная защита (AC).
  */
 @Component({
   selector: 'app-admin-users-page',
@@ -76,8 +77,9 @@ export class AdminUsersPage {
   protected readonly pageSize = PAGE_SIZE;
   protected readonly roleOptions = ROLE_OPTIONS;
   protected readonly roleFilterOptions = ROLE_FILTER_OPTIONS;
+  protected readonly authMethodLabel = AUTH_METHOD_TYPE_LABELS;
 
-  protected readonly loginFilter = signal('');
+  protected readonly searchFilter = signal('');
   protected readonly roleFilter = signal<AdminUserAnyRole | null>(null);
 
   protected readonly drawerVisible = signal(false);
@@ -108,7 +110,7 @@ export class AdminUsersPage {
     this.isLoading.set(true);
     this.hasError.set(false);
     const filter = {
-      login: this.loginFilter().trim() || undefined,
+      search: this.searchFilter().trim() || undefined,
       role: this.roleFilter() ?? undefined,
     };
     this.adminUsersService.getUsers(page, PAGE_SIZE, filter).subscribe({
@@ -172,7 +174,7 @@ export class AdminUsersPage {
   protected onDeleteClick(user: AdminUser): void {
     this.detailDrawerVisible.set(false);
     this.modalService.open(ConfirmModal, {
-      message: `Удалить пользователя «${user.login}»?`,
+      message: `Удалить пользователя «${user.name ?? user.id}»?`,
       confirmText: 'Удалить',
       onConfirm: () => {
         this.adminUsersService.remove(user.id).subscribe({

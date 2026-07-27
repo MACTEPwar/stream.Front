@@ -8,11 +8,10 @@ import { AuthService } from './auth.service';
 
 const mockUser: CurrentUser = {
   id: '1',
-  login: 'streamer',
   role: 'USER',
-  email: 'streamer@example.com',
   name: 'Streamer',
   avatarUrl: null,
+  authMethods: [{ type: 'LOCAL' }],
 };
 
 describe('AuthService', () => {
@@ -127,30 +126,6 @@ describe('AuthService', () => {
     req.flush(null);
 
     expect(service.currentUser()).toBeNull();
-  });
-
-  it('changePassword() бьёт в POST /auth/change-password с withCredentials и телом ChangePasswordDto', () => {
-    service.changePassword({ currentPassword: 'old-secret', newPassword: 'new-secret' }).subscribe();
-
-    const req = httpMock.expectOne(`${environment.apiUrl}/auth/change-password`);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.withCredentials).toBe(true);
-    expect(req.request.body).toEqual({ currentPassword: 'old-secret', newPassword: 'new-secret' });
-    req.flush({ success: true });
-  });
-
-  it('changePassword() эмиттит ошибку при неверном текущем пароле (401), не трогая currentUser', () => {
-    service.login('streamer', 'secret').subscribe();
-    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush(mockUser);
-
-    service.changePassword({ currentPassword: 'wrong', newPassword: 'new-secret' }).subscribe({
-      error: () => undefined,
-    });
-    httpMock
-      .expectOne(`${environment.apiUrl}/auth/change-password`)
-      .flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
-
-    expect(service.currentUser()).toEqual(mockUser);
   });
 
   it('logout() сбрасывает currentUser в null, даже если запрос завершился ошибкой', () => {

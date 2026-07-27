@@ -12,9 +12,9 @@ import {
 
 const mockUser: AdminUser = {
   id: 'u1',
-  login: 'johndoe',
+  name: 'John Doe',
   role: 'USER',
-  provider: null,
+  authMethods: ['LOCAL'],
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -50,15 +50,15 @@ describe('AdminUsersService', () => {
     expect(result).toEqual(mockResponse);
   });
 
-  it('getUsers() добавляет фильтры login/role к query-параметрам', () => {
+  it('getUsers() добавляет фильтры search/role к query-параметрам', () => {
     const mockResponse: PaginatedResponse<AdminUser> = {
       items: [],
       meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
     };
-    service.getUsers(1, 20, { login: 'john', role: 'ADMIN' }).subscribe();
+    service.getUsers(1, 20, { search: 'john', role: 'ADMIN' }).subscribe();
 
     const req = httpMock.expectOne(
-      `${environment.apiUrl}/admin/users?page=1&limit=20&login=john&role=ADMIN`,
+      `${environment.apiUrl}/admin/users?page=1&limit=20&search=john&role=ADMIN`,
     );
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
@@ -67,8 +67,6 @@ describe('AdminUsersService', () => {
   it('getUser() бьёт в GET /admin/users/:id', () => {
     const detail: AdminUserDetail = {
       ...mockUser,
-      email: 'johndoe@example.com',
-      name: 'John Doe',
       avatarUrl: null,
       gameAccounts: [],
       socialLinks: [],

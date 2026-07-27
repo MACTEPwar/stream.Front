@@ -11,16 +11,15 @@ import { AdminUsersPage } from './admin-users-page';
 
 const currentAdmin: CurrentUser = {
   id: 'admin1',
-  login: 'admin',
   role: 'ADMIN',
-  email: null,
-  name: null,
+  name: 'admin',
   avatarUrl: null,
+  authMethods: [{ type: 'LOCAL' }],
 };
 
 const mockUsers: AdminUser[] = [
-  { id: 'admin1', login: 'admin', role: 'ADMIN', provider: null, createdAt: '', updatedAt: '' },
-  { id: 'u2', login: 'streamer', role: 'USER', provider: null, createdAt: '', updatedAt: '' },
+  { id: 'admin1', name: 'admin', role: 'ADMIN', authMethods: ['LOCAL'], createdAt: '', updatedAt: '' },
+  { id: 'u2', name: 'streamer', role: 'USER', authMethods: ['LOCAL'], createdAt: '', updatedAt: '' },
 ];
 
 function mockResponse(items: AdminUser[]): PaginatedResponse<AdminUser> {
@@ -102,25 +101,23 @@ describe('AdminUsersPage', () => {
     expect(fixture.componentInstance['users']()[1].role).toBe('ADMIN');
   });
 
-  it('применяет фильтры login/role и сбрасывает на страницу 1', () => {
+  it('применяет фильтры search/role и сбрасывает на страницу 1', () => {
     const fixture = createComponent();
 
-    fixture.componentInstance['loginFilter'].set('john');
+    fixture.componentInstance['searchFilter'].set('john');
     fixture.componentInstance['roleFilter'].set('ADMIN');
     fixture.componentInstance['onFilterChange']();
 
     const req = httpMock.expectOne(
-      `${environment.apiUrl}/admin/users?page=1&limit=20&login=john&role=ADMIN`,
+      `${environment.apiUrl}/admin/users?page=1&limit=20&search=john&role=ADMIN`,
     );
     req.flush(mockResponse([]));
   });
 
-  it('«Просмотр» загружает и показывает карточку пользователя (профиль/аккаунты/соц-сети)', () => {
+  it('«Просмотр» загружает и показывает карточку пользователя (профиль/способы входа/аккаунты/соц-сети)', () => {
     const fixture = createComponent();
     const detail: AdminUserDetail = {
       ...mockUsers[1],
-      email: 'streamer@example.com',
-      name: 'Streamer',
       avatarUrl: null,
       gameAccounts: [
         {
@@ -145,7 +142,7 @@ describe('AdminUsersPage', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(fixture.componentInstance['detailDrawerVisible']()).toBe(true);
-    expect(el.textContent).toContain('streamer@example.com');
+    expect(el.textContent).toContain('Локальный вход');
     expect(el.textContent).toContain('ProNick');
     expect(el.textContent).toContain('TELEGRAM: @nick');
   });
