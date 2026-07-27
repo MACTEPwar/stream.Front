@@ -36,6 +36,11 @@ $color-0d004d: #0d004d;
 // Тот же золотистый, что у NavActiveIndicator (stream.Front#49) — по прямому
 // запросу пользователя используется как hover-цвет пунктов меню (#48).
 $color-f7ecb3: #f7ecb3;
+// `Button` (stream.Front#89), severity="primary" (дефолт) — по прямому
+// запросу пользователя: фон/граница/текст, не из designTokens JSON-экспорта.
+$color-f4d2a4: #f4d2a4;
+$color-f8ecb3: #f8ecb3;
+$color-76511c: #76511c;
 
 // Typography
 $font-family-montserrat: 'Montserrat', sans-serif;
