@@ -5,7 +5,7 @@ import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { AuthMethodsService } from '@core/services/auth-methods.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { TextField } from '@shared/components/text-field/text-field';
 
 // Совпадает с backend/src/auth/methods/dto/add-local-method.dto.ts
@@ -33,7 +33,7 @@ export interface AddLocalMethodModalData {
  */
 @Component({
   selector: 'app-add-local-method-modal',
-  imports: [TextField, Button],
+  imports: [TextField, DecorativeButton],
   templateUrl: './add-local-method-modal.html',
   styleUrl: './add-local-method-modal.scss',
 })

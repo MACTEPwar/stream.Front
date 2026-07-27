@@ -1,7 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 
 import { ModalService } from '@core/services/modal.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 
 export interface ConfirmModalData {
   message: string;
@@ -26,7 +26,7 @@ export interface ConfirmModalData {
  */
 @Component({
   selector: 'app-confirm-modal',
-  imports: [Button],
+  imports: [DecorativeButton],
   templateUrl: './confirm-modal.html',
   styleUrl: './confirm-modal.scss',
 })

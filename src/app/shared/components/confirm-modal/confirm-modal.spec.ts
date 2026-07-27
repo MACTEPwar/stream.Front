@@ -18,7 +18,7 @@ describe('ConfirmModal', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.confirm-modal__message')?.textContent).toContain('Удалить аккаунт?');
-    const buttons = el.querySelectorAll<HTMLButtonElement>('app-button button.button');
+    const buttons = el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button');
     expect(buttons[0].textContent).toContain('Подтвердить');
     expect(buttons[1].textContent).toContain('Отмена');
   });
@@ -33,7 +33,7 @@ describe('ConfirmModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const confirmButton = el.querySelector<HTMLButtonElement>('app-button button.button');
+    const confirmButton = el.querySelector<HTMLButtonElement>('app-decorative-button button.button');
     expect(confirmButton?.textContent).toContain('Удалить');
   });
 
@@ -45,7 +45,7 @@ describe('ConfirmModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    el.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
 
     expect(onConfirm).toHaveBeenCalled();
     expect(closeSpy).toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('ConfirmModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    el.querySelectorAll<HTMLButtonElement>('app-button button.button')[1].click();
+    el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[1].click();
 
     expect(onConfirm).not.toHaveBeenCalled();
     expect(closeSpy).toHaveBeenCalled();

@@ -5,7 +5,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ImageUrlService } from '@core/services/image-url.service';
 import { ModalService } from '@core/services/modal.service';
 import { LoginModal } from '@features/auth/components/login-modal/login-modal';
-import { Button } from '../button/button';
+import { DecorativeButton } from '../decorative-button/decorative-button';
 import { NavActiveIndicator } from '../nav-active-indicator/nav-active-indicator';
 
 /** Совпадает с дефолтом `NavActiveIndicator.width()` — до первого измерения ResizeObserver'ом (или в jsdom-тестах). */
@@ -51,7 +51,7 @@ interface NavItem {
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, NavActiveIndicator, Button],
+  imports: [RouterLink, RouterLinkActive, NavActiveIndicator, DecorativeButton],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })

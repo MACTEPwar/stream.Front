@@ -5,7 +5,7 @@ import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { AuthMethodsService } from '@core/services/auth-methods.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { TextField } from '@shared/components/text-field/text-field';
 
 // Совпадает с MinLength в backend/src/auth/dto/change-password.dto.ts — тот же
@@ -29,7 +29,7 @@ const MIN_PASSWORD_LENGTH = 8;
  */
 @Component({
   selector: 'app-change-password-modal',
-  imports: [TextField, Button],
+  imports: [TextField, DecorativeButton],
   templateUrl: './change-password-modal.html',
   styleUrl: './change-password-modal.scss',
 })

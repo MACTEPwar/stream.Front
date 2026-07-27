@@ -4,7 +4,7 @@ import { Component, computed, input } from '@angular/core';
 // без этого несколько <app-nav-active-indicator> на одной странице делили
 // бы один и тот же id, а url(#id) резолвился бы в первый попавшийся элемент
 // в документе, не в свой собственный <svg> (тот же баг, что был у Button/
-// SectionTitle, см. frontend/src/app/shared/components/button/button.ts).
+// SectionTitle, см. frontend/src/app/shared/components/decorative-button/decorative-button.ts).
 let nextNavActiveIndicatorUid = 0;
 
 /** Исходная (Figma) ширина SVG — совпадает с шириной текста "Главная" в макете. */

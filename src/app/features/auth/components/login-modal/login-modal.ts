@@ -7,7 +7,7 @@ import { GoogleAuthService } from '@core/services/google-auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AuthModalShell } from '@shared/components/auth-modal-shell/auth-modal-shell';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { TextField } from '@shared/components/text-field/text-field';
 import { RegisterModal } from '../register-modal/register-modal';
 
@@ -25,7 +25,7 @@ import { RegisterModal } from '../register-modal/register-modal';
  */
 @Component({
   selector: 'app-login-modal',
-  imports: [AuthModalShell, TextField, Button],
+  imports: [AuthModalShell, TextField, DecorativeButton],
   templateUrl: './login-modal.html',
   styleUrl: './login-modal.scss',
 })

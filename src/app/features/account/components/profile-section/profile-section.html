@@ -8,13 +8,13 @@
           <div class="profile-section__avatar-preview--placeholder"></div>
         }
       </div>
-      <app-button text="Поменять" type="secondary" [width]="'content'" (click)="onChangeAvatarClick()" />
+      <app-decorative-button text="Поменять" type="secondary" [width]="'content'" (click)="onChangeAvatarClick()" />
     </div>
 
     <app-text-field label="Отображаемое имя" placeholder="Введите имя" [(value)]="name" />
 
     <div class="profile-section__actions">
-      <app-button text="Сохранить" type="primary" [width]="'content'" (click)="onSave()" />
+      <app-decorative-button text="Сохранить" type="primary" [width]="'content'" (click)="onSave()" />
     </div>
   </div>
 
@@ -25,14 +25,14 @@
       <span class="profile-section__auth-method-label">{{ authMethodLabel.LOCAL }}</span>
       @if (hasLocal()) {
         <div class="profile-section__auth-method-actions">
-          <app-button
+          <app-decorative-button
             text="Сменить пароль"
             type="secondary"
             [width]="'content'"
             (click)="onChangePasswordClick()"
           />
           @if (canDisconnect()) {
-            <app-button
+            <app-decorative-button
               text="Отключить"
               type="secondary"
               [width]="'content'"
@@ -41,7 +41,7 @@
           }
         </div>
       } @else {
-        <app-button
+        <app-decorative-button
           text="Подключить локальный вход"
           type="secondary"
           [width]="'content'"
@@ -54,7 +54,7 @@
       <span class="profile-section__auth-method-label">{{ authMethodLabel.GOOGLE }}</span>
       @if (hasGoogle()) {
         @if (canDisconnect()) {
-          <app-button
+          <app-decorative-button
             text="Отключить"
             type="secondary"
             [width]="'content'"

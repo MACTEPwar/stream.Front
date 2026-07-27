@@ -92,7 +92,7 @@ describe('GameAccountsSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const addButton = Array.from(el.querySelectorAll('app-button')).find(
+    const addButton = Array.from(el.querySelectorAll('app-decorative-button')).find(
       (b) => b.textContent?.trim() === 'Добавить',
     );
     expect(addButton).not.toBeUndefined();
@@ -106,7 +106,7 @@ describe('GameAccountsSection', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const addButton = Array.from(el.querySelectorAll<HTMLButtonElement>('app-button button.button')).find(
+    const addButton = Array.from(el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')).find(
       (b) => b.textContent?.trim() === 'Добавить',
     );
     addButton?.click();
@@ -139,7 +139,7 @@ describe('GameAccountsSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.game-accounts-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
     fixture.detectChanges();
 
     const editInputs = firstCard.querySelectorAll<HTMLInputElement>('input');
@@ -148,7 +148,7 @@ describe('GameAccountsSection', () => {
     editInputs[0].dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/profile/game-accounts/acc-1`);
     expect(req.request.method).toBe('PATCH');
@@ -170,7 +170,7 @@ describe('GameAccountsSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.game-accounts-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
     fixture.detectChanges();
 
     const editInputs = firstCard.querySelectorAll<HTMLInputElement>('input');
@@ -178,7 +178,7 @@ describe('GameAccountsSection', () => {
     editInputs[0].dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[0].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[0].click();
 
     expect(showSpy).toHaveBeenCalledWith('Заполните ник и id аккаунта', 'error');
     httpMock.expectNone(`${environment.apiUrl}/profile/game-accounts/acc-1`);
@@ -193,7 +193,7 @@ describe('GameAccountsSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.game-accounts-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[1].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[1].click();
 
     expect(openSpy).toHaveBeenCalled();
     const data = openSpy.mock.calls[0][1] as { message: string; onConfirm: () => void };
@@ -221,7 +221,7 @@ describe('GameAccountsSection', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const firstCard = el.querySelectorAll('.game-accounts-section__card')[0];
-    firstCard.querySelectorAll<HTMLButtonElement>('app-button button.button')[1].click();
+    firstCard.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button')[1].click();
 
     const data = openSpy.mock.calls[0][1] as { onConfirm: () => void };
     data.onConfirm();

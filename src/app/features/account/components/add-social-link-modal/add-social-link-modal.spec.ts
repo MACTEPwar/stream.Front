@@ -59,7 +59,7 @@ describe('AddSocialLinkModal', () => {
     const options = el.querySelectorAll('.add-social-link-modal__select option');
     expect(options.length).toBe(6);
     expect(el.querySelectorAll('app-text-field').length).toBe(1);
-    const buttons = Array.from(el.querySelectorAll('app-button')).map((b) => b.textContent?.trim());
+    const buttons = Array.from(el.querySelectorAll('app-decorative-button')).map((b) => b.textContent?.trim());
     expect(buttons).toEqual(['Добавить', 'Отмена']);
   });
 
@@ -70,7 +70,7 @@ describe('AddSocialLinkModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     expect(showSpy).toHaveBeenCalledWith('Выберите тип и заполните значение', 'error');
     httpMock.expectNone(`${environment.apiUrl}/profile/social-links`);
@@ -87,7 +87,7 @@ describe('AddSocialLinkModal', () => {
     selectType(el, 'TELEGRAM');
     fillTextField(el, '@newhandle');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/profile/social-links`);
     expect(req.request.method).toBe('POST');
@@ -110,7 +110,7 @@ describe('AddSocialLinkModal', () => {
     selectType(el, 'TELEGRAM');
     fillTextField(el, '@newhandle');
     fixture.detectChanges();
-    el.querySelector<HTMLButtonElement>('app-button button.button')?.click();
+    el.querySelector<HTMLButtonElement>('app-decorative-button button.button')?.click();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/profile/social-links`);
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
@@ -127,7 +127,7 @@ describe('AddSocialLinkModal', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const buttons = el.querySelectorAll<HTMLButtonElement>('app-button button.button');
+    const buttons = el.querySelectorAll<HTMLButtonElement>('app-decorative-button button.button');
     buttons[1].click();
 
     expect(closeSpy).toHaveBeenCalled();

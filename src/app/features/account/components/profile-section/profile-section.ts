@@ -20,7 +20,7 @@ import { ImageUrlService } from '@core/services/image-url.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { ProfileService } from '@core/services/profile.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { ConfirmModal, ConfirmModalData } from '@shared/components/confirm-modal/confirm-modal';
 import { TextField } from '@shared/components/text-field/text-field';
 import { AddLocalMethodModal } from '../add-local-method-modal/add-local-method-modal';
@@ -75,7 +75,7 @@ import { ChangePasswordModal } from '../change-password-modal/change-password-mo
  */
 @Component({
   selector: 'app-profile-section',
-  imports: [TextField, Button],
+  imports: [TextField, DecorativeButton],
   templateUrl: './profile-section.html',
   styleUrl: './profile-section.scss',
 })

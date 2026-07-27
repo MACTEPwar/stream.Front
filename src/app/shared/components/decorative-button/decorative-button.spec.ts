@@ -1,37 +1,37 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { Button, ButtonType, ButtonWidthMode } from './button';
+import { DecorativeButton, DecorativeButtonType, DecorativeButtonWidthMode } from './decorative-button';
 
 @Component({
-  selector: 'app-button-host',
-  imports: [Button],
+  selector: 'app-decorative-button-host',
+  imports: [DecorativeButton],
   template: `
-    <app-button [text]="text()" [width]="width()" [type]="type()">
+    <app-decorative-button [text]="text()" [width]="width()" [type]="type()">
       @if (withIcon()) {
         <svg icon viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" /></svg>
       }
-    </app-button>
+    </app-decorative-button>
   `,
 })
-class ButtonHost {
+class DecorativeButtonHost {
   readonly text = signal('Поддержать');
   readonly withIcon = signal(false);
-  readonly width = signal<number | ButtonWidthMode | undefined>(undefined);
-  readonly type = signal<ButtonType>('primary');
+  readonly width = signal<number | DecorativeButtonWidthMode | undefined>(undefined);
+  readonly type = signal<DecorativeButtonType>('primary');
 }
 
-// Каждый инстанс Button получает свой -{{uid}} суффикс на все id/url(#...) (см.
-// button.ts/button.html) — поэтому здесь везде используются селекторы "начинается
+// Каждый инстанс DecorativeButton получает свой -{{uid}} суффикс на все id/url(#...) (см.
+// decorative-button.ts/decorative-button.html) — поэтому здесь везде используются селекторы "начинается
 // с" (^=), а не точное совпадение: сам суффикс в тестах не важен и не предсказуем
 // (инкрементный счётчик общий на все тесты в файле).
-describe('Button', () => {
+describe('DecorativeButton', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [ButtonHost] });
+    TestBed.configureTestingModule({ imports: [DecorativeButtonHost] });
   });
 
   it('рендерит кнопку со статичным SVG и переданным текстом', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
@@ -41,7 +41,7 @@ describe('Button', () => {
   });
 
   it('без спроецированной иконки — слот [icon] пуст', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
@@ -49,7 +49,7 @@ describe('Button', () => {
   });
 
   it('с иконкой — спроецированный SVG рендерится в слоте .button__icon', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.withIcon.set(true);
     fixture.detectChanges();
 
@@ -58,7 +58,7 @@ describe('Button', () => {
   });
 
   it('без иконки — слот .button__icon пуст и убран из раскладки (display: none), текст один по центру', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
@@ -70,7 +70,7 @@ describe('Button', () => {
   });
 
   it('иконка+текст — единая flex-группа, отцентрованная по всей кнопке, с зазором 8px', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.withIcon.set(true);
     fixture.detectChanges();
 
@@ -86,7 +86,7 @@ describe('Button', () => {
   });
 
   it('меняет текст на разной длине без ошибок рендера (короткий/длинный)', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.button__text').textContent).toBe('Поддержать');
 
@@ -98,7 +98,7 @@ describe('Button', () => {
   });
 
   it('без width() — ширина кнопки равна точному эквиваленту исходных 320 unit', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
 
     const button: HTMLElement = fixture.nativeElement.querySelector('button.button');
@@ -106,7 +106,7 @@ describe('Button', () => {
   });
 
   it('width() — растягивает кнопку до заданного количества пикселей', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(500);
     fixture.detectChanges();
 
@@ -115,7 +115,7 @@ describe('Button', () => {
   });
 
   it('width() — растягиваемые блоки (5-блочные группы) получают одинаковый по величине scale, острые концы (clip-left/clip-right) transform не получают', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(500);
     fixture.detectChanges();
 
@@ -130,7 +130,7 @@ describe('Button', () => {
   });
 
   it('width() меньше минимума — кламп не даёт блокам инвертироваться', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(1);
     fixture.detectChanges();
 
@@ -139,7 +139,7 @@ describe('Button', () => {
   });
 
   it('width() — кольца (filter2_d) не растягиваются, только весь блок сдвигается к новому центру', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(500);
     fixture.detectChanges();
 
@@ -152,7 +152,7 @@ describe('Button', () => {
   });
 
   it('width() — угловые диамант-блики следуют за своими остриями (с ручной поправкой -6/+6), а не за centerShiftTransform()', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(500);
     fixture.detectChanges();
 
@@ -166,7 +166,7 @@ describe('Button', () => {
   });
 
   it('width() — рамка (filter5_d) использует свои границы (30.0527/289.947), а не границы glow', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(500);
     fixture.detectChanges();
 
@@ -192,7 +192,7 @@ describe('Button', () => {
   });
 
   it('рамка использует свой собственный clip-frame-mid-center (не общий с glow) — нужен под точечный фикс шва', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
@@ -204,7 +204,7 @@ describe('Button', () => {
   });
 
   it('width() — гем (filter3_d) сдвигается вместе с новым центром кнопки', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(500);
     fixture.detectChanges();
 
@@ -214,7 +214,7 @@ describe('Button', () => {
   });
 
   it('width() — filter0/filter1/filter5 region заведомо статичный (не [attr.width]), чтобы Chromium не терял растянутую середину', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set(700);
     fixture.detectChanges();
 
@@ -226,7 +226,7 @@ describe('Button', () => {
   });
 
   it("width()='parent' — ширина кнопки задаётся через CSS 100%, не инлайновым px", () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set('parent');
     fixture.detectChanges();
 
@@ -235,7 +235,7 @@ describe('Button', () => {
   });
 
   it("width()='content' — без ResizeObserver (jsdom) падает на CONTENT_PADDING_PX*2 = 100px, не на дефолтную ширину", () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.width.set('content');
     fixture.detectChanges();
 
@@ -244,7 +244,7 @@ describe('Button', () => {
   });
 
   it("type()='primary' (дефолт) — glow/тело/текст цвета primary из исходного макета", () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
@@ -258,7 +258,7 @@ describe('Button', () => {
   });
 
   it("type()='secondary' — меняет цвета из Frame 68_2 (glow/база тела/тон тела/текст) + подобранные рамка/блики/гем, геометрия та же", () => {
-    const fixture = TestBed.createComponent(ButtonHost);
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.componentInstance.type.set('secondary');
     fixture.detectChanges();
 
@@ -275,10 +275,10 @@ describe('Button', () => {
 
     // рамка/блики/гем — в исходнике Frame 68_2 буквально те же F7ECB2/FFF9DB/F8ECB2,
     // что и у primary, но по прямому запросу пользователя перекрашены и они тоже
-    // (подобранный, не из исходника, лавандовый тон — см. комментарий в button.ts).
+    // (подобранный, не из исходника, лавандовый тон — см. комментарий в decorative-button.ts).
     // Рамка — НЕ мутация stop-color (Chromium не перерисовывал закешированный
     // filter5_d, см. комментарий у paint4_radial_2821_998_secondary в
-    // button.html), а переключение stroke на отдельный статичный градиент.
+    // decorative-button.html), а переключение stroke на отдельный статичный градиент.
     const frameTip = svg.querySelector('path[clip-path^="url(#clip-frame-left_2821_998"]');
     expect(frameTip?.getAttribute('stroke')).toContain('paint4_radial_2821_998_secondary');
     const secondaryFrameStops = svg.querySelectorAll('[id^="paint4_radial_2821_998_secondary"] stop');
@@ -302,15 +302,15 @@ describe('Button', () => {
   });
 
   it('несколько инстансов на одной странице — каждый использует свои собственные id/url(#...), не первого попавшегося (Chromium резолвит url(#id) по документу целиком, не по локальному <svg>)', () => {
-    const primaryFixture = TestBed.createComponent(ButtonHost);
+    const primaryFixture = TestBed.createComponent(DecorativeButtonHost);
     primaryFixture.detectChanges();
 
-    const secondaryFixture = TestBed.createComponent(ButtonHost);
+    const secondaryFixture = TestBed.createComponent(DecorativeButtonHost);
     secondaryFixture.componentInstance.type.set('secondary');
     secondaryFixture.detectChanges();
 
     // оба фикстуры одновременно в document.body — так же, как несколько
-    // <app-button> на одной странице (см. /kit)
+    // <app-decorative-button> на одной странице (см. /kit)
     document.body.appendChild(primaryFixture.nativeElement);
     document.body.appendChild(secondaryFixture.nativeElement);
 

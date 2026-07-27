@@ -12,8 +12,8 @@ const DEFAULT_WIDTH_PX = ORIGINAL_WIDTH_UNITS * PX_PER_UNIT;
 /** Отступ слева/справа от контента (иконка+зазор+текст) в режиме width="content". */
 const CONTENT_PADDING_PX = 50;
 
-// Все id/url(#...) внутри главного SVG (button.html) захардкожены как в исходнике
-// (_2821_998), к каждому добавляется -{{uid}} — иначе несколько <app-button> на
+// Все id/url(#...) внутри главного SVG (decorative-button.html) захардкожены как в исходнике
+// (_2821_998), к каждому добавляется -{{uid}} — иначе несколько <app-decorative-button> на
 // одной странице (см. /kit) делят один и тот же id, и url(#...)/getElementById
 // резолвится в ПЕРВЫЙ такой элемент в документе, а не в свой собственный (было
 // незаметно, пока все инстансы были одного цвета — с появлением type() один
@@ -55,15 +55,15 @@ function anchoredScale(anchor: number, scale: number, shift: number): string {
 }
 
 /** `width()` помимо числа (px) принимает две именованные раскладки. */
-export type ButtonWidthMode = 'parent' | 'content';
+export type DecorativeButtonWidthMode = 'parent' | 'content';
 
-/** `type()` — меняет только цвета (см. Button в конструкторе), геометрия одна на оба. */
-export type ButtonType = 'primary' | 'secondary';
+/** `type()` — меняет только цвета (см. DecorativeButton в конструкторе), геометрия одна на оба. */
+export type DecorativeButtonType = 'primary' | 'secondary';
 
 /**
  * Кнопка «Поддержать» (stream.Front#39) — перенос приложенного SVG (Frame 68,
  * 320×51). Динамика: текст (`text()`), иконка через content projection
- * ([icon], может быть пустой — тогда `.button__icon:empty` в button.scss
+ * ([icon], может быть пустой — тогда `.button__icon:empty` в decorative-button.scss
  * убирает её из flex-раскладки и текст остаётся один по центру), и ширина
  * (`width()`) — три режима поверх одного и того же 9-slice-подобного
  * растягивания: скруглённые/острые концы (`OUTER_LEFT..OUTER_RIGHT` у glow/
@@ -86,17 +86,17 @@ export type ButtonType = 'primary' | 'secondary';
  * константы выше.
  */
 @Component({
-  selector: 'app-button',
+  selector: 'app-decorative-button',
   imports: [],
-  templateUrl: './button.html',
-  styleUrl: './button.scss',
+  templateUrl: './decorative-button.html',
+  styleUrl: './decorative-button.scss',
 })
-export class Button {
+export class DecorativeButton {
   protected readonly uid = `btn${nextButtonUid++}`;
 
   readonly text = input.required<string>();
-  readonly width = input<number | ButtonWidthMode>();
-  readonly type = input<ButtonType>('primary');
+  readonly width = input<number | DecorativeButtonWidthMode>();
+  readonly type = input<DecorativeButtonType>('primary');
 
   // 'secondary' — тот же 1:1 SVG (см. Frame 68_2, приложен пользователем). В самом
   // экспорте отличаются только 4 цвета (glow/база тела/тон тела/текст) — рамка,
@@ -119,7 +119,7 @@ export class Button {
   );
   protected readonly sparkleFill = computed(() => (this.isSecondary() ? '#F0F0FF' : '#FFF9DB'));
   protected readonly gemFill = computed(() => (this.isSecondary() ? '#DCDCFC' : '#F8ECB2'));
-  // Рамка (см. комментарий у paint4_radial_2821_998/_secondary в button.html) —
+  // Рамка (см. комментарий у paint4_radial_2821_998/_secondary в decorative-button.html) —
   // НЕ мутируем цвета одного градиента, переключаем ссылку между двумя
   // статичными градиентами (Chromium-баг с filter5_d, найден пиксельно).
   protected readonly frameStrokeUrl = computed(() =>
@@ -175,7 +175,7 @@ export class Button {
     // 'content' — .button__content-inner, в отличие от .button__content, не
     // растянут position:absolute/inset:0, поэтому его собственная ширина —
     // это естественная ширина иконка+8px-gap+текст, которую уже посчитал flex
-    // (пустая иконка схлопывается в 0 через :empty в button.scss). Одно и то
+    // (пустая иконка схлопывается в 0 через :empty в decorative-button.scss). Одно и то
     // же измерение реагирует и на смену text(), и на появление/исчезновение
     // иконки — оба меняют размер этого блока.
     effect((onCleanup) => {
@@ -230,7 +230,7 @@ export class Button {
   protected readonly centerShiftTransform = computed(() => `translate(${this.extra() / 2} 0)`);
 
   // Icon's native size (fixed, never stretches) — PX_PER_UNIT is width-independent, so these are
-  // true constants. Positioning itself is handled by the .button__content flex layout (button.scss).
+  // true constants. Positioning itself is handled by the .button__content flex layout (decorative-button.scss).
   protected readonly iconWidthPx = 44 * PX_PER_UNIT;
   protected readonly iconHeightPx = 38 * PX_PER_UNIT;
 }

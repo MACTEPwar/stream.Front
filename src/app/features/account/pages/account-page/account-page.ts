@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '@core/services/auth.service';
-import { Button } from '@shared/components/button/button';
+import { DecorativeButton } from '@shared/components/decorative-button/decorative-button';
 import { SectionTitle } from '@shared/components/section-title/section-title';
 import { GameAccountsSection } from '../../components/game-accounts-section/game-accounts-section';
 import { ProfileSection } from '../../components/profile-section/profile-section';
@@ -27,7 +27,7 @@ import { SocialLinksSection } from '../../components/social-links-section/social
  */
 @Component({
   selector: 'app-account-page',
-  imports: [SectionTitle, Button, ProfileSection, GameAccountsSection, SocialLinksSection],
+  imports: [SectionTitle, DecorativeButton, ProfileSection, GameAccountsSection, SocialLinksSection],
   templateUrl: './account-page.html',
   styleUrl: './account-page.scss',
 })
