@@ -250,6 +250,16 @@ describe('ProfileSection', () => {
     expect(openSpy).toHaveBeenCalledWith(ChangePasswordModal);
   });
 
+  it('avatarUrl, загруженный с ПК (/uploads/*), резолвится через ImageUrlService в превью (bug stream.Front#84)', () => {
+    setCurrentUser({ ...localOnlyUser, avatarUrl: '/uploads/existing-avatar.png' });
+    const fixture = TestBed.createComponent(ProfileSection);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const img = el.querySelector<HTMLImageElement>('.profile-section__avatar-preview img');
+    expect(img?.getAttribute('src')).toBe(`${environment.apiUrl}/uploads/existing-avatar.png`);
+  });
+
   it('клик «Поменять» открывает AvatarPickerModal с текущим avatarUrl, onConfirm обновляет превью', () => {
     setCurrentUser(localOnlyUser);
     const openSpy = vi.spyOn(modalService, 'open');

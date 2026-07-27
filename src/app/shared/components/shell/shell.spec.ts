@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 
+import { environment } from '@env/environment';
 import { AuthService } from '@core/services/auth.service';
 import { CurrentUser } from '@core/models/current-user.model';
 import { ModalService } from '@core/services/modal.service';
@@ -74,7 +75,7 @@ describe('Shell', () => {
     expect(el.querySelector('img.shell__account-avatar')).toBeNull();
   });
 
-  it('залогинен с avatarUrl: рендерит <img> с этим src, без плейсхолдера', () => {
+  it('залогинен с avatarUrl (/uploads/*, загружен с ПК) — резолвит src через ImageUrlService на backend origin, без плейсхолдера (bug stream.Front#84)', () => {
     const authService = TestBed.inject(AuthService);
     (authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }).currentUserSignal.set({
       ...mockUser,
@@ -86,7 +87,7 @@ describe('Shell', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const img = el.querySelector<HTMLImageElement>('img.shell__account-avatar');
-    expect(img?.getAttribute('src')).toBe('/uploads/avatar.png');
+    expect(img?.getAttribute('src')).toBe(`${environment.apiUrl}/uploads/avatar.png`);
     expect(el.querySelector('.shell__account-avatar--placeholder')).toBeNull();
   });
 

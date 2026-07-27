@@ -16,6 +16,7 @@ import { Profile } from '@core/models/profile.model';
 import { AuthMethodsService } from '@core/services/auth-methods.service';
 import { AuthService } from '@core/services/auth.service';
 import { GoogleAuthService } from '@core/services/google-auth.service';
+import { ImageUrlService } from '@core/services/image-url.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { ProfileService } from '@core/services/profile.service';
@@ -82,6 +83,7 @@ export class ProfileSection {
   private readonly authService = inject(AuthService);
   private readonly authMethodsService = inject(AuthMethodsService);
   private readonly googleAuthService = inject(GoogleAuthService);
+  private readonly imageUrlService = inject(ImageUrlService);
   private readonly profileService = inject(ProfileService);
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
@@ -91,6 +93,10 @@ export class ProfileSection {
 
   protected readonly name = signal(this.savedName());
   protected readonly pendingAvatarUrl = signal(this.savedAvatarUrl());
+  protected readonly resolvedAvatarUrl = computed(() => {
+    const url = this.pendingAvatarUrl();
+    return url ? this.imageUrlService.resolve(url) : null;
+  });
 
   protected readonly authMethodLabel = AUTH_METHOD_TYPE_LABELS;
   protected readonly authMethods = computed(

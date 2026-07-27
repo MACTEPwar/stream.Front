@@ -105,6 +105,39 @@ describe('AvatarPickerModal', () => {
     expect(onConfirm).toHaveBeenCalledWith('/uploads/avatar.png');
   });
 
+  it('успешная загрузка файла — показывает превью загруженного фото, резолвнутое через ImageUrlService (bug stream.Front#84)', () => {
+    const fixture = TestBed.createComponent(AvatarPickerModal);
+    fixture.componentRef.setInput('data', { currentUrl: null, onConfirm: () => undefined });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.avatar-picker-modal__uploaded-preview')).toBeNull();
+
+    const fileInput = el.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const file = new File(['bytes'], 'avatar.png', { type: 'image/png' });
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    fileInput.dispatchEvent(new Event('change'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/upload`);
+    req.flush({ url: '/uploads/avatar.png' });
+    fixture.detectChanges();
+
+    const preview = el.querySelector<HTMLImageElement>('.avatar-picker-modal__uploaded-preview img');
+    expect(preview?.getAttribute('src')).toBe(`${environment.apiUrl}/uploads/avatar.png`);
+  });
+
+  it('выбор пресета — не показывает превью загруженного фото (у пресетов своя подсветка)', () => {
+    const fixture = TestBed.createComponent(AvatarPickerModal);
+    fixture.componentRef.setInput('data', { currentUrl: null, onConfirm: () => undefined });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    el.querySelectorAll<HTMLButtonElement>('.avatar-picker-modal__preset')[0].click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.avatar-picker-modal__uploaded-preview')).toBeNull();
+  });
+
   it('ошибка загрузки файла — показывает toast, не меняет выбор', () => {
     const showSpy = vi.spyOn(notificationService, 'show');
     const fixture = TestBed.createComponent(AvatarPickerModal);

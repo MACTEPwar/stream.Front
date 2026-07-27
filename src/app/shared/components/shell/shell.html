@@ -32,7 +32,7 @@
       }
       <a routerLink="/account" class="shell__account-link">
         @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
-          <img [src]="avatarUrl" alt="" class="shell__account-avatar" />
+          <img [src]="resolveAvatarUrl(avatarUrl)" alt="" class="shell__account-avatar" />
         } @else {
           <span class="shell__account-avatar shell__account-avatar--placeholder" aria-hidden="true"></span>
         }

@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 
 import { extractApiErrorMessage } from '@core/models/api-error.model';
+import { ImageUrlService } from '@core/services/image-url.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { UploadService } from '@core/services/upload.service';
@@ -41,11 +42,18 @@ export class AvatarPickerModal {
   readonly data = input<AvatarPickerModalData>();
 
   private readonly uploadService = inject(UploadService);
+  private readonly imageUrlService = inject(ImageUrlService);
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
 
   protected readonly avatarPresets = AVATAR_PRESETS;
   protected readonly selectedUrl = linkedSignal(() => this.data()?.currentUrl ?? null);
+  /** Превью выбранного варианта — не показывается для пресетов, у них уже есть своя подсветка `--active` в галерее. */
+  protected readonly uploadedPreviewUrl = computed(() => {
+    const url = this.selectedUrl();
+    if (!url || this.avatarPresets.includes(url)) return null;
+    return this.imageUrlService.resolve(url);
+  });
 
   protected onPresetSelect(presetPath: string): void {
     this.selectedUrl.set(presetPath);
