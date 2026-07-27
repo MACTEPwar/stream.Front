@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { NotificationService } from '@core/services/notification.service';
+import { Button } from '@shared/components/button/button';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { ScheduleDay, ScheduleService, Weekday } from '../../../main/services/schedule.service';
 
@@ -46,7 +46,7 @@ const EVENT_TITLE_MAX_LENGTH = 200;
   imports: [
     TableModule,
     DrawerModule,
-    ButtonModule,
+    Button,
     ToggleSwitchModule,
     InputTextModule,
     FormsModule,

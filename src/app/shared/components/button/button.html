@@ -1,0 +1,6 @@
+<button pButton [size]="size()" [severity]="severity()" [disabled]="disabled()">
+  @if (icon(); as iconClass) {
+    <i [class]="iconClass"></i>
+  }
+  {{ text() }}
+</button>
