@@ -1,128 +1,153 @@
 <div class="kit-page">
-  <h1 class="kit-page__title">Button</h1>
+  <aside class="kit-page__sidebar">
+    <nav class="kit-page__nav">
+      @for (component of kitComponents; track component.key) {
+        <button
+          type="button"
+          class="kit-page__nav-link"
+          [class.kit-page__nav-link--active]="selectedComponent() === component.key"
+          (click)="onComponentSelect(component.key)"
+        >
+          {{ component.label }}
+        </button>
+      }
+    </nav>
+  </aside>
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">Поддержать — без иконки (текст по центру)</h2>
-    <div class="kit-page__row">
-      <app-decorative-button text="Хелп" />
-    </div>
-  </section>
+  <div class="kit-page__content">
+    @if (selectedComponent() === 'button') {
+      <h1 class="kit-page__title">Button</h1>
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">Поддержать — со спроецированной иконкой ([icon])</h2>
-    <div class="kit-page__row">
-      <app-decorative-button text="Парампапам">
-        <img icon src="/icons/button-support-icon.svg" alt="" />
-      </app-decorative-button>
-    </div>
-  </section>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">Поддержать — без иконки (текст по центру)</h2>
+        <div class="kit-page__row">
+          <app-decorative-button text="Хелп" />
+        </div>
+      </section>
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">width() — фиксированные пиксели (9-slice: концы фиксированы, середина тянется)</h2>
-    <div class="kit-page__row">
-      <app-decorative-button text="Узкая" [width]="150" />
-      <app-decorative-button text="Поддержать" [width]="301" />
-      <app-decorative-button text="Поддержать прямо сейчас" [width]="500">
-        <img icon src="/icons/button-support-icon.svg" alt="" />
-      </app-decorative-button>
-      <app-decorative-button text="Совсем широкая" [width]="700" />
-    </div>
-  </section>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">Поддержать — со спроецированной иконкой ([icon])</h2>
+        <div class="kit-page__row">
+          <app-decorative-button text="Парампапам">
+            <img icon src="/icons/button-support-icon.svg" alt="" />
+          </app-decorative-button>
+        </div>
+      </section>
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">width()="parent" — на всю ширину родительского контейнера</h2>
-    <div class="kit-page__parent-demo" style="width: 400px">
-      <app-decorative-button text="Во всю ширину контейнера 400px" [width]="'parent'" />
-    </div>
-    <div class="kit-page__parent-demo" style="width: 700px; margin-top: 12px">
-      <app-decorative-button text="Во всю ширину контейнера 700px" [width]="'parent'">
-        <img icon src="/icons/button-support-icon.svg" alt="" />
-      </app-decorative-button>
-    </div>
-  </section>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">width() — фиксированные пиксели (9-slice: концы фиксированы, середина тянется)</h2>
+        <div class="kit-page__row">
+          <app-decorative-button text="Узкая" [width]="150" />
+          <app-decorative-button text="Поддержать" [width]="301" />
+          <app-decorative-button text="Поддержать прямо сейчас" [width]="500">
+            <img icon src="/icons/button-support-icon.svg" alt="" />
+          </app-decorative-button>
+          <app-decorative-button text="Совсем широкая" [width]="700" />
+        </div>
+      </section>
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">width()="content" — по контенту (иконка+зазор+текст + 50px слева/справа)</h2>
-    <div class="kit-page__row">
-      <app-decorative-button text="Ок" [width]="'content'" />
-      <app-decorative-button text="Поддержать прямо сейчас" [width]="'content'" />
-      <app-decorative-button text="С иконкой" [width]="'content'">
-        <img icon src="/icons/button-support-icon.svg" alt="" />
-      </app-decorative-button>
-    </div>
-  </section>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">width()="parent" — на всю ширину родительского контейнера</h2>
+        <div class="kit-page__parent-demo" style="width: 400px">
+          <app-decorative-button text="Во всю ширину контейнера 400px" [width]="'parent'" />
+        </div>
+        <div class="kit-page__parent-demo" style="width: 700px; margin-top: 12px">
+          <app-decorative-button text="Во всю ширину контейнера 700px" [width]="'parent'">
+            <img icon src="/icons/button-support-icon.svg" alt="" />
+          </app-decorative-button>
+        </div>
+      </section>
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">type()="secondary" — те же геометрия/размеры, другие цвета</h2>
-    <div class="kit-page__row">
-      <app-decorative-button text="Secondary" type="secondary" />
-      <app-decorative-button text="Парампапам" type="secondary">
-        <img icon src="/icons/button-support-icon.svg" alt="" />
-      </app-decorative-button>
-      <app-decorative-button text="Поддержать прямо сейчас" type="secondary" [width]="500" />
-    </div>
-  </section>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">width()="content" — по контенту (иконка+зазор+текст + 50px слева/справа)</h2>
+        <div class="kit-page__row">
+          <app-decorative-button text="Ок" [width]="'content'" />
+          <app-decorative-button text="Поддержать прямо сейчас" [width]="'content'" />
+          <app-decorative-button text="С иконкой" [width]="'content'">
+            <img icon src="/icons/button-support-icon.svg" alt="" />
+          </app-decorative-button>
+        </div>
+      </section>
 
-  <h1 class="kit-page__title">SectionTitle</h1>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">type()="secondary" — те же геометрия/размеры, другие цвета</h2>
+        <div class="kit-page__row">
+          <app-decorative-button text="Secondary" type="secondary" />
+          <app-decorative-button text="Парампапам" type="secondary">
+            <img icon src="/icons/button-support-icon.svg" alt="" />
+          </app-decorative-button>
+          <app-decorative-button text="Поддержать прямо сейчас" type="secondary" [width]="500" />
+        </div>
+      </section>
+    }
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">
-      ширина подчёркивания = фактической ширине текста (измеряется автоматически, не вводится) — левая/правая линии
-      растягиваются (равны и зеркальны), шеврон только сдвигается, сам не масштабируется
-    </h2>
-    <div class="kit-page__row">
-      <app-section-title text="Топ" />
-      <app-section-title text="Расписание" />
-      <app-section-title text="Очень длинный заголовок секции для проверки" />
-    </div>
-  </section>
+    @if (selectedComponent() === 'section-title') {
+      <h1 class="kit-page__title">SectionTitle</h1>
 
-  <h1 class="kit-page__title">List</h1>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          ширина подчёркивания = фактической ширине текста (измеряется автоматически, не вводится) — левая/правая линии
+          растягиваются (равны и зеркальны), шеврон только сдвигается, сам не масштабируется
+        </h2>
+        <div class="kit-page__row">
+          <app-section-title text="Топ" />
+          <app-section-title text="Расписание" />
+          <app-section-title text="Очень длинный заголовок секции для проверки" />
+        </div>
+      </section>
+    }
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">
-      data (items()) + настройки (settings()) — List раскладывает элементы (direction/itemWidth/gap) и рендерит
-      каждый через ListItem; каждый сегмент внутри item'а — свои text/width/color/align (здесь: weekday/event/time
-      с фиксированной шириной по краям и растягивающейся серединой, online/offline — свой color)
-    </h2>
-    <div class="kit-page__list-demo">
-      <app-list [items]="scheduleListItems" [settings]="{ gap: 8 }" />
-    </div>
-  </section>
+    @if (selectedComponent() === 'list') {
+      <h1 class="kit-page__title">List</h1>
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">
-      loading() (stream.Front#52) — тот же декор ListItem, что и в обычном списке, только без текста
-      (loaderSettings().itemsCount плейсхолдеров); у каждой строки своя гифка-бегун, бежит горизонтально до конца
-      строки и обратно, бесконечно
-    </h2>
-    <div class="kit-page__list-demo">
-      <app-list [items]="[]" [settings]="{ gap: 8 }" [loading]="true" [loaderSettings]="{ itemsCount: 5 }" />
-    </div>
-  </section>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          data (items()) + настройки (settings()) — List раскладывает элементы (direction/itemWidth/gap) и рендерит
+          каждый через ListItem; каждый сегмент внутри item'а — свои text/width/color/align (здесь: weekday/event/time
+          с фиксированной шириной по краям и растягивающейся серединой, online/offline — свой color)
+        </h2>
+        <div class="kit-page__list-demo">
+          <app-list [items]="scheduleListItems" [settings]="{ gap: 8 }" />
+        </div>
+      </section>
 
-  <h1 class="kit-page__title">PrimeNG</h1>
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          loading() (stream.Front#52) — тот же декор ListItem, что и в обычном списке, только без текста
+          (loaderSettings().itemsCount плейсхолдеров); у каждой строки своя гифка-бегун, бежит горизонтально до конца
+          строки и обратно, бесконечно
+        </h2>
+        <div class="kit-page__list-demo">
+          <app-list [items]="[]" [settings]="{ gap: 8 }" [loading]="true" [loaderSettings]="{ itemsCount: 5 }" />
+        </div>
+      </section>
+    }
 
-  <section class="kit-page__section">
-    <h2 class="kit-page__section-title">
-      p-table под темой AdminPreset (stream.Front#75) — demo/проверка темы, PrimeNG-компоненты в проекте
-      применяются только внутри админ-панели
-    </h2>
-    <div class="kit-page__row">
-      <p-table [value]="primeTableRows" styleClass="kit-page__prime-table">
-        <ng-template #header>
-          <tr>
-            <th>Логин</th>
-            <th>Роль</th>
-          </tr>
-        </ng-template>
-        <ng-template #body let-row>
-          <tr>
-            <td>{{ row.login }}</td>
-            <td>{{ row.role }}</td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-  </section>
+    @if (selectedComponent() === 'primeng') {
+      <h1 class="kit-page__title">Таблица</h1>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          p-table под темой AdminPreset (stream.Front#75) — demo/проверка темы, PrimeNG-компоненты в проекте
+          применяются только внутри админ-панели
+        </h2>
+        <div class="kit-page__row">
+          <p-table [value]="primeTableRows" styleClass="kit-page__prime-table">
+            <ng-template #header>
+              <tr>
+                <th>Логин</th>
+                <th>Роль</th>
+              </tr>
+            </ng-template>
+            <ng-template #body let-row>
+              <tr>
+                <td>{{ row.login }}</td>
+                <td>{{ row.role }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </section>
+    }
+  </div>
 </div>

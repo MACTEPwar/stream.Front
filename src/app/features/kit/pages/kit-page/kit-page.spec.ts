@@ -7,11 +7,40 @@ describe('KitPage', () => {
     TestBed.configureTestingModule({ imports: [KitPage] });
   });
 
-  it('рендерит demo p-table (stream.Front#75) с тестовыми строками', () => {
+  it('по умолчанию выбран первый компонент (Button) — сайдбар подсвечивает его, контент показан', () => {
     const fixture = TestBed.createComponent(KitPage);
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
+    const links = Array.from(el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link'));
+    expect(links.map((l) => l.textContent?.trim())).toEqual(['Button', 'SectionTitle', 'List', 'Таблица']);
+    expect(links[0].classList).toContain('kit-page__nav-link--active');
+    expect(el.querySelector('.kit-page__title')?.textContent).toBe('Button');
+  });
+
+  it('клик по пункту сайдбара переключает видимый контент, скрывая остальные компоненты', () => {
+    const fixture = TestBed.createComponent(KitPage);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const links = Array.from(el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link'));
+    links[2].click();
+    fixture.detectChanges();
+
+    expect(links[2].classList).toContain('kit-page__nav-link--active');
+    expect(links[0].classList).not.toContain('kit-page__nav-link--active');
+    expect(el.querySelector('.kit-page__title')?.textContent).toBe('List');
+    expect(el.querySelector('app-decorative-button')).toBeNull();
+  });
+
+  it('рендерит demo p-table (stream.Front#75) с тестовыми строками после выбора «Таблица» в сайдбаре', () => {
+    const fixture = TestBed.createComponent(KitPage);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link')[3].click();
+    fixture.detectChanges();
+
     const rows = el.querySelectorAll('.p-datatable-tbody tr');
     expect(rows.length).toBe(3);
     expect(rows[0].textContent).toContain('admin');

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TableModule } from 'primeng/table';
 
 import { DecorativeButton } from '../../../../shared/components/decorative-button/decorative-button';
@@ -10,6 +10,13 @@ interface KitTableRow {
   role: string;
 }
 
+export type KitComponentKey = 'button' | 'section-title' | 'list' | 'primeng';
+
+interface KitComponentNavItem {
+  readonly key: KitComponentKey;
+  readonly label: string;
+}
+
 /**
  * Служебная страница-каталог UI-kit компонентов (stream.Front#39) — не часть
  * пользовательского сайта, только для ручной сверки вариантов при вёрстке.
@@ -18,6 +25,16 @@ interface KitTableRow {
  * (`core/primeng/admin-preset.ts`), не реальное использование: PrimeNG-
  * компоненты в проекте применяются только внутри админ-панели
  * (`stream.Front#76`/`#77`), не на пользовательском сайте.
+ *
+ * **Layout — сайдбар компонентов слева / контент справа (`stream.Front#86`,
+ * по прямому запросу пользователя)** — раньше все демо-секции лежали одной
+ * длинной страницей подряд без навигации. `selectedComponent` — сигнал с
+ * ключом текущего выбранного компонента (`KIT_COMPONENTS`, дефолт — первый
+ * в списке, чтобы правая панель не была пустой при заходе на `/kit`); клик
+ * по пункту сайдбара просто переключает его, вся демо-разметка каждого
+ * компонента остаётся как есть, просто обёрнута в `@if (selectedComponent()
+ * === '...')`. URL-роутинг по отдельным компонентам сознательно не заведён
+ * (см. "Не входит" в issue) — состояние живёт только в памяти компонента.
  */
 @Component({
   selector: 'app-kit-page',
@@ -26,6 +43,19 @@ interface KitTableRow {
   styleUrl: './kit-page.scss',
 })
 export class KitPage {
+  protected readonly kitComponents: readonly KitComponentNavItem[] = [
+    { key: 'button', label: 'Button' },
+    { key: 'section-title', label: 'SectionTitle' },
+    { key: 'list', label: 'List' },
+    { key: 'primeng', label: 'Таблица' },
+  ];
+
+  protected readonly selectedComponent = signal<KitComponentKey>(this.kitComponents[0].key);
+
+  protected onComponentSelect(key: KitComponentKey): void {
+    this.selectedComponent.set(key);
+  }
+
   protected readonly primeTableRows: KitTableRow[] = [
     { login: 'admin', role: 'ADMIN' },
     { login: 'streamer', role: 'USER' },
