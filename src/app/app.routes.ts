@@ -70,10 +70,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/about/pages/about-page/about-page').then((m) => m.AboutPage),
   },
-  {
-    path: 'kit',
-    loadComponent: () => import('./features/kit/pages/kit-page/kit-page').then((m) => m.KitPage),
-  },
   // Любой нераспознанный роут — тоже на main (по прямому запросу пользователя).
   { path: '**', redirectTo: 'main' },
 ];
