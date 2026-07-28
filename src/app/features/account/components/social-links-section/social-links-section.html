@@ -26,7 +26,9 @@
                   <option [value]="entry[0]">{{ entry[1] }}</option>
                 }
               </select>
-              <app-text-field label="Значение" placeholder="Введите значение" [(value)]="editValue" />
+              <app-text-field label="Значение" placeholder="Введите значение" [(value)]="editValue">
+                <img icon src="/icons/text-field-person.svg" alt="" />
+              </app-text-field>
               <div class="social-links-section__card-actions">
                 <app-decorative-button
                   text="Сохранить"

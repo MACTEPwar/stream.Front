@@ -18,7 +18,9 @@
       </select>
     </div>
 
-    <app-text-field label="Значение" [required]="true" placeholder="Введите значение" [(value)]="value" />
+    <app-text-field label="Значение" [required]="true" placeholder="Введите значение" [(value)]="value">
+      <img icon src="/icons/text-field-person.svg" alt="" />
+    </app-text-field>
 
     <div class="add-social-link-modal__actions">
       <app-decorative-button text="Добавить" type="primary" [width]="'content'" (click)="onSubmit()" />

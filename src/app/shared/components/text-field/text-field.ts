@@ -5,15 +5,27 @@ export type TextFieldType = 'text' | 'password';
 let nextTextFieldUid = 0;
 
 /**
- * Переиспользуемое поле ввода (stream.Front#58/#59) — signal-based, без
- * ReactiveFormsModule (первая форма в проекте, `[(value)]` через `model()`
- * вместо `FormControl`, по прямому запросу пользователя). `type()="password"`
- * добавляет кнопку-глаз, переключающую видимость введённого текста —
- * внутреннее состояние (`isPasswordVisible`), не завязанное на `type()`
- * снаружи. Иконка-префикс выбирается по `type()` (person/lock) — в этой
- * форме других типов полей нет, поэтому отдельный `icon` input не заводился.
+ * Переиспользуемое поле ввода — основной текстовый инпут сайта (не только
+ * auth-формы), signal-based, без ReactiveFormsModule (`[(value)]` через
+ * `model()` вместо `FormControl`, по прямому запросу пользователя).
+ * `type()="password"` добавляет кнопку-глаз, переключающую видимость
+ * введённого текста — внутреннее состояние (`isPasswordVisible`), не
+ * завязанное на `type()` снаружи.
+ *
+ * Иконка-префикс — опциональна, приоритет по прямому запросу пользователя:
+ * 1. `icon()` — класс PrimeIcons (как у `Button.icon`, например `'pi pi-user'`)
+ * 2. иначе — спроецированный контент (`<ng-content select="[icon]">`, тот же
+ *    приём, что у `DecorativeButton`) — так сохранены прежние bespoke SVG
+ *    (раньше выбирались автоматически по `type()`: person/lock, теперь
+ *    вынесены в `public/icons/text-field-{person,lock}.svg`, каждый
+ *    caller явно проецирует нужный)
+ * 3. иначе — компартмента иконки вообще нет (`.text-field__prefix-icon:empty`
+ *    в `text-field.scss` схлопывает его, тот же приём, что у `.button__icon`)
+ *
  * `required()` — только визуальная звёздочка у лейбла (см. поля "Логин",
- * "Пароль" в макете), не блокирует сабмит сама по себе.
+ * "Пароль" в макете), не блокирует сабмит сама по себе. `errorText()`
+ * подсвечивает красным и рамку, и лейбл (по прямому запросу пользователя —
+ * раньше только рамку).
  */
 @Component({
   selector: 'app-text-field',
@@ -30,6 +42,7 @@ export class TextField {
   readonly placeholder = input<string>();
   readonly value = model<string>('');
   readonly errorText = input<string | null>(null);
+  readonly icon = input<string>();
 
   protected readonly isPasswordVisible = signal(false);
 

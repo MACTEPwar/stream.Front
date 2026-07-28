@@ -2,13 +2,17 @@
   <h2 class="add-game-account-modal__title">Добавить игровой аккаунт</h2>
 
   <form class="add-game-account-modal__form" (submit)="$event.preventDefault(); onSubmit()">
-    <app-text-field label="Ник" [required]="true" placeholder="Введите ник" [(value)]="nickname" />
+    <app-text-field label="Ник" [required]="true" placeholder="Введите ник" [(value)]="nickname">
+      <img icon src="/icons/text-field-person.svg" alt="" />
+    </app-text-field>
     <app-text-field
       label="Id аккаунта"
       [required]="true"
       placeholder="Введите id аккаунта"
       [(value)]="externalId"
-    />
+    >
+      <img icon src="/icons/text-field-person.svg" alt="" />
+    </app-text-field>
 
     <div class="add-game-account-modal__actions">
       <app-decorative-button text="Добавить" type="primary" [width]="'content'" (click)="onSubmit()" />

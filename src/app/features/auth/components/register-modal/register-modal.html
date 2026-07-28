@@ -5,21 +5,27 @@
   (footerLinkClick)="onLoginLinkClick()"
 >
   <form class="register-modal__form" (submit)="$event.preventDefault(); onSubmit()">
-    <app-text-field label="Логин" [required]="true" placeholder="Введите логин" [(value)]="login" />
+    <app-text-field label="Логин" [required]="true" placeholder="Введите логин" [(value)]="login">
+      <img icon src="/icons/text-field-person.svg" alt="" />
+    </app-text-field>
     <app-text-field
       label="Пароль"
       type="password"
       [required]="true"
       placeholder="Введите пароль"
       [(value)]="password"
-    />
+    >
+      <img icon src="/icons/text-field-lock.svg" alt="" />
+    </app-text-field>
     <app-text-field
       label="Подтвердить пароль"
       type="password"
       [required]="true"
       placeholder="Повторите пароль"
       [(value)]="confirmPassword"
-    />
+    >
+      <img icon src="/icons/text-field-lock.svg" alt="" />
+    </app-text-field>
 
     <app-decorative-button text="Подтвердить" type="primary" [width]="'parent'" (click)="onSubmit()" />
 
