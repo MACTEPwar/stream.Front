@@ -1,0 +1,19 @@
+@use 'variables' as vars;
+
+// `p-tag` генерирует только 2 CSS-переменные на severity (`--p-tag-{severity}-
+// background`/`-color`) — не интерактивный компонент, в отличие от `pButton`
+// (см. `button.scss`), у него нет hover/active вариантов. Значения — уже
+// существующая палитра проекта (`_variables.scss`), не новые hex; выбор
+// какой PrimeNG severity под какую роль (`warn`/`info`/`secondary`) — чисто
+// namespace-развязка (см. `SEVERITY_MAP` в `badge.ts`), сами дефолтные цвета
+// Aura/AdminPreset-палитры для этих severity полностью перекрыты ниже.
+:host {
+  --p-tag-warn-background: #{vars.$color-e6c319};
+  --p-tag-warn-color: #{vars.$color-333333};
+
+  --p-tag-info-background: #{vars.$color-e66e19};
+  --p-tag-info-color: #{vars.$color-ffffff};
+
+  --p-tag-secondary-background: #{vars.$color-d9d9d9};
+  --p-tag-secondary-color: #{vars.$color-333333};
+}

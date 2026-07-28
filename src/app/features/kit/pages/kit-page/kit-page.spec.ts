@@ -16,6 +16,7 @@ describe('KitPage', () => {
     expect(links.map((l) => l.textContent?.trim())).toEqual([
       'DecorativeButton',
       'Button',
+      'Badge',
       'SectionTitle',
       'List',
       'Таблица',
@@ -30,10 +31,10 @@ describe('KitPage', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     const links = Array.from(el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link'));
-    links[3].click();
+    links[4].click();
     fixture.detectChanges();
 
-    expect(links[3].classList).toContain('kit-page__nav-link--active');
+    expect(links[4].classList).toContain('kit-page__nav-link--active');
     expect(links[0].classList).not.toContain('kit-page__nav-link--active');
     expect(el.querySelector('.kit-page__title')?.textContent).toBe('List');
     expect(el.querySelector('app-decorative-button')).toBeNull();
@@ -59,7 +60,7 @@ describe('KitPage', () => {
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link')[4].click();
+    el.querySelectorAll<HTMLButtonElement>('.kit-page__nav-link')[5].click();
     fixture.detectChanges();
 
     const rows = el.querySelectorAll('.p-datatable-tbody tr');
