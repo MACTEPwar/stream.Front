@@ -89,6 +89,15 @@ This will compile your project and store the build artifacts in the `dist/` dire
 npm test
 ```
 
+## Storybook (UI-kit)
+
+```bash
+npm run storybook        # dev server at http://localhost:6006
+npm run build-storybook  # static build into storybook-static/ (dev-only, not part of ng build)
+```
+
+Story files (`*.stories.ts`) live next to each shared component (`src/app/shared/components/*/`). See `PROJECT_MAP.md` → «UI-kit / Storybook» for details.
+
 ## Linting and formatting
 
 ```bash
