@@ -38,27 +38,9 @@
         <p-toggleswitch id="admin-schedule-online" [(ngModel)]="isOnline" />
       </div>
 
-      <div class="admin-schedule-page__field">
-        <label for="admin-schedule-event-title">Событие</label>
-        <input
-          id="admin-schedule-event-title"
-          type="text"
-          pInputText
-          [(ngModel)]="eventTitle"
-          maxlength="200"
-        />
-      </div>
+      <app-text-field label="Событие" [(value)]="eventTitle" />
 
-      <div class="admin-schedule-page__field">
-        <label for="admin-schedule-time">Время (ЧЧ:ММ)</label>
-        <input
-          id="admin-schedule-time"
-          type="text"
-          pInputText
-          [(ngModel)]="time"
-          placeholder="19:00"
-        />
-      </div>
+      <app-text-field label="Время (ЧЧ:ММ)" [(value)]="time" placeholder="19:00" />
 
       <app-button
         text="Сохранить"
