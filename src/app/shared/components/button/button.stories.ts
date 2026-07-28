@@ -16,7 +16,10 @@ const meta: Meta<Button> = {
   },
   argTypes: {
     text: { control: 'text' },
-    severity: { control: 'radio', options: [undefined, 'danger', 'contrast'] },
+    severity: {
+      control: 'radio',
+      options: [undefined, 'danger', 'contrast', 'secondary', 'info', 'success'],
+    },
     size: { control: 'radio', options: [undefined, 'small'] },
     disabled: { control: 'boolean' },
     icon: { control: 'text' },
@@ -33,12 +36,15 @@ export const Default: Story = {
 };
 
 export const Severity: Story = {
-  name: 'severity() — типы (дефолт/danger)',
+  name: 'severity() — типы (дефолт/danger/secondary/info/success)',
   render: () => ({
     template: `
       <div style="display: flex; gap: 12px;">
         <app-button text="Сохранить" />
         <app-button text="Удалить" severity="danger" />
+        <app-button text="Отмена" severity="secondary" />
+        <app-button text="Инфо" severity="info" />
+        <app-button text="Готово" severity="success" />
       </div>
     `,
   }),
@@ -95,4 +101,46 @@ export const Active: Story = {
     active: { control: 'boolean' },
   },
   args: { icon: 'pi pi-eye', severity: 'contrast', active: true },
+};
+
+interface PrimaryColorsArgs {
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+}
+
+/**
+ * Playground для severity="primary" (дефолт, без явного severity) — цвета
+ * подобраны на конкретных hex-значениях (fon/border/text), не завязаны на
+ * пропсы Button (тот их не принимает) — здесь переопределяются те же
+ * CSS-переменные, что и в button.scss (--p-button-primary-*), через
+ * [style.--var] на обёртке; hover/active остаются производными кода
+ * (button.scss), это песочница только для базового состояния кнопки.
+ */
+export const PrimaryColors: StoryObj<PrimaryColorsArgs> = {
+  name: 'Песочница цветов — severity="primary" (дефолт)',
+  argTypes: {
+    bgColor: { control: 'color' },
+    borderColor: { control: 'color' },
+    textColor: { control: 'color' },
+  },
+  args: {
+    bgColor: '#f4d2a4',
+    borderColor: '#f8ecb3',
+    textColor: '#76511c',
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <div
+        [style.--p-button-primary-background]="bgColor"
+        [style.--p-button-primary-border-color]="borderColor"
+        [style.--p-button-primary-color]="textColor"
+        style="display: flex; gap: 12px;"
+      >
+        <app-button text="Сохранить" />
+        <app-button icon="pi pi-check" text="С иконкой" />
+      </div>
+    `,
+  }),
 };

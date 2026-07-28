@@ -3,13 +3,16 @@ import { ButtonModule } from 'primeng/button';
 
 /**
  * Нестандартные `severity` в текущих usages — `'danger'` (админка,
- * `AdminUsersPage`/`AdminSchedulePage`, кнопки «Удалить», stream.Front#89) и
+ * `AdminUsersPage`/`AdminSchedulePage`, кнопки «Удалить», stream.Front#89),
  * `'contrast'` (публичный сайт, иконки-кнопки карточек турниров/новостей —
  * светлый фон/тёмная иконка, см. `filter`-блок в `docs/figma/tournament1.json`,
- * stream.Front#95). Остальные PrimeNG severity заводятся отдельной задачей по
- * мере необходимости.
+ * stream.Front#95), `'secondary'` (тёмно-синяя кнопка) и `'info'`/`'success'`
+ * (та же светлая HSL-модель, что у primary, оттенок повёрнут на синий/
+ * зелёный) — все цвета см. `button.scss`, по прямому запросу пользователя.
+ * Остальные PrimeNG severity заводятся отдельной задачей по мере
+ * необходимости.
  */
-export type ButtonSeverity = 'danger' | 'contrast';
+export type ButtonSeverity = 'danger' | 'contrast' | 'secondary' | 'info' | 'success';
 
 /** Единственный нестандартный `size` в текущих usages — полная шкала PrimeNG (`large` и т.д.) вне скоупа этой итерации. */
 export type ButtonSize = 'small';

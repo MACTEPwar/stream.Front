@@ -1,19 +1,123 @@
+@use 'sass:map';
 @use 'variables' as vars;
 
 // `AdminPreset` (core/primeng/admin-preset.ts) перекрашивает только
-// primary/surface — `severity="danger"` иначе рисуется дефолтным Aura-красным
-// (`{red.500}`/`{red.400}`), никак не связанным с палитрой проекта. Вместо
-// хардкода hex в разметке — переопределяем те же CSS-переменные, которые
-// генерирует PrimeNG dt()-токенами (`--p-button-danger-*`), значениями уже
-// существующего в проекте красного (`$color-cf1717`/`$color-c61718`, см.
-// `ErrorMessage`) — донастроить цвет позже можно будет прямо здесь, без
-// изменения структуры компонента/шаблона.
-// severity="primary" (дефолт, без явного severity) — та же логика: без
-// перекраски здесь рисуется цвет `AdminPreset`-палитры (`primary: palette(
-// '#e6c319')`, см. core/primeng/admin-preset.ts) — по прямому запросу
-// пользователя переопределён отдельно от него, только для этого компонента.
-// Hover/active намеренно не тронуты (не запрашивались) — остаются
-// производными от палитры `AdminPreset`.
+// primary/surface — остальные severity иначе рисуются дефолтной Aura-
+// палитрой, никак не связанной с цветами проекта. Вместо хардкода hex в
+// разметке — переопределяем те же CSS-переменные, которые генерирует
+// PrimeNG dt()-токенами (`--p-button-{severity}-*`), в одном месте (карта
+// ниже + `@each`), а не отдельным блоком на каждый severity — раньше это
+// было ровно так и разрослось до плохо читаемого дублирования по мере
+// добавления новых severity (по прямому запросу пользователя).
+//
+// Каждый severity описывает полный набор состояний: базовое, hover, active
+// (см. `button.button--active` ниже — своё, не завязанное на реальный
+// `:hover`/`:active`) и focus-ring (клавиатурная навигация, a11y — раньше
+// не задавался вовсе ни для одного severity, наследовался от золотой
+// палитры AdminPreset). Цвета конкретных severity — по прямому запросу
+// пользователя:
+// - primary (дефолт) — светлый тёплый золотой (stream.Front#89)
+// - secondary — тёмно-синий/лавандовый текст
+// - danger — красный (уже был, дополнен текстом/focus-ring)
+// - contrast — светлый/серый, для иконок-кнопок публичного сайта
+//   (stream.Front#95, уже был, дополнен focus-ring)
+// - info/success — та же HSL-модель, что у primary (светлый фон + тёмный
+//   текст того же оттенка, повёрнутого на синий/зелёный), рамка
+//   переиспользует тот же бледно-золотой акцент, что у primary/secondary
+//
+// hover/active — единый приём для всех severity, кроме danger (сохранён
+// как было: hover и active используют один и тот же оттенок) и contrast
+// (сохранён как было — соседние оттенки существующей серой палитры): 15%/
+// 30% подмес базового фона/рамки к цвету текста ЭТОГО ЖЕ severity (не
+// заново изобретённое правило для каждого нового цвета — светлые кнопки
+// от подмеса темнеют, тёмные — светлеют, поскольку их текст светлее фона).
+$button-severities: (
+  primary: (
+    background: vars.$color-f4d2a4,
+    border: vars.$color-f8ecb3,
+    color: vars.$color-76511c,
+    hover-background: vars.$color-e1bf90,
+    hover-border: vars.$color-e5cb9e,
+    hover-color: vars.$color-76511c,
+    active-background: vars.$color-cfa97c,
+    active-border: vars.$color-d3b78a,
+    active-color: vars.$color-76511c,
+    focus-color: vars.$color-76511c,
+    focus-shadow-rgb: '118, 81, 28',
+  ),
+  secondary: (
+    background: vars.$color-4445a8,
+    border: vars.$color-f7ebb3,
+    color: vars.$color-aeaefb,
+    hover-background: vars.$color-5455b4,
+    hover-border: vars.$color-ece2be,
+    hover-color: vars.$color-aeaefb,
+    active-background: vars.$color-6465c1,
+    active-border: vars.$color-e1d9c9,
+    active-color: vars.$color-aeaefb,
+    focus-color: vars.$color-aeaefb,
+    focus-shadow-rgb: '174, 174, 251',
+  ),
+  // Приглушённая (не $color-cf1717 из ErrorMessage) — по прямому запросу
+  // пользователя, см. _variables.scss.
+  danger: (
+    background: vars.$color-af4141,
+    border: vars.$color-af4141,
+    color: vars.$color-ffffff,
+    hover-background: vars.$color-833131,
+    hover-border: vars.$color-833131,
+    hover-color: vars.$color-ffffff,
+    active-background: vars.$color-602424,
+    active-border: vars.$color-602424,
+    active-color: vars.$color-ffffff,
+    focus-color: vars.$color-ffffff,
+    focus-shadow-rgb: '255, 255, 255',
+  ),
+  // stream.Front#95 — bg `rgb(249, 249, 249)` как у `filter`-блока в
+  // `docs/figma/tournament1.json`, для иконок-кнопок публичного сайта.
+  contrast: (
+    background: vars.$color-f9f9f9,
+    border: vars.$color-f9f9f9,
+    color: vars.$color-333333,
+    hover-background: vars.$color-d9d9d9,
+    hover-border: vars.$color-d9d9d9,
+    hover-color: vars.$color-333333,
+    active-background: vars.$color-bfbfbf,
+    active-border: vars.$color-bfbfbf,
+    active-color: vars.$color-333333,
+    focus-color: vars.$color-333333,
+    focus-shadow-rgb: '51, 51, 51',
+  ),
+  info: (
+    background: vars.$color-a4d3f4,
+    border: vars.$color-f8ecb3,
+    color: vars.$color-1c5278,
+    hover-background: vars.$color-90c0e1,
+    hover-border: vars.$color-d7d5aa,
+    hover-color: vars.$color-1c5278,
+    active-background: vars.$color-7baccf,
+    active-border: vars.$color-b6bea1,
+    active-color: vars.$color-1c5278,
+    focus-color: vars.$color-1c5278,
+    focus-shadow-rgb: '28, 82, 120',
+  ),
+  // Приглушённая (не неоново-мятная) — по прямому запросу пользователя, см.
+  // _variables.scss.
+  success: (
+    background: vars.$color-96c6a6,
+    border: vars.$color-f8ecb3,
+    color: vars.$color-1c783b,
+    hover-background: vars.$color-78b38b,
+    hover-border: vars.$color-c1cf95,
+    hover-color: vars.$color-1c783b,
+    active-background: vars.$color-5fa376,
+    active-border: vars.$color-95b87d,
+    active-color: vars.$color-1c783b,
+    focus-color: vars.$color-1c783b,
+    focus-shadow-rgb: '28, 120, 59',
+  ),
+);
+
 // Текст кнопки — Montserrat (по прямому запросу пользователя), не дефолтный
 // Aura-шрифт `AdminPreset`-темы (сама тема шрифт не переопределяет, только
 // цветовую палитру, см. core/primeng/admin-preset.ts). `<button>` — прямой
@@ -24,56 +128,41 @@ button {
 }
 
 :host {
-  --p-button-primary-background: #{vars.$color-f4d2a4};
-  --p-button-primary-border-color: #{vars.$color-f8ecb3};
-  --p-button-primary-color: #{vars.$color-76511c};
-
-  --p-button-danger-background: #{vars.$color-cf1717};
-  --p-button-danger-hover-background: #{vars.$color-c61718};
-  --p-button-danger-active-background: #{vars.$color-c61718};
-  --p-button-danger-border-color: #{vars.$color-cf1717};
-  --p-button-danger-hover-border-color: #{vars.$color-c61718};
-  --p-button-danger-active-border-color: #{vars.$color-c61718};
-
-  // severity="contrast" (stream.Front#95) — светлый фон/тёмная иконка, как у
-  // `filter`-блока в `docs/figma/tournament1.json` (bg `rgb(249, 249, 249)`,
-  // тень `0 2px 5px rgba(0,0,0,.35)`) — используется для иконок-кнопок
-  // публичного сайта (сброс/глаз/сердце/воронка-фильтр карточек турниров/
-  // новостей), не для админки. Hover/active — соседние оттенки серого из
-  // существующей палитры (`$color-d9d9d9`/`$color-bfbfbf`), тени Figma здесь
-  // не воспроизводятся (это забота места использования — карточки/группа
-  // кнопок, не самого Button).
-  --p-button-contrast-background: #{vars.$color-f9f9f9};
-  --p-button-contrast-hover-background: #{vars.$color-d9d9d9};
-  --p-button-contrast-active-background: #{vars.$color-bfbfbf};
-  --p-button-contrast-border-color: #{vars.$color-f9f9f9};
-  --p-button-contrast-hover-border-color: #{vars.$color-d9d9d9};
-  --p-button-contrast-active-border-color: #{vars.$color-bfbfbf};
-  --p-button-contrast-color: #{vars.$color-333333};
-  --p-button-contrast-hover-color: #{vars.$color-333333};
-  --p-button-contrast-active-color: #{vars.$color-333333};
+  @each $name, $tokens in $button-severities {
+    --p-button-#{$name}-background: #{map.get($tokens, background)};
+    --p-button-#{$name}-border-color: #{map.get($tokens, border)};
+    --p-button-#{$name}-color: #{map.get($tokens, color)};
+    --p-button-#{$name}-hover-background: #{map.get($tokens, hover-background)};
+    --p-button-#{$name}-hover-border-color: #{map.get($tokens, hover-border)};
+    --p-button-#{$name}-hover-color: #{map.get($tokens, hover-color)};
+    --p-button-#{$name}-active-background: #{map.get($tokens, active-background)};
+    --p-button-#{$name}-active-border-color: #{map.get($tokens, active-border)};
+    --p-button-#{$name}-active-color: #{map.get($tokens, active-color)};
+    --p-button-#{$name}-focus-ring-color: #{map.get($tokens, focus-color)};
+    --p-button-#{$name}-focus-ring-shadow: 0 0 0 3px
+      rgba(#{map.get($tokens, focus-shadow-rgb)}, 0.25);
+  }
 }
 
 // active() (stream.Front#95) — постоянное визуальное "нажатое" состояние,
 // не завязанное на реальный `:active` (мышь зажата) псевдокласс. Переиспользует
 // те же `--p-button-{severity}-active-*` токены, что PrimeNG уже применяет по
 // `:not(:disabled):active` (см. `@primeuix/styles/dist/button`) — просто
-// делает их постоянными через явный класс, а не событие мыши. Дефолт
-// (без явного `severity`, как и в остальном компоненте) — токены `primary`.
+// делает их постоянными через явный класс, а не событие мыши. `primary` —
+// дефолт (без явного `severity`, как и в остальном компоненте), поэтому без
+// модификатора `.p-button-primary` — PrimeNG сам его не добавляет.
 button.button--active {
   background: var(--p-button-primary-active-background);
   border-color: var(--p-button-primary-active-border-color);
   color: var(--p-button-primary-active-color);
 }
 
-button.button--active.p-button-danger {
-  background: var(--p-button-danger-active-background);
-  border-color: var(--p-button-danger-active-border-color);
-  color: var(--p-button-danger-active-color);
-}
-
-button.button--active.p-button-contrast {
-  background: var(--p-button-contrast-active-background);
-  border-color: var(--p-button-contrast-active-border-color);
-  color: var(--p-button-contrast-active-color);
+@each $name in map.keys($button-severities) {
+  @if $name != primary {
+    button.button--active.p-button-#{$name} {
+      background: var(--p-button-#{$name}-active-background);
+      border-color: var(--p-button-#{$name}-active-border-color);
+      color: var(--p-button-#{$name}-active-color);
+    }
+  }
 }
