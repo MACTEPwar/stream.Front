@@ -128,6 +128,50 @@
           <app-button text="Удалить" severity="danger" icon="pi pi-trash" />
         </div>
       </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          text() необязателен — icon-only режим (stream.Front#95), иконки-кнопки публичного сайта
+        </h2>
+        <div class="kit-page__row">
+          <app-button icon="pi pi-check" />
+          <app-button icon="pi pi-trash" severity="danger" />
+        </div>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          severity="contrast" (stream.Front#95) — светлый фон/тёмная иконка, как у filter-блока карточек турниров
+        </h2>
+        <div class="kit-page__row">
+          <app-button icon="pi pi-filter" severity="contrast" />
+        </div>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          active() (stream.Front#95) — визуальное "нажатое" состояние; Button не хранит тоггл сам, значение приходит
+          снаружи (здесь — клик переключает сигнал демо-страницы)
+        </h2>
+        <div class="kit-page__row">
+          <app-button icon="pi pi-eye" severity="contrast" [active]="watchedActive()" (click)="toggleWatched()" />
+          <app-button icon="pi pi-heart" severity="contrast" [active]="likedActive()" (click)="toggleLiked()" />
+        </div>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          ButtonGroup (stream.Front#95) — несколько Button под одной общей визуальной обводкой (сброс + 2 тоггла)
+        </h2>
+        <div class="kit-page__row">
+          <app-button-group>
+            <app-button icon="pi pi-refresh" severity="contrast" />
+            <app-button icon="pi pi-eye" severity="contrast" [active]="watchedActive()" (click)="toggleWatched()" />
+            <app-button icon="pi pi-heart" severity="contrast" [active]="likedActive()" (click)="toggleLiked()" />
+          </app-button-group>
+          <app-button icon="pi pi-filter" severity="contrast" />
+        </div>
+      </section>
     }
 
     @if (selectedComponent() === 'section-title') {
