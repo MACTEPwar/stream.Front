@@ -1,6 +1,15 @@
-<button pButton [size]="size()" [severity]="severity()" [disabled]="disabled()">
+<button
+  pButton
+  [iconOnly]="!text()"
+  [size]="size()"
+  [severity]="severity()"
+  [disabled]="disabled()"
+  [class.button--active]="active()"
+>
   @if (icon(); as iconClass) {
     <i [class]="iconClass"></i>
   }
-  {{ text() }}
+  @if (text(); as label) {
+    {{ label }}
+  }
 </button>

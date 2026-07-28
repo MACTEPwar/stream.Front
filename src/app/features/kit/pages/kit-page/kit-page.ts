@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { TableModule } from 'primeng/table';
 
 import { Button } from '../../../../shared/components/button/button';
+import { ButtonGroup } from '../../../../shared/components/button-group/button-group';
 import { DecorativeButton } from '../../../../shared/components/decorative-button/decorative-button';
 import { List, ListItemData } from '../../../../shared/components/list/list';
 import { SectionTitle } from '../../../../shared/components/section-title/section-title';
@@ -39,7 +40,7 @@ interface KitComponentNavItem {
  */
 @Component({
   selector: 'app-kit-page',
-  imports: [DecorativeButton, Button, SectionTitle, List, TableModule],
+  imports: [DecorativeButton, Button, ButtonGroup, SectionTitle, List, TableModule],
   templateUrl: './kit-page.html',
   styleUrl: './kit-page.scss',
 })
@@ -60,6 +61,21 @@ export class KitPage {
 
   protected onComponentSelect(key: KitComponentKey): void {
     this.selectedComponent.set(key);
+  }
+
+  // Демо active()/pressed (stream.Front#95) — Button не хранит и не считает
+  // тоггл-состояние сам (см. jsdoc Button), решение "что значит активно"
+  // остаётся за вызывающим кодом; здесь это просто два независимых сигнала
+  // демо-страницы для группы иконок-кнопок "глаз"/"сердце".
+  protected readonly watchedActive = signal(false);
+  protected readonly likedActive = signal(false);
+
+  protected toggleWatched(): void {
+    this.watchedActive.update((value) => !value);
+  }
+
+  protected toggleLiked(): void {
+    this.likedActive.update((value) => !value);
   }
 
   protected readonly primeTableRows: KitTableRow[] = [

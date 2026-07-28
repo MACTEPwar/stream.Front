@@ -34,4 +34,46 @@ button {
   --p-button-danger-border-color: #{vars.$color-cf1717};
   --p-button-danger-hover-border-color: #{vars.$color-c61718};
   --p-button-danger-active-border-color: #{vars.$color-c61718};
+
+  // severity="contrast" (stream.Front#95) — светлый фон/тёмная иконка, как у
+  // `filter`-блока в `docs/figma/tournament1.json` (bg `rgb(249, 249, 249)`,
+  // тень `0 2px 5px rgba(0,0,0,.35)`) — используется для иконок-кнопок
+  // публичного сайта (сброс/глаз/сердце/воронка-фильтр карточек турниров/
+  // новостей), не для админки. Hover/active — соседние оттенки серого из
+  // существующей палитры (`$color-d9d9d9`/`$color-bfbfbf`), тени Figma здесь
+  // не воспроизводятся (это забота места использования — карточки/группа
+  // кнопок, не самого Button).
+  --p-button-contrast-background: #{vars.$color-f9f9f9};
+  --p-button-contrast-hover-background: #{vars.$color-d9d9d9};
+  --p-button-contrast-active-background: #{vars.$color-bfbfbf};
+  --p-button-contrast-border-color: #{vars.$color-f9f9f9};
+  --p-button-contrast-hover-border-color: #{vars.$color-d9d9d9};
+  --p-button-contrast-active-border-color: #{vars.$color-bfbfbf};
+  --p-button-contrast-color: #{vars.$color-333333};
+  --p-button-contrast-hover-color: #{vars.$color-333333};
+  --p-button-contrast-active-color: #{vars.$color-333333};
+}
+
+// active() (stream.Front#95) — постоянное визуальное "нажатое" состояние,
+// не завязанное на реальный `:active` (мышь зажата) псевдокласс. Переиспользует
+// те же `--p-button-{severity}-active-*` токены, что PrimeNG уже применяет по
+// `:not(:disabled):active` (см. `@primeuix/styles/dist/button`) — просто
+// делает их постоянными через явный класс, а не событие мыши. Дефолт
+// (без явного `severity`, как и в остальном компоненте) — токены `primary`.
+button.button--active {
+  background: var(--p-button-primary-active-background);
+  border-color: var(--p-button-primary-active-border-color);
+  color: var(--p-button-primary-active-color);
+}
+
+button.button--active.p-button-danger {
+  background: var(--p-button-danger-active-background);
+  border-color: var(--p-button-danger-active-border-color);
+  color: var(--p-button-danger-active-color);
+}
+
+button.button--active.p-button-contrast {
+  background: var(--p-button-contrast-active-background);
+  border-color: var(--p-button-contrast-active-border-color);
+  color: var(--p-button-contrast-active-color);
 }

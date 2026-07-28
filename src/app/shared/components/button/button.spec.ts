@@ -13,16 +13,18 @@ import { Button, ButtonSeverity, ButtonSize } from './button';
       [size]="size()"
       [disabled]="disabled()"
       [icon]="icon()"
+      [active]="active()"
       (click)="onClick()"
     />
   `,
 })
 class ButtonHost {
-  readonly text = signal('Сохранить');
+  readonly text = signal<string | undefined>('Сохранить');
   readonly severity = signal<ButtonSeverity | undefined>(undefined);
   readonly size = signal<ButtonSize | undefined>(undefined);
   readonly disabled = signal(false);
   readonly icon = signal<string | undefined>(undefined);
+  readonly active = signal(false);
   readonly onClick = vi.fn();
 }
 
@@ -67,6 +69,15 @@ describe('Button', () => {
     expect(button.classList.contains('p-button-danger')).toBe(true);
   });
 
+  it('severity="contrast" — прокидывается в pButton (класс p-button-contrast)', () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.componentInstance.severity.set('contrast');
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button');
+    expect(button.classList.contains('p-button-contrast')).toBe(true);
+  });
+
   it('size="small" — прокидывается в pButton (класс p-button-sm)', () => {
     const fixture = TestBed.createComponent(ButtonHost);
     fixture.componentInstance.size.set('small');
@@ -92,5 +103,30 @@ describe('Button', () => {
     fixture.nativeElement.querySelector('button').click();
 
     expect(fixture.componentInstance.onClick).toHaveBeenCalled();
+  });
+
+  it('без text() — icon-only режим (пустая pButton-directива [iconOnly], нет текстового узла)', () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.componentInstance.text.set(undefined);
+    fixture.componentInstance.icon.set('pi pi-refresh');
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(button.classList.contains('p-button-icon-only')).toBe(true);
+    expect(button.textContent.trim()).toBe('');
+  });
+
+  it('active() — добавляет класс button--active', () => {
+    const fixture = TestBed.createComponent(ButtonHost);
+    fixture.detectChanges();
+
+    const buttonInitial: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(buttonInitial.classList.contains('button--active')).toBe(false);
+
+    fixture.componentInstance.active.set(true);
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(button.classList.contains('button--active')).toBe(true);
   });
 });
