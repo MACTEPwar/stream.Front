@@ -40,7 +40,7 @@
       <ng-template #body let-user>
         <tr>
           <td>{{ user.name || '—' }}</td>
-          <td>{{ user.role }}</td>
+          <td><app-badge [text]="user.role" [severity]="badgeSeverity(user.role)" /></td>
           <td>
             <app-button text="Просмотр" size="small" (click)="onViewClick(user)" />
             @if (!isOwnRow(user)) {
@@ -108,7 +108,7 @@
             <dt>Имя</dt>
             <dd>{{ user.name || '—' }}</dd>
             <dt>Роль</dt>
-            <dd>{{ user.role }}</dd>
+            <dd><app-badge [text]="user.role" [severity]="badgeSeverity(user.role)" /></dd>
             <dt>Регистрация</dt>
             <dd>{{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}</dd>
           </dl>

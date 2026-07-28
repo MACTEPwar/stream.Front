@@ -174,6 +174,25 @@
       </section>
     }
 
+    @if (selectedComponent() === 'badge') {
+      <h1 class="kit-page__title">Badge</h1>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">
+          тонкая обёртка над PrimeNG p-tag (stream.Front#96) — вывод роли пользователя в AdminUsersPage
+        </h2>
+      </section>
+
+      <section class="kit-page__section">
+        <h2 class="kit-page__section-title">severity() — семантические роли (admin/moderator/user)</h2>
+        <div class="kit-page__row">
+          <app-badge text="ADMIN" severity="admin" />
+          <app-badge text="MODERATOR" severity="moderator" />
+          <app-badge text="USER" severity="user" />
+        </div>
+      </section>
+    }
+
     @if (selectedComponent() === 'section-title') {
       <h1 class="kit-page__title">SectionTitle</h1>
 

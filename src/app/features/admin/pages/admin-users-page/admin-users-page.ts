@@ -7,9 +7,11 @@ import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 
 import { AUTH_METHOD_TYPE_LABELS } from '@core/models/auth-method.model';
+import { UserRole } from '@core/models/current-user.model';
 import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
+import { Badge, BadgeSeverity } from '@shared/components/badge/badge';
 import { Button } from '@shared/components/button/button';
 import { ConfirmModal } from '@shared/components/confirm-modal/confirm-modal';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
@@ -20,6 +22,12 @@ import {
   AdminUserRole,
   AdminUsersService,
 } from '../../services/admin-users.service';
+
+const ROLE_BADGE_SEVERITY: Record<UserRole, BadgeSeverity> = {
+  ADMIN: 'admin',
+  MODERATOR: 'moderator',
+  USER: 'user',
+};
 
 const PAGE_SIZE = 20;
 
@@ -54,6 +62,7 @@ const ROLE_FILTER_OPTIONS: { label: string; value: AdminUserAnyRole | null }[] =
     TableModule,
     DrawerModule,
     Button,
+    Badge,
     SelectModule,
     InputTextModule,
     FormsModule,
@@ -93,6 +102,10 @@ export class AdminUsersPage {
 
   protected isOwnRow(user: AdminUser): boolean {
     return user.id === this.authService.currentUser()?.id;
+  }
+
+  protected badgeSeverity(role: UserRole): BadgeSeverity {
+    return ROLE_BADGE_SEVERITY[role];
   }
 
   protected onLazyLoad(event: TableLazyLoadEvent): void {

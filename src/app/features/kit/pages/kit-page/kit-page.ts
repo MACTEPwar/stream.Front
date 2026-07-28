@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TableModule } from 'primeng/table';
 
+import { Badge } from '../../../../shared/components/badge/badge';
 import { Button } from '../../../../shared/components/button/button';
 import { ButtonGroup } from '../../../../shared/components/button-group/button-group';
 import { DecorativeButton } from '../../../../shared/components/decorative-button/decorative-button';
@@ -12,7 +13,13 @@ interface KitTableRow {
   role: string;
 }
 
-export type KitComponentKey = 'decorative-button' | 'button' | 'section-title' | 'list' | 'primeng';
+export type KitComponentKey =
+  | 'decorative-button'
+  | 'button'
+  | 'badge'
+  | 'section-title'
+  | 'list'
+  | 'primeng';
 
 interface KitComponentNavItem {
   readonly key: KitComponentKey;
@@ -40,7 +47,7 @@ interface KitComponentNavItem {
  */
 @Component({
   selector: 'app-kit-page',
-  imports: [DecorativeButton, Button, ButtonGroup, SectionTitle, List, TableModule],
+  imports: [DecorativeButton, Button, ButtonGroup, Badge, SectionTitle, List, TableModule],
   templateUrl: './kit-page.html',
   styleUrl: './kit-page.scss',
 })
@@ -52,6 +59,7 @@ export class KitPage {
   protected readonly kitComponents: readonly KitComponentNavItem[] = [
     { key: 'decorative-button', label: 'DecorativeButton' },
     { key: 'button', label: 'Button' },
+    { key: 'badge', label: 'Badge' },
     { key: 'section-title', label: 'SectionTitle' },
     { key: 'list', label: 'List' },
     { key: 'primeng', label: 'Таблица' },
