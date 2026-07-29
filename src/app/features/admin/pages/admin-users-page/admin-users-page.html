@@ -12,7 +12,7 @@
       [(ngModel)]="roleFilter"
       (ngModelChange)="onFilterChange()"
     />
-    <app-button text="Найти" size="small" (click)="onFilterChange()" />
+    <app-button text="Найти" (click)="onFilterChange()" />
   </div>
 
   @if (hasError()) {
@@ -149,13 +149,8 @@
 
         @if (!isOwnRow(user)) {
           <div class="admin-users-page__detail-actions">
-            <app-button text="Изменить роль" size="small" (click)="onEditRoleClick(user)" />
-            <app-button
-              text="Удалить"
-              size="small"
-              severity="danger"
-              (click)="onDeleteClick(user)"
-            />
+            <app-button text="Изменить роль" (click)="onEditRoleClick(user)" />
+            <app-button text="Удалить" severity="danger" (click)="onDeleteClick(user)" />
           </div>
         }
       </div>
