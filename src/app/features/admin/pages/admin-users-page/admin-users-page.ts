@@ -22,10 +22,13 @@ import {
   AdminUsersService,
 } from '../../services/admin-users.service';
 
+// BadgeSeverity (stream.Front#107) — та же палитра, что у Button, не
+// семантические имена ролей (было admin/moderator/user) — маппинг роль →
+// severity живёт здесь же, Badge про роли ничего не знает.
 const ROLE_BADGE_SEVERITY: Record<UserRole, BadgeSeverity> = {
-  ADMIN: 'admin',
-  MODERATOR: 'moderator',
-  USER: 'user',
+  ADMIN: 'danger',
+  MODERATOR: 'info',
+  USER: 'contrast',
 };
 
 const PAGE_SIZE = 20;

@@ -1,19 +1,58 @@
+@use 'sass:map';
 @use 'variables' as vars;
 
-// `p-tag` генерирует только 2 CSS-переменные на severity (`--p-tag-{severity}-
-// background`/`-color`) — не интерактивный компонент, в отличие от `pButton`
-// (см. `button.scss`), у него нет hover/active вариантов. Значения — уже
-// существующая палитра проекта (`_variables.scss`), не новые hex; выбор
-// какой PrimeNG severity под какую роль (`warn`/`info`/`secondary`) — чисто
-// namespace-развязка (см. `SEVERITY_MAP` в `badge.ts`), сами дефолтные цвета
-// Aura/AdminPreset-палитры для этих severity полностью перекрыты ниже.
+// Та же палитра фонов/текста, что у `Button` (`button.scss:34-119`, по
+// прямому запросу пользователя — "цвета аналогично как у кнопки") — только
+// фон/текст (`p-tag` не интерактивен, в отличие от `pButton`, hover/active
+// не нужны). `primary` — дефолт без явного `severity` на `p-tag` (тот же
+// приём, что у `Button`): PrimeNG сам применяет `tag.primary.*`-токены к
+// базовому `.p-tag` без доп. severity-класса.
+$badge-severities: (
+  primary: (
+    background: vars.$color-f4d2a4,
+    color: vars.$color-76511c,
+  ),
+  secondary: (
+    background: vars.$color-4445a8,
+    color: vars.$color-aeaefb,
+  ),
+  danger: (
+    background: vars.$color-af4141,
+    color: vars.$color-ffffff,
+  ),
+  contrast: (
+    background: vars.$color-f9f9f9,
+    color: vars.$color-333333,
+  ),
+  info: (
+    background: vars.$color-a4d3f4,
+    color: vars.$color-1c5278,
+  ),
+  success: (
+    background: vars.$color-96c6a6,
+    color: vars.$color-1c783b,
+  ),
+);
+
 :host {
-  --p-tag-warn-background: #{vars.$color-e6c319};
-  --p-tag-warn-color: #{vars.$color-333333};
+  @each $name, $tokens in $badge-severities {
+    --p-tag-#{$name}-background: #{map.get($tokens, background)};
+    --p-tag-#{$name}-color: #{map.get($tokens, color)};
+  }
 
-  --p-tag-info-background: #{vars.$color-e66e19};
-  --p-tag-info-color: #{vars.$color-ffffff};
+  // Паддинг — 4px сверху/снизу, 8px справа/слева (по прямому запросу
+  // пользователя, значения из Figma-инспектора). `--p-tag-padding` — тот же
+  // приём, что и цвета выше (dt()-токен PrimeNG).
+  --p-tag-padding: 4px 8px;
+}
 
-  --p-tag-secondary-background: #{vars.$color-d9d9d9};
-  --p-tag-secondary-color: #{vars.$color-333333};
+// `<p-tag>` — "host-class" компонент (класс `p-tag` навешен на сам
+// host-элемент `<p-tag>`, не на вложенный див, см. `primeng-tag.mjs`) —
+// сам этот тег написан в шаблоне ЭТОГО компонента (`badge.html`), поэтому
+// несёт его же scope-атрибут (Emulated-инкапсуляция), обычный (не `::ng-deep`)
+// селектор его достаёт. Шрифт — Montserrat (по прямому запросу пользователя)
+// — у `p-tag` нет dt()-токена под font-family вовсе (только `font.size`/
+// `font.weight`), поэтому напрямую CSS-свойством, не переменной.
+p-tag {
+  font-family: vars.$font-family-montserrat;
 }
