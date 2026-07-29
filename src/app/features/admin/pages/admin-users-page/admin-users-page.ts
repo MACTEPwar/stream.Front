@@ -1,8 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { DrawerModule } from 'primeng/drawer';
-import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 
 import { AUTH_METHOD_TYPE_LABELS } from '@core/models/auth-method.model';
@@ -14,6 +12,7 @@ import { Badge, BadgeSeverity } from '@shared/components/badge/badge';
 import { Button } from '@shared/components/button/button';
 import { ConfirmModal } from '@shared/components/confirm-modal/confirm-modal';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
+import { Select } from '@shared/components/select/select';
 import { TextField } from '@shared/components/text-field/text-field';
 import {
   AdminUser,
@@ -58,17 +57,7 @@ const ROLE_FILTER_OPTIONS: { label: string; value: AdminUserAnyRole | null }[] =
  */
 @Component({
   selector: 'app-admin-users-page',
-  imports: [
-    TableModule,
-    DrawerModule,
-    Button,
-    Badge,
-    SelectModule,
-    TextField,
-    FormsModule,
-    ErrorMessage,
-    DatePipe,
-  ],
+  imports: [TableModule, DrawerModule, Button, Badge, Select, TextField, ErrorMessage, DatePipe],
   templateUrl: './admin-users-page.html',
   styleUrl: './admin-users-page.scss',
 })

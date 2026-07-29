@@ -1,0 +1,11 @@
+<p-select
+  [id]="id()"
+  [options]="options()"
+  [optionLabel]="optionLabel()"
+  [optionValue]="optionValue()"
+  [placeholder]="placeholder() ?? ''"
+  appendTo="body"
+  panelStyleClass="app-select-panel"
+  [ngModel]="value()"
+  (ngModelChange)="value.set($event)"
+/>

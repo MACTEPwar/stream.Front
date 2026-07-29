@@ -1,0 +1,94 @@
+@use 'variables' as vars;
+
+// Цвета/паддинги — как у TextField (`.text-field__control`/`.text-field__input`
+// в text-field.scss): фон $color-ffffff, бордер $color-e4e4e4, текст
+// $color-1e1e1e, плейсхолдер $color-b2b2b2, шрифт Montserrat 16 — по прямому
+// запросу пользователя (селект должен визуально совпадать со строкой
+// инпута/кнопки). Переопределяем те же CSS-переменные, которые генерирует
+// PrimeNG dt()-токенами (`--p-select-*`), тот же приём, что у `Button`/`Badge`.
+:host {
+  display: block;
+  width: 100%;
+
+  --p-select-background: #{vars.$color-ffffff};
+  --p-select-border-color: #{vars.$color-e4e4e4};
+  --p-select-hover-border-color: #{vars.$color-e4e4e4};
+  --p-select-focus-border-color: #{vars.$color-e4e4e4};
+  --p-select-focus-ring-shadow: none;
+  --p-select-border-radius: 5px;
+  --p-select-color: #{vars.$color-1e1e1e};
+  --p-select-placeholder-color: #{vars.$color-b2b2b2};
+  --p-select-dropdown-color: #{vars.$color-1e1e1e};
+  --p-select-font-size: #{vars.$font-size-16};
+  --p-select-font-weight: #{vars.$font-weight-400};
+  --p-select-padding-y: 0px;
+  --p-select-padding-x: 12px;
+}
+
+// Высота = TextField.text-field__control (40px) и Button
+// (button.scss, `button:not(.p-button-sm)`), по прямому запросу пользователя
+// — строка фильтров (инпут/селект/кнопка) смотрится одного роста. Обычный
+// (не `::ng-deep`) селектор — Angular сам скоупит его атрибутом этого
+// компонента (Emulated-инкапсуляция, дефолт), достаточно для управляющего
+// элемента: он, в отличие от вынесенного `appendTo="body"` списка ниже,
+// физически остаётся внутри DOM-поддерева этого компонента.
+.p-select {
+  width: 100%;
+  height: 40px;
+  align-items: center;
+  font-family: vars.$font-family-montserrat;
+}
+
+// Список (`p-select-overlay`) физически вынесен `appendTo="body"` в конец
+// `<body>` (см. select.ts) — вне DOM-поддерева этого компонента, обычный
+// Angular-скоуп (атрибут на селекторе) там уже не совпадёт ни с чем, а
+// CSS-переменные на `:host` не наследуются (дерево DOM оборвано). `::ng-deep`
+// (без `:host`-предка — иначе это descendant-комбинатор, требующий
+// физического DOM-предка, которого после переноса в `<body>` уже нет)
+// снимает Angular-скоуп с этих конкретных правил, делая их по-настоящему
+// глобальными — обычным CSS-селекторам физическое место элемента в DOM не
+// важно. Привязаны к персональному классу `.app-select-panel`
+// (`panelStyleClass`, select.html), чтобы не зацепить чужой `p-select`.
+// `!important` — без Angular-скоупа наши правила теряют буст специфичности
+// (обычный `:host`-компонент выигрывает у `--p-select-*`-правил PrimeNG
+// именно за счёт добавленного атрибута, `::ng-deep` его снимает), а
+// собственные PrimeNG-правила той же специфичности (`.p-select-option:not(...)`)
+// побеждали бы по порядку подключения стилей — на глаз (не тестами) было
+// видно на hover-состоянии: выбранная опция красилась верно, а hover — нет.
+//
+// Список — так же светло, как сам селект (по прямому запросу пользователя),
+// не унаследованный тёмный фон темы `AdminPreset`; бордер и тень — чтобы
+// список визуально отделялся от остального контента под ним.
+::ng-deep .app-select-panel.p-select-overlay {
+  background: #{vars.$color-ffffff} !important;
+  color: #{vars.$color-1e1e1e} !important;
+  border: 1px solid #{vars.$color-e4e4e4} !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+}
+
+// Разделитель между пунктами списка (по прямому запросу пользователя,
+// "горизонтальный hr") — граница снизу у каждого пункта, кроме последнего
+// (последнему разделитель не нужен — ниже уже край самого списка).
+::ng-deep .app-select-panel .p-select-option {
+  color: #{vars.$color-1e1e1e} !important;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #{vars.$color-e4e4e4} !important;
+  }
+}
+
+// Уже выбранная опция — `Button severity="primary"` `active`-токены (не сам
+// селект целиком, тот при открытии остаётся таким же светлым, как в покое —
+// по прямому запросу пользователя, уточнение прошлой итерации, где в active
+// красилась вся коробка селекта). Наведение/клавиатурный фокус на
+// невыбранной опции — те же `hover`-токены. Оба — см. `button.scss:36-47`.
+::ng-deep .app-select-panel .p-select-option:not(.p-select-option-selected):hover,
+::ng-deep .app-select-panel .p-select-option:not(.p-select-option-selected).p-focus {
+  background: #{vars.$color-e1bf90} !important;
+  color: #{vars.$color-76511c} !important;
+}
+
+::ng-deep .app-select-panel .p-select-option.p-select-option-selected {
+  background: #{vars.$color-cfa97c} !important;
+  color: #{vars.$color-76511c} !important;
+}
