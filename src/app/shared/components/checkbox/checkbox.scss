@@ -1,0 +1,172 @@
+@use 'sass:map';
+@use 'variables' as vars;
+
+// Та же палитра фонов, что у `Button` (`button.scss:34-119`, по прямому
+// запросу пользователя) — фон отмеченной коробки (= бордер, тот же цвет,
+// по прямому запросу пользователя) + hover/click (`active`), которых у
+// PrimeNG dt()-токенов для checked-состояния нет (только `checked.hover.*`,
+// `checked.active.*` не существует вовсе). Цвет галочки — белый на всех,
+// кроме `contrast` (у него самого светлый фон, белая галочка была бы не
+// видна) — по прямому запросу пользователя.
+$checkbox-severities: (
+  primary: (
+    background: vars.$color-f4d2a4,
+    hover-background: vars.$color-e1bf90,
+    active-background: vars.$color-cfa97c,
+    icon-color: vars.$color-ffffff,
+  ),
+  secondary: (
+    background: vars.$color-4445a8,
+    hover-background: vars.$color-5455b4,
+    active-background: vars.$color-6465c1,
+    icon-color: vars.$color-ffffff,
+  ),
+  danger: (
+    background: vars.$color-af4141,
+    hover-background: vars.$color-833131,
+    active-background: vars.$color-602424,
+    icon-color: vars.$color-ffffff,
+  ),
+  contrast: (
+    background: vars.$color-f9f9f9,
+    hover-background: vars.$color-d9d9d9,
+    active-background: vars.$color-bfbfbf,
+    icon-color: vars.$color-333333,
+  ),
+  info: (
+    background: vars.$color-a4d3f4,
+    hover-background: vars.$color-90c0e1,
+    active-background: vars.$color-7baccf,
+    icon-color: vars.$color-ffffff,
+  ),
+  success: (
+    background: vars.$color-96c6a6,
+    hover-background: vars.$color-78b38b,
+    active-background: vars.$color-5fa376,
+    icon-color: vars.$color-ffffff,
+  ),
+);
+
+// Коробка в состоянии покоя — НЕ залита цветом (фон $color-ffffff), но
+// бордер — цвет severity/custom-color (тот же, каким была бы заливка в
+// checked-состоянии), по образцу присланному пользователем: непустой
+// (отмеченный) чекбокс — сплошная заливка тем же цветом, что бордер; пустой
+// (неотмеченный) — только цветной контур, заливка остаётся светлой.
+// Дефолт здесь — нейтральный fallback, реально всегда перекрыт классом
+// `.checkbox--severity-*` (severity() всегда имеет значение) ниже.
+:host {
+  display: inline-flex;
+
+  --p-checkbox-background: #{vars.$color-ffffff};
+  --p-checkbox-border-color: #{vars.$color-e4e4e4};
+  --p-checkbox-hover-border-color: #{vars.$color-e4e4e4};
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox__label {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  color: vars.$color-1e1e1e;
+}
+
+// Толщина бордера (2px, по прямому запросу пользователя) — PrimeNG пишет
+// `border: 1px solid ...` буквально в разметке компонента, не через
+// dt()-токен (`checkbox.border.*` покрывает только цвет/radius, не ширину) —
+// переопределить нечем, кроме прямого CSS-правила. `.p-checkbox-box`
+// отрисован дочерним `p-checkbox`, не в шаблоне ЭТОГО компонента — обычный
+// scoped-селектор Emulated-инкапсуляции до него не достаёт, `::ng-deep`
+// снимает Angular-скоуп (тот же приём, что и ниже для hover/click/иконки).
+.checkbox ::ng-deep .p-checkbox-box {
+  border-width: 2px;
+}
+
+// Галочка (`CheckIcon`, `primeng/icons/check`) нарисована заливкой
+// (`fill="currentColor"`), не обводкой — "жирнее" (по прямому запросу
+// пользователя) через добавленный `stroke` поверх уже заданной заливки: CSS
+// (даже без `!important`) перекрывает presentation-атрибут `fill` в разметке
+// иконки, поэтому `fill: currentColor` здесь не просто декларативный шум, а
+// реально нужен — без него стало бы `fill: none` по умолчанию для `path` вне
+// presentation-атрибута.
+.checkbox ::ng-deep .p-checkbox-icon path {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0.75px;
+}
+
+// Фон/бордер/цвет иконки отмеченной коробки — через переопределение
+// CSS-переменных (`--p-checkbox-checked-*`, dt()-токены PrimeNG) на классе
+// `.checkbox--severity-*`, тот же приём, что у `Button`/`Badge`/`Select` —
+// работает через обычное наследование CSS-переменных по DOM-дереву,
+// `::ng-deep` для этой части не нужен (в отличие от hover/click ниже).
+//
+// Hover — есть готовый dt()-токен (`checkbox.checked.hover.*`), переопределён
+// тем же способом. "Клик" (`:active`) — токена нет вовсе, дорисован отдельным
+// CSS-правилом через `::ng-deep` (таргетит внутренний класс `.p-checkbox-box`
+// дочернего `p-checkbox`, отрисованный не в шаблоне ЭТОГО компонента — обычный
+// scoped-селектор Emulated-инкапсуляции до него не достаёт, `::ng-deep`
+// снимает Angular-скоуп для этой части селектора).
+@each $name, $tokens in $checkbox-severities {
+  .checkbox--severity-#{$name} {
+    // Неотмеченная коробка — контур того же цвета, что стал бы заливкой при
+    // отметке (не белый/серый, по прямому запросу пользователя — на
+    // присланном примере контур пустого чекбокса цветной, не нейтральный).
+    --p-checkbox-border-color: #{map.get($tokens, background)};
+    --p-checkbox-hover-border-color: #{map.get($tokens, background)};
+
+    --p-checkbox-checked-background: #{map.get($tokens, background)};
+    --p-checkbox-checked-border-color: #{map.get($tokens, background)};
+    --p-checkbox-checked-hover-background: #{map.get($tokens, hover-background)};
+    --p-checkbox-checked-hover-border-color: #{map.get($tokens, hover-background)};
+    --p-checkbox-checked-focus-border-color: #{map.get($tokens, background)};
+    --p-checkbox-icon-checked-color: #{map.get($tokens, icon-color)};
+    --p-checkbox-icon-checked-hover-color: #{map.get($tokens, icon-color)};
+  }
+
+  .checkbox--severity-#{$name} ::ng-deep .p-checkbox-checked:not(.p-disabled):has(.p-checkbox-input:active) .p-checkbox-box {
+    background: #{map.get($tokens, active-background)};
+    border-color: #{map.get($tokens, active-background)};
+  }
+}
+
+// Свой цвет (`color()`) — перебивает severity целиком (по прямому запросу
+// пользователя): та же пара CSS-переменных, что и у severity выше, но
+// значение — inline custom property `--checkbox-custom-color`
+// (`checkbox.html`, рантайм-значение произвольного пользователя, не
+// compile-time SCSS-карта). Идёт ПОСЛЕ severity-цикла — при выставленном
+// `color()` на элементе одновременно оба класса, при равной специфичности
+// побеждает более позднее правило в файле. Hover/клик — не заранее
+// подобранный оттенок (для произвольного цвета его взять неоткуда), а
+// вычисленный в рантайме через `color-mix()`.
+.checkbox--custom-color {
+  --p-checkbox-border-color: var(--checkbox-custom-color);
+  --p-checkbox-hover-border-color: var(--checkbox-custom-color);
+
+  --p-checkbox-checked-background: var(--checkbox-custom-color);
+  --p-checkbox-checked-border-color: var(--checkbox-custom-color);
+  --p-checkbox-checked-hover-background: color-mix(in srgb, var(--checkbox-custom-color) 85%, black);
+  --p-checkbox-checked-hover-border-color: color-mix(in srgb, var(--checkbox-custom-color) 85%, black);
+  --p-checkbox-checked-focus-border-color: var(--checkbox-custom-color);
+  --p-checkbox-icon-checked-color: #{vars.$color-ffffff};
+  --p-checkbox-icon-checked-hover-color: #{vars.$color-ffffff};
+}
+
+.checkbox--custom-color ::ng-deep .p-checkbox-checked:not(.p-disabled):has(.p-checkbox-input:active) .p-checkbox-box {
+  background: color-mix(in srgb, var(--checkbox-custom-color) 70%, black);
+  border-color: color-mix(in srgb, var(--checkbox-custom-color) 70%, black);
+}
+
+// Свой цвет галочки (`iconColor()`) — отдельно от фона/бордера (по прямому
+// запросу пользователя), не завязан ни на `severity`, ни на `color()`. Идёт
+// ПОСЛЕДНИМ в файле — при выставленном `iconColor()` побеждает независимо от
+// того, задан ли одновременно `color()` (та же логика tie-break по порядку
+// правил, что у `.checkbox--custom-color` выше).
+.checkbox--custom-icon-color {
+  --p-checkbox-icon-checked-color: var(--checkbox-custom-icon-color);
+  --p-checkbox-icon-checked-hover-color: var(--checkbox-custom-icon-color);
+}
