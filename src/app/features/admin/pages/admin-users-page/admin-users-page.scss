@@ -9,6 +9,19 @@
   margin-bottom: 16px;
 }
 
+// TextField/Select сами задают `width: 100%` на своём хосте (растягиваются
+// под родителя, поэтому в этой flex-строке делят место поровну) — здесь
+// фиксируем конкретную ширину через `flex-basis` (`flex: 0 0 <px>`, не
+// `width`: явный `flex-basis` в раскладке флекс-контейнера имеет приоритет
+// над `width`), по прямому запросу пользователя.
+.admin-users-page__search-field {
+  flex: 0 0 350px;
+}
+
+.admin-users-page__role-filter {
+  flex: 0 0 200px;
+}
+
 .admin-users-page__detail {
   display: flex;
   flex-direction: column;

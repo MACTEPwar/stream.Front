@@ -1,16 +1,18 @@
 <div class="admin-users-page">
   <div class="admin-users-page__filters">
     <app-text-field
+      class="admin-users-page__search-field"
       placeholder="Поиск по имени или логину"
       [(value)]="searchFilter"
       (keyup.enter)="onFilterChange()"
     />
-    <p-select
+    <app-select
+      class="admin-users-page__role-filter"
       [options]="roleFilterOptions"
       optionLabel="label"
       optionValue="value"
-      [(ngModel)]="roleFilter"
-      (ngModelChange)="onFilterChange()"
+      [(value)]="roleFilter"
+      (valueChange)="onFilterChange()"
     />
     <app-button text="Найти" (click)="onFilterChange()" />
   </div>
@@ -71,12 +73,12 @@
     <div class="admin-users-page__form">
       <div class="admin-users-page__field">
         <label for="admin-users-role">Роль</label>
-        <p-select
+        <app-select
           id="admin-users-role"
           [options]="roleOptions"
           optionLabel="label"
           optionValue="value"
-          [(ngModel)]="editingRole"
+          [(value)]="editingRole"
         />
       </div>
 
