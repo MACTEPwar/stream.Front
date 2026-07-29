@@ -127,6 +127,17 @@ button {
   font-family: vars.$font-family-montserrat;
 }
 
+// Обычная (не size="small") кнопка — высота/размер шрифта как у TextField
+// (`.text-field__control`/`.text-field__input` в text-field.scss: height 40px,
+// font-size 16px), по прямому запросу пользователя — визуально одна строка
+// ввода/кнопки рядом смотрятся одного роста. `:not(.p-button-sm)` — small
+// сохраняет свою собственную шкалу PrimeNG (padding/font-size токенов
+// `button.sm.*`), явную высоту здесь не переопределяем.
+button:not(.p-button-sm) {
+  height: 40px;
+  font-size: vars.$font-size-16;
+}
+
 :host {
   @each $name, $tokens in $button-severities {
     --p-button-#{$name}-background: #{map.get($tokens, background)};
