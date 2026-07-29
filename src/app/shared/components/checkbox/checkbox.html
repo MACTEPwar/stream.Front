@@ -1,0 +1,12 @@
+<label
+  [class]="rootClasses()"
+  [style.--checkbox-custom-color]="color()"
+  [style.--checkbox-custom-icon-color]="iconColor()"
+  [for]="uid"
+>
+  <p-checkbox [inputId]="uid" [binary]="true" [ngModel]="checked()" (ngModelChange)="checked.set($event)" />
+
+  @if (label(); as text) {
+    <span class="checkbox__label">{{ text }}</span>
+  }
+</label>
