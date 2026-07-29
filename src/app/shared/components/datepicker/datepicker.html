@@ -1,0 +1,20 @@
+<p-datepicker
+  [id]="id()"
+  [selectionMode]="selectionMode()"
+  [placeholder]="placeholder() ?? ''"
+  [disabled]="disabled()"
+  [inline]="inline()"
+  [numberOfMonths]="numberOfMonths()"
+  [defaultDate]="resolvedDefaultDate()"
+  [minDate]="minDate()"
+  [maxDate]="maxDate()"
+  [appendTo]="inline() ? undefined : 'body'"
+  panelStyleClass="app-datepicker-panel"
+  [ngModel]="value()"
+  (ngModelChange)="value.set($event)"
+>
+  <ng-template #date let-date>
+    <span class="day-range-fill" [class.day-range-fill--in]="isDateInRange(date)"></span>
+    <span class="day-number">{{ date.day }}</span>
+  </ng-template>
+</p-datepicker>
