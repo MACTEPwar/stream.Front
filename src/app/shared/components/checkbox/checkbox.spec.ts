@@ -115,4 +115,68 @@ describe('Checkbox', () => {
 
     expect(fixture.componentInstance.checked()).toBe(true);
   });
+
+  it('checked() — добавляет класс checkbox--checked на корневой label', () => {
+    const fixture = TestBed.createComponent(CheckboxHost);
+    fixture.detectChanges();
+
+    const label = fixture.nativeElement.querySelector('label')!;
+    expect(label.classList).not.toContain('checkbox--checked');
+
+    fixture.componentInstance.checked.set(true);
+    fixture.detectChanges();
+
+    expect(label.classList).toContain('checkbox--checked');
+  });
+});
+
+@Component({
+  selector: 'app-checkbox-button-mode-host',
+  imports: [Checkbox],
+  template: `
+    <app-checkbox [buttonMode]="buttonMode()" [(checked)]="checked">
+      <i class="pi pi-eye"></i>
+    </app-checkbox>
+  `,
+})
+class CheckboxButtonModeHost {
+  readonly buttonMode = signal(false);
+  readonly checked = signal(false);
+}
+
+describe('Checkbox — buttonMode', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [CheckboxButtonModeHost] });
+  });
+
+  it('buttonMode=false — класс checkbox--button-mode не добавляется', () => {
+    const fixture = TestBed.createComponent(CheckboxButtonModeHost);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('label')?.classList).not.toContain('checkbox--button-mode');
+  });
+
+  it('buttonMode=true — добавляет класс checkbox--button-mode на корневой label', () => {
+    const fixture = TestBed.createComponent(CheckboxButtonModeHost);
+    fixture.componentInstance.buttonMode.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('label')?.classList).toContain('checkbox--button-mode');
+  });
+
+  it('buttonMode=true — p-checkbox остаётся в DOM (не удалён)', () => {
+    const fixture = TestBed.createComponent(CheckboxButtonModeHost);
+    fixture.componentInstance.buttonMode.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('p-checkbox')).not.toBeNull();
+  });
+
+  it('buttonMode=true — ng-content проецируется внутрь label', () => {
+    const fixture = TestBed.createComponent(CheckboxButtonModeHost);
+    fixture.componentInstance.buttonMode.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('i.pi-eye')).not.toBeNull();
+  });
 });

@@ -23,7 +23,6 @@ const meta: Meta<Button> = {
     size: { control: 'radio', options: [undefined, 'small'] },
     disabled: { control: 'boolean' },
     icon: { control: 'text' },
-    active: { control: 'boolean' },
   },
 };
 
@@ -93,14 +92,6 @@ export const IconOnly: Story = {
 export const ContrastSeverity: Story = {
   name: 'severity="contrast" (stream.Front#95) — filter-блок карточек турниров',
   args: { icon: 'pi pi-filter', severity: 'contrast' },
-};
-
-export const Active: Story = {
-  name: 'active() (stream.Front#95) — визуальное "нажатое" состояние',
-  argTypes: {
-    active: { control: 'boolean' },
-  },
-  args: { icon: 'pi pi-eye', severity: 'contrast', active: true },
 };
 
 interface PrimaryColorsArgs {

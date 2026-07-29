@@ -8,42 +8,56 @@
 // `checked.active.*` не существует вовсе). Цвет галочки — белый на всех,
 // кроме `contrast` (у него самого светлый фон, белая галочка была бы не
 // видна) — по прямому запросу пользователя.
+// `border` и `text-color` используются только в `buttonMode` (label-as-button):
+// те же значения, что у `Button` (`button.scss`) для одноимённых severity.
 $checkbox-severities: (
   primary: (
     background: vars.$color-f4d2a4,
+    border: vars.$color-f8ecb3,
     hover-background: vars.$color-e1bf90,
     active-background: vars.$color-cfa97c,
     icon-color: vars.$color-ffffff,
+    text-color: vars.$color-76511c,
   ),
   secondary: (
     background: vars.$color-4445a8,
+    border: vars.$color-f7ebb3,
     hover-background: vars.$color-5455b4,
     active-background: vars.$color-6465c1,
     icon-color: vars.$color-ffffff,
+    text-color: vars.$color-aeaefb,
   ),
   danger: (
     background: vars.$color-af4141,
+    border: vars.$color-af4141,
     hover-background: vars.$color-833131,
     active-background: vars.$color-602424,
     icon-color: vars.$color-ffffff,
+    text-color: vars.$color-ffffff,
   ),
   contrast: (
     background: vars.$color-f9f9f9,
+    border: vars.$color-f9f9f9,
     hover-background: vars.$color-d9d9d9,
     active-background: vars.$color-bfbfbf,
     icon-color: vars.$color-333333,
+    text-color: vars.$color-333333,
   ),
   info: (
     background: vars.$color-a4d3f4,
+    border: vars.$color-f8ecb3,
     hover-background: vars.$color-90c0e1,
     active-background: vars.$color-7baccf,
     icon-color: vars.$color-ffffff,
+    text-color: vars.$color-1c5278,
   ),
   success: (
     background: vars.$color-96c6a6,
+    border: vars.$color-f8ecb3,
     hover-background: vars.$color-78b38b,
     active-background: vars.$color-5fa376,
     icon-color: vars.$color-ffffff,
+    text-color: vars.$color-1c783b,
   ),
 );
 
@@ -169,4 +183,62 @@ $checkbox-severities: (
 .checkbox--custom-icon-color {
   --p-checkbox-icon-checked-color: var(--checkbox-custom-icon-color);
   --p-checkbox-icon-checked-hover-color: var(--checkbox-custom-icon-color);
+}
+
+// Button mode — label выглядит как кнопка; коробка p-checkbox скрыта через
+// visually-hidden pattern (`position: absolute; width/height: 1px; clip`),
+// НЕ `display:none` — иначе `<label for>` не может синтетически кликнуть
+// внутренний `<input>`, и тогда тоггл не работает. `checkbox--checked`
+// добавляется через класс в шаблоне при `checked() === true` и используется
+// для "нажатого" вида, аналогично тому, как Button ранее делал это через
+// `button--active` (удалён).
+.checkbox--button-mode ::ng-deep p-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.checkbox--button-mode {
+  height: 40px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--p-button-border-radius, 6px);
+  padding: 0 12px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+// Текст через checkbox__label наследует color от label, не фиксированный
+// $color-1e1e1e (актуально для кнопок с label-пропсом, а не ng-content).
+.checkbox--button-mode .checkbox__label {
+  color: inherit;
+}
+
+// Цвета button mode по severity — три состояния: покой, hover, нажато/checked.
+// Специфичность `.checkbox--severity-X.checkbox--button-mode` выше, чем у
+// `.checkbox--severity-X` выше в файле, поэтому `background`/`border-color`/
+// `color` на самом label перекрывают CSS-переменные p-checkbox (те никуда не
+// деваются, но скрытая коробка их не показывает).
+@each $name, $tokens in $checkbox-severities {
+  .checkbox--severity-#{$name}.checkbox--button-mode {
+    background: map.get($tokens, background);
+    border-color: map.get($tokens, border);
+    color: map.get($tokens, text-color);
+
+    &:hover {
+      background: map.get($tokens, hover-background);
+      border-color: map.get($tokens, hover-background);
+    }
+
+    &:active,
+    &.checkbox--checked {
+      background: map.get($tokens, active-background);
+      border-color: map.get($tokens, active-background);
+    }
+  }
 }

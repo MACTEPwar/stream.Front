@@ -55,6 +55,13 @@ let nextCheckboxUid = 0;
  * кроме `'contrast'` (тёмная, т.к. фон `contrast` сам светлый) — по прямому
  * запросу пользователя.
  *
+ * `buttonMode()` — скрывает коробку p-checkbox (visually-hidden pattern, не
+ * `display:none` — иначе `<label for>` перестаёт синтетически кликать input)
+ * и стилизует `<label>` как кнопку (высота 40px, рамка, паддинг, severity-
+ * цвета). Класс `checkbox--checked` на label отражает состояние тоггла и
+ * используется для "нажатого" вида. Через `<ng-content>` внутрь можно
+ * проецировать любой контент — иконку, текст, их комбинацию.
+ *
  * Размер коробки — временный дефолт PrimeNG (не сверен с Figma по прямому
  * согласованию — ревизия отдельной задачей при необходимости).
  */
@@ -72,6 +79,7 @@ export class Checkbox {
   readonly color = input<string>();
   readonly iconColor = input<string>();
   readonly checked = model(false);
+  readonly buttonMode = input(false);
 
   protected readonly rootClasses = computed(() => {
     const classes = ['checkbox', `checkbox--severity-${this.severity()}`];
@@ -80,6 +88,9 @@ export class Checkbox {
     }
     if (this.iconColor()) {
       classes.push('checkbox--custom-icon-color');
+    }
+    if (this.buttonMode()) {
+      classes.push('checkbox--button-mode');
     }
     return classes.join(' ');
   });

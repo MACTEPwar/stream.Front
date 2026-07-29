@@ -1,5 +1,6 @@
 <label
   [class]="rootClasses()"
+  [class.checkbox--checked]="checked()"
   [style.--checkbox-custom-color]="color()"
   [style.--checkbox-custom-icon-color]="iconColor()"
   [for]="uid"
@@ -9,4 +10,5 @@
   @if (label(); as text) {
     <span class="checkbox__label">{{ text }}</span>
   }
+  <ng-content />
 </label>

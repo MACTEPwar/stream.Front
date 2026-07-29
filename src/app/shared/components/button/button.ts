@@ -36,11 +36,6 @@ export type ButtonSize = 'small';
  * контенте (`ButtonDirective.isIconOnly()`), которые этот компонент не
  * использует (обычный `<i>`, см. выше).
  *
- * `active()` (stream.Front#95) — только визуальное "нажатое"/подсвеченное
- * состояние (класс `button--active`, стили см. `button.scss`), компонент не
- * хранит и не вычисляет бизнес-смысл тоггла сам — что значит "активно"
- * (лайкнуто/в избранном/фильтр применён) решает вызывающий код, сюда
- * приходит уже готовый `boolean`.
  */
 @Component({
   selector: 'app-button',
@@ -54,5 +49,4 @@ export class Button {
   readonly size = input<ButtonSize>();
   readonly disabled = input(false);
   readonly icon = input<string>();
-  readonly active = input(false);
 }

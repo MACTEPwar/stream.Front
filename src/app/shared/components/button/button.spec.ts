@@ -13,7 +13,6 @@ import { Button, ButtonSeverity, ButtonSize } from './button';
       [size]="size()"
       [disabled]="disabled()"
       [icon]="icon()"
-      [active]="active()"
       (click)="onClick()"
     />
   `,
@@ -24,7 +23,6 @@ class ButtonHost {
   readonly size = signal<ButtonSize | undefined>(undefined);
   readonly disabled = signal(false);
   readonly icon = signal<string | undefined>(undefined);
-  readonly active = signal(false);
   readonly onClick = vi.fn();
 }
 
@@ -116,17 +114,5 @@ describe('Button', () => {
     expect(button.textContent.trim()).toBe('');
   });
 
-  it('active() — добавляет класс button--active', () => {
-    const fixture = TestBed.createComponent(ButtonHost);
-    fixture.detectChanges();
-
-    const buttonInitial: HTMLButtonElement = fixture.nativeElement.querySelector('button');
-    expect(buttonInitial.classList.contains('button--active')).toBe(false);
-
-    fixture.componentInstance.active.set(true);
-    fixture.detectChanges();
-
-    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
-    expect(button.classList.contains('button--active')).toBe(true);
-  });
 });
+

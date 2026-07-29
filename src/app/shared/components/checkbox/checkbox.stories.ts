@@ -22,6 +22,7 @@ const meta: Meta<Checkbox> = {
     },
     color: { control: 'color' },
     iconColor: { control: 'color' },
+    buttonMode: { control: 'boolean' },
   },
 };
 
@@ -62,4 +63,36 @@ export const CustomColor: Story = {
 export const CustomIconColor: Story = {
   name: 'iconColor() — свой цвет галочки, независимо от severity/color',
   args: { label: 'Своя галочка', severity: 'primary', iconColor: '#af4141', checked: true },
+};
+
+export const ButtonModeIconOnly: Story = {
+  name: 'buttonMode() — icon-only тоггл (как была кнопка с active)',
+  render: () => ({
+    template: `
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <app-checkbox buttonMode severity="contrast">
+          <i class="pi pi-eye"></i>
+        </app-checkbox>
+        <app-checkbox buttonMode severity="contrast" [checked]="true">
+          <i class="pi pi-heart"></i>
+        </app-checkbox>
+      </div>
+    `,
+  }),
+};
+
+export const ButtonModeAllSeverities: Story = {
+  name: 'buttonMode() — все severity, отмечены',
+  render: () => ({
+    template: `
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <app-checkbox buttonMode severity="primary" [checked]="true">primary</app-checkbox>
+        <app-checkbox buttonMode severity="secondary" [checked]="true">secondary</app-checkbox>
+        <app-checkbox buttonMode severity="danger" [checked]="true">danger</app-checkbox>
+        <app-checkbox buttonMode severity="contrast" [checked]="true">contrast</app-checkbox>
+        <app-checkbox buttonMode severity="info" [checked]="true">info</app-checkbox>
+        <app-checkbox buttonMode severity="success" [checked]="true">success</app-checkbox>
+      </div>
+    `,
+  }),
 };
