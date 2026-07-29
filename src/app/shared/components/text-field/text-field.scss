@@ -7,16 +7,23 @@
   width: 100%;
 }
 
-// Стиль "Body" из Figma-текстовых стилей (Nunito Sans Regular 16,
-// line-height 24, letter-spacing 3%); цвет — через $color-black
-// (алиас $color-1e1e1e, по прямому запросу пользователя), не литерал.
+// Стиль "Body" из Figma-текстовых стилей (line-height 24, letter-spacing 3%);
+// шрифт — Montserrat (по прямому запросу пользователя, не исходный Nunito
+// Sans из Figma-стиля); цвет — через $color-black (алиас $color-1e1e1e, по
+// прямому запросу пользователя), не литерал.
 .text-field__label {
-  font-family: vars.$font-family-nunito-sans;
+  font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-16;
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-24;
   letter-spacing: vars.$letter-spacing-3;
   color: vars.$color-black;
+
+  // errorText() подсвечивает не только рамку control, но и лейбл (по
+  // прямому запросу пользователя) — тот же красный, что у .text-field__error.
+  &--invalid {
+    color: vars.$color-cf1717;
+  }
 }
 
 .text-field__required {
@@ -49,6 +56,10 @@
   }
 }
 
+// icon() (PrimeIcons) / спроецированный SVG (person/lock из
+// public/icons/text-field-*.svg) / ничего — компартмент опционален (по
+// прямому запросу пользователя), :empty схлопывает его целиком, тот же
+// приём, что у .button__icon в decorative-button.scss.
 .text-field__prefix-icon {
   flex: 0 0 40px;
   width: 40px;
@@ -59,9 +70,20 @@
   color: vars.$color-black;
   opacity: 0.5;
 
-  svg {
+  &:empty {
+    display: none;
+  }
+
+  svg,
+  img {
     width: 20px;
     height: 20px;
+  }
+
+  // PrimeIcons — шрифтовая иконка (глиф), не заменяемый элемент как svg/img —
+  // размер через font-size, не width/height (те на инлайновом <i> не сработают).
+  i {
+    font-size: 20px;
   }
 }
 
@@ -73,7 +95,7 @@
   border: none;
   background: transparent;
   padding: 0 12px;
-  font-family: vars.$font-family-nunito-sans;
+  font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-16;
   color: vars.$color-1e1e1e;
 
@@ -112,7 +134,7 @@
 }
 
 .text-field__error {
-  font-family: vars.$font-family-nunito-sans;
+  font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-14;
   color: vars.$color-cf1717;
 }

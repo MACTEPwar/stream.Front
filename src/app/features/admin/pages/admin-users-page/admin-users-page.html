@@ -1,10 +1,8 @@
 <div class="admin-users-page">
   <div class="admin-users-page__filters">
-    <input
-      type="text"
-      pInputText
+    <app-text-field
       placeholder="Поиск по имени или логину"
-      [(ngModel)]="searchFilter"
+      [(value)]="searchFilter"
       (keyup.enter)="onFilterChange()"
     />
     <p-select

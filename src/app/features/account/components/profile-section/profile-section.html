@@ -11,7 +11,9 @@
       <app-decorative-button text="Поменять" type="secondary" [width]="'content'" (click)="onChangeAvatarClick()" />
     </div>
 
-    <app-text-field label="Отображаемое имя" placeholder="Введите имя" [(value)]="name" />
+    <app-text-field label="Отображаемое имя" placeholder="Введите имя" [(value)]="name">
+      <img icon src="/icons/text-field-person.svg" alt="" />
+    </app-text-field>
 
     <div class="profile-section__actions">
       <app-decorative-button text="Сохранить" type="primary" [width]="'content'" (click)="onSave()" />

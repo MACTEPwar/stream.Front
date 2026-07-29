@@ -14,7 +14,12 @@ import { TextField, TextFieldType } from './text-field';
       [placeholder]="placeholder()"
       [(value)]="value"
       [errorText]="errorText()"
-    />
+      [icon]="icon()"
+    >
+      @if (projectIcon()) {
+        <svg icon viewBox="0 0 24 24"></svg>
+      }
+    </app-text-field>
   `,
 })
 class TextFieldHost {
@@ -24,6 +29,8 @@ class TextFieldHost {
   readonly placeholder = signal('Введите логин');
   readonly value = signal('');
   readonly errorText = signal<string | null>(null);
+  readonly icon = signal<string | undefined>(undefined);
+  readonly projectIcon = signal(false);
 }
 
 describe('TextField', () => {
@@ -117,5 +124,50 @@ describe('TextField', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.text-field__error')).toBeNull();
+  });
+
+  it('errorText — подсвечивает лейбл (не только рамку control)', () => {
+    const fixture = TestBed.createComponent(TextFieldHost);
+    fixture.componentInstance.errorText.set('Пароли не совпадают');
+    fixture.detectChanges();
+
+    const label = fixture.nativeElement.querySelector('.text-field__label');
+    expect(label?.classList).toContain('text-field__label--invalid');
+  });
+
+  it('без icon() и без проекции — компартмент иконки пуст (схлопнут через :empty)', () => {
+    const fixture = TestBed.createComponent(TextFieldHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.text-field__prefix-icon')?.children.length).toBe(0);
+  });
+
+  it('icon() — рендерит <i> с переданным классом PrimeIcons', () => {
+    const fixture = TestBed.createComponent(TextFieldHost);
+    fixture.componentInstance.icon.set('pi pi-user');
+    fixture.detectChanges();
+
+    const iconEl = fixture.nativeElement.querySelector('.text-field__prefix-icon i');
+    expect(iconEl?.className).toBe('pi pi-user');
+  });
+
+  it('без icon(), но со спроецированным контентом — рендерит проекцию', () => {
+    const fixture = TestBed.createComponent(TextFieldHost);
+    fixture.componentInstance.projectIcon.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.text-field__prefix-icon svg')).not.toBeNull();
+  });
+
+  it('icon() приоритетнее проекции — при обоих рендерится <i>, не проекция', () => {
+    const fixture = TestBed.createComponent(TextFieldHost);
+    fixture.componentInstance.icon.set('pi pi-user');
+    fixture.componentInstance.projectIcon.set(true);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.text-field__prefix-icon i')).not.toBeNull();
+    expect(el.querySelector('.text-field__prefix-icon svg')).toBeNull();
   });
 });

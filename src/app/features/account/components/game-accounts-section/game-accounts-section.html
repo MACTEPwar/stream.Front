@@ -15,8 +15,12 @@
         @for (account of accounts(); track account.id) {
           <div class="game-accounts-section__card">
             @if (editingId() === account.id) {
-              <app-text-field label="Ник" placeholder="Введите ник" [(value)]="editNickname" />
-              <app-text-field label="Id аккаунта" placeholder="Введите id аккаунта" [(value)]="editExternalId" />
+              <app-text-field label="Ник" placeholder="Введите ник" [(value)]="editNickname">
+                <img icon src="/icons/text-field-person.svg" alt="" />
+              </app-text-field>
+              <app-text-field label="Id аккаунта" placeholder="Введите id аккаунта" [(value)]="editExternalId">
+                <img icon src="/icons/text-field-person.svg" alt="" />
+              </app-text-field>
               <div class="game-accounts-section__card-actions">
                 <app-decorative-button
                   text="Сохранить"
