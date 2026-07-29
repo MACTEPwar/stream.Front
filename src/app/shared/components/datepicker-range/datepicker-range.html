@@ -1,0 +1,18 @@
+<div class="datepicker-range">
+  <app-datepicker
+    selectionMode="single"
+    [inline]="true"
+    [defaultDate]="leftDefaultDate()"
+    [maxDate]="rightDate() ?? undefined"
+    [rangeHighlight]="value()"
+    [(value)]="leftValue"
+  />
+  <app-datepicker
+    selectionMode="single"
+    [inline]="true"
+    [defaultDate]="rightDefaultDate()"
+    [minDate]="leftDate() ?? undefined"
+    [rangeHighlight]="value()"
+    [(value)]="rightValue"
+  />
+</div>

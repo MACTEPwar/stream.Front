@@ -1,0 +1,36 @@
+@use 'variables' as vars;
+
+// Два независимых `app-datepicker` (stream.Front#109), визуально собранные в
+// ОДНУ карточку (по прямому запросу пользователя — "как единый элемент"):
+// общие рамка/тень/скругление на этой обёртке, у самих дочерних панелей
+// (`::ng-deep`, см. ниже) рамка/тень/скругление сняты — вместо расчёта
+// border-radius для "внешних" углов каждой панели по отдельности (как у
+// `ButtonGroup`, соседние кнопки) выбран более простой приём: панели
+// становятся прямоугольными (border-radius: 0), а `overflow: hidden` на
+// этой обёртке сам обрезает их по скруглению внешней рамки.
+:host {
+  display: inline-flex;
+  background: #{vars.$color-ffffff};
+  border: 1px solid #{vars.$color-e4e4e4};
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+
+.datepicker-range {
+  display: flex;
+}
+
+// Разделитель между календарями — тот же цвет бордера, что у панели/инпутов
+// (`$color-e4e4e4`), не двойная линия (у каждой панели свой бордер уже снят
+// ниже) и не отдельный `<div>` — граница на первом ребёнке простая и не
+// требует лишней разметки.
+.datepicker-range app-datepicker:not(:last-child) {
+  border-right: 1px solid #{vars.$color-e4e4e4};
+}
+
+:host ::ng-deep .app-datepicker-panel.p-datepicker-panel {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}

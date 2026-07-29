@@ -1,0 +1,224 @@
+@use 'variables' as vars;
+
+// Коробка инпута (текст с выбранной датой) — те же цвета/паддинги, что у
+// `TextField`/`Select` (по прямому запросу пользователя: строка инпута/
+// селекта/датапикера смотрится одного роста и стиля). `p-datepicker` рендерит
+// поле директивой `pInputText` (см. `primeng-datepicker.mjs`), поэтому цвета
+// переопределяются через `--p-inputtext-*`, а не `--p-datepicker-*` — тех же
+// переменных, что генерирует PrimeNG dt()-токенами для `InputText`.
+// Фиксированная ширина (не растягивается на всю ширину контейнера, как
+// строчный инпут/селект) — по прямому запросу пользователя: значение
+// вмещает самый длинный текст текущего usage без переноса — период
+// "31.07.2026 - 15.08.2026" (formatDate() через `ruTranslation.dateFormat`,
+// см. core/primeng/ru-translation.ts) при паддинге 12px с обеих сторон.
+$width: 240px;
+
+:host {
+  display: inline-block;
+  width: $width;
+
+  // `inline` (stream.Front#109) — снимаем фиксированную ширину: в этом
+  // режиме `.p-datepicker`/`.p-datepicker-input` вообще не рендерятся (см.
+  // `datepicker.ts`), ширину диктует сама панель (`numberOfMonths` — два
+  // месяца рядом шире, чем поле ввода одной даты); `datepicker--inline`
+  // ставится через `host` в `@Component()` (`[class.datepicker--inline]`).
+  &.datepicker--inline {
+    width: auto;
+  }
+
+  --p-inputtext-background: #{vars.$color-ffffff};
+  --p-inputtext-border-color: #{vars.$color-e4e4e4};
+  --p-inputtext-hover-border-color: #{vars.$color-e4e4e4};
+  --p-inputtext-focus-border-color: #{vars.$color-e4e4e4};
+  --p-inputtext-focus-ring-shadow: none;
+  --p-inputtext-border-radius: 5px;
+  --p-inputtext-color: #{vars.$color-1e1e1e};
+  --p-inputtext-placeholder-color: #{vars.$color-b2b2b2};
+  --p-inputtext-font-size: #{vars.$font-size-16};
+  --p-inputtext-font-weight: #{vars.$font-weight-400};
+  --p-inputtext-padding-y: 0px;
+  --p-inputtext-padding-x: 12px;
+
+  --p-datepicker-dropdown-color: #{vars.$color-1e1e1e};
+}
+
+// Высота = TextField/Select (40px) и Button, по прямому запросу пользователя.
+// Обычный (не `::ng-deep`) селектор — `.p-datepicker` физически внутри
+// DOM-поддерева этого компонента, Angular сам скоупит его атрибутом.
+.p-datepicker {
+  width: 100%;
+}
+
+// `<input>` рендерится не в шаблоне ЭТОГО компонента, а внутри собственного
+// (внутреннего) шаблона `p-datepicker` (`ViewEncapsulation.None` у самого
+// `DatePicker`, см. `primeng-datepicker.mjs`) — обычный scoped-селектор
+// (`.p-datepicker .p-datepicker-input`) до него не достаёт: он физически
+// остаётся в DOM-поддереве этого компонента (в отличие от вынесенной панели
+// ниже), но Angular не проставляет атрибут-скоуп ЭТОГО компонента на чужой
+// внутренний шаблон. `:host ::ng-deep` — тот же приём, что и для панели, но
+// с `:host`-предком (не голый `::ng-deep`, как у панели) — здесь предок
+// физически существует в DOM, поэтому есть смысл ограничить правило только
+// инстансами этого компонента, а не делать его глобальным для всех
+// `p-datepicker` на странице.
+:host ::ng-deep .p-datepicker-input {
+  // `box-sizing: border-box` уже глобальный дефолт (`_reset.scss`), но
+  // задаётся явно — единственная гарантия, что `height` не поедет, если
+  // этот файл когда-нибудь будет читаться/копироваться без глобального
+  // reset (тот же приём подстраховки, что `.text-field__input`, см.
+  // text-field.scss:94).
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
+  font-family: vars.$font-family-montserrat;
+}
+
+// Панель календаря (`p-datepicker-panel`) физически вынесена `appendTo="body"`
+// (datepicker.ts) в конец `<body>` — вне DOM-поддерева этого компонента,
+// поэтому CSS-переменные на `:host` до неё не доходят (дерево DOM оборвано,
+// та же ситуация, что у `Select`, см. select.scss). `::ng-deep` снимает
+// Angular-скоуп с этих правил, привязка к персональному классу
+// `.app-datepicker-panel` (`panelStyleClass`, datepicker.html) — чтобы не
+// зацепить чужой `p-datepicker` на странице.
+//
+// Светлая схема (по прямому запросу пользователя) — панель, шапка (месяц/год)
+// и дни недели/числа в цветах TextField/Select, а не унаследованный тёмный
+// фон темы `AdminPreset`.
+::ng-deep .app-datepicker-panel.p-datepicker-panel {
+  background: #{vars.$color-ffffff} !important;
+  color: #{vars.$color-1e1e1e} !important;
+  border: 1px solid #{vars.$color-e4e4e4} !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+  font-family: vars.$font-family-montserrat !important;
+}
+
+::ng-deep .app-datepicker-panel .p-datepicker-header {
+  background: #{vars.$color-ffffff} !important;
+  color: #{vars.$color-1e1e1e} !important;
+  border-block-end-color: #{vars.$color-e4e4e4} !important;
+}
+
+// Месяц/год в шапке — по умолчанию наследуется от тёмной темы `AdminPreset`
+// (светлый текст), на светлом фоне шапки выше был бы невидим без явного
+// переопределения цвета текста (не только фона).
+::ng-deep .app-datepicker-panel .p-datepicker-select-month,
+::ng-deep .app-datepicker-panel .p-datepicker-select-year {
+  color: #{vars.$color-1e1e1e} !important;
+}
+
+::ng-deep .app-datepicker-panel .p-datepicker-select-month:enabled:hover,
+::ng-deep .app-datepicker-panel .p-datepicker-select-year:enabled:hover {
+  background: #{vars.$color-e1bf90} !important;
+  color: #{vars.$color-76511c} !important;
+}
+
+::ng-deep .app-datepicker-panel .p-datepicker-weekday {
+  color: #{vars.$color-b2b2b2} !important;
+}
+
+// "Сегодня" вне выбора — светлый нейтральный кружок (не тёмный default темы).
+// `:not(.p-datepicker-day-selected)` — иначе выигрывал бы по специфичности
+// (3 класса против 2 у `.p-datepicker-day-selected` ниже) над выбранным
+// сегодняшним днём, перекрашивая его обратно в нейтральный вместо primary.
+::ng-deep .app-datepicker-panel .p-datepicker-today > .p-datepicker-day:not(.p-datepicker-day-selected):not(.p-datepicker-day-selected-range) {
+  background: #{vars.$color-e4e4e4} !important;
+  color: #{vars.$color-1e1e1e} !important;
+}
+
+// Квадрат с небольшим скруглением вместо круга (дефолт PrimeNG —
+// `border-radius: 50%`) — по прямому запросу пользователя, тот же радиус,
+// что у `Select`/`TextField` (`5px`, см. `--p-inputtext-border-radius` выше).
+::ng-deep .app-datepicker-panel .p-datepicker-day {
+  color: #{vars.$color-1e1e1e} !important;
+  border-radius: 5px !important;
+}
+
+// Наведение/клавиатурный фокус на невыбранном дне — `Button severity="primary"`
+// `hover`-токены (тот же приём, что у `Select`, см. select.scss:80-89).
+::ng-deep .app-datepicker-panel .p-datepicker-day:not(.p-datepicker-day-selected):not(.p-disabled):hover {
+  background: #{vars.$color-e1bf90} !important;
+  color: #{vars.$color-76511c} !important;
+}
+
+// Выбранный день (`single`) и оба края диапазона (`range`) — `Button
+// severity="primary"` `active`-токены; дни МЕЖДУ выбранными краями диапазона
+// (`p-datepicker-day-selected-range`) — тот же оттенок, но приглушённый
+// (`hover`-токен), чтобы визуально отличать край периода от промежуточных
+// дней (по прямому запросу пользователя — цвета выбора из primary-кнопки).
+::ng-deep .app-datepicker-panel .p-datepicker-day-selected {
+  background: #{vars.$color-cfa97c} !important;
+  color: #{vars.$color-76511c} !important;
+}
+
+::ng-deep .app-datepicker-panel .p-datepicker-day-selected-range {
+  background: #{vars.$color-e1bf90} !important;
+  color: #{vars.$color-76511c} !important;
+}
+
+// Клик по названию месяца/года в шапке (`.p-datepicker-select-month`/`-year`
+// выше) переключает панель в отдельный view — сетку месяцев (`.p-datepicker-
+// month`) или сетку годов (`.p-datepicker-year`), это НЕ те же элементы, что
+// дни (`.p-datepicker-day`) — свои классы, свои dt()-токены, без явного
+// переопределения наследуют тёмную тему `AdminPreset` точно так же, как
+// раньше дни/шапка: текст невидим (светлый на светлой панели), а hover/
+// "выбрано" красятся дефолтным жёлтым `AdminPreset` вместо наших цветов.
+::ng-deep .app-datepicker-panel .p-datepicker-month,
+::ng-deep .app-datepicker-panel .p-datepicker-year {
+  color: #{vars.$color-1e1e1e} !important;
+  border-radius: 5px !important;
+}
+
+::ng-deep .app-datepicker-panel .p-datepicker-month:not(.p-disabled):not(.p-datepicker-month-selected):hover,
+::ng-deep .app-datepicker-panel .p-datepicker-year:not(.p-disabled):not(.p-datepicker-year-selected):hover {
+  background: #{vars.$color-e1bf90} !important;
+  color: #{vars.$color-76511c} !important;
+}
+
+::ng-deep .app-datepicker-panel .p-datepicker-month-selected,
+::ng-deep .app-datepicker-panel .p-datepicker-year-selected {
+  background: #{vars.$color-cfa97c} !important;
+  color: #{vars.$color-76511c} !important;
+}
+
+// Заливка дней МЕЖДУ `rangeHighlight()` (только для `DatepickerRange`, см.
+// комментарий в datepicker.ts) — контент из `<ng-template #date>`
+// (datepicker.html), физически принадлежит шаблону ЭТОГО компонента
+// (спроецирован через `ngTemplateOutlet` дочерним `p-datepicker`), поэтому
+// несёт наш `_ngcontent`-атрибут и достаётся ОБЫЧНЫМ (не `::ng-deep`)
+// селектором — в отличие от `.p-datepicker-day`/панели выше, которые рендерит
+// СОБСТВЕННЫЙ шаблон `p-datepicker`. `position: absolute; inset: 0` —
+// заполняет всю ячейку позади номера дня (`.p-datepicker-day` уже
+// `position: relative` в базовых стилях PrimeNG).
+//
+// Без явного `z-index` заливка красилась ПОВЕРХ числа дня, а не под ним —
+// вопреки порядку в разметке (заливка раньше `{{ date.day }}`). Причина —
+// правило стекинга CSS 2.1 Appendix E: позиционированные потомки без
+// `z-index` (т.е. `z-index: auto`, наш случай) красятся стекинг-контекстом
+// ПОЗЖЕ обычного строчного контента (голый текст `{{ date.day }}`), даже
+// если в DOM идут раньше него — порядок в разметке тут не имеет значения,
+// только уровень стека. Заметно было визуально: залитые (промежуточные)
+// дни диапазона полностью теряли цифру, видную только у самих концов
+// диапазона (`.p-datepicker-day-selected`, у которых заливка прозрачна —
+// `isDateInRange()` намеренно исключает края строгим `>`/`<`).
+// (Раньше здесь стоял `z-index: -1` — тоже неверно: прятал заливку ЗА
+// непрозрачным фоном соседних ячеек в общем стекинг-контексте таблицы дней,
+// видна была только на редких ячейках "чужого" месяца с иной версткой.)
+//
+// Фикс — не трогать заливку, а поднять само число (`.day-number` ниже)
+// явным `z-index: 1` (с `position: relative`, иначе `z-index` не действует
+// вовсе) — гарантированно красится ПОСЛЕ заливки (`z-index: auto` = уровень
+// стека 0, `1` > `0`) независимо от DOM-порядка.
+.day-range-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 5px;
+  pointer-events: none;
+
+  &.day-range-fill--in {
+    background: #{vars.$color-e1bf90};
+  }
+}
+
+.day-number {
+  position: relative;
+  z-index: 1;
+}

@@ -4,6 +4,7 @@ import { setCompodocJson } from '@storybook/addon-docs/angular';
 import { providePrimeNG } from 'primeng/config';
 
 import { AdminPreset } from '../src/app/core/primeng/admin-preset';
+import { ruTranslation } from '../src/app/core/primeng/ru-translation';
 import { environment } from '../src/environments/environment';
 import docJson from '../documentation.json';
 
@@ -26,6 +27,7 @@ const preview: Preview = {
             preset: AdminPreset,
             options: { darkModeSelector: '.p-dark' },
           },
+          translation: ruTranslation,
           license: environment.primengLicenseKey,
         }),
       ],

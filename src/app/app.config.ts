@@ -11,6 +11,7 @@ import { authInterceptor } from '@core/interceptors/auth.interceptor';
 import { withCredentialsInterceptor } from '@core/interceptors/with-credentials.interceptor';
 import { initializeAuth } from '@core/initializers/auth.initializer';
 import { AdminPreset } from '@core/primeng/admin-preset';
+import { ruTranslation } from '@core/primeng/ru-translation';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 
@@ -36,6 +37,9 @@ export const appConfig: ApplicationConfig = {
         // на <html> (src/index.html), не зависим от системной темы браузера.
         options: { darkModeSelector: '.p-dark' },
       },
+      // Русская локализация (stream.Front#109) — dayNames/monthNames/dateFormat
+      // и т.п. для всех PrimeNG-компонентов, в т.ч. Datepicker.
+      translation: ruTranslation,
       license: environment.primengLicenseKey,
     }),
   ],
