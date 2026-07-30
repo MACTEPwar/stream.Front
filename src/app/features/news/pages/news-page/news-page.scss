@@ -1,39 +1,8 @@
-@use 'variables' as vars;
-
 :host {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 24px;
   min-height: 100%;
-  padding: 32px 0;
-}
-
-// `p-popover` физически вынесен `appendTo="body"` (дефолт `Popover.appendTo`,
-// см. `primeng-popover.d.ts`) в конец `<body>` — вне DOM-поддерева этого
-// компонента, обычный Angular-скоуп там не совпадёт ни с чем (та же ситуация,
-// что у `Select`/`Datepicker`, см. select.scss/datepicker.scss). `::ng-deep`
-// снимает Angular-скоуп, привязка к персональному классу
-// `.news-page__filter-popover` (`styleClass`, news-page.ts), чтобы не задеть
-// чужой `p-popover` на странице. Переопределяем те же CSS-переменные,
-// которые генерирует PrimeNG dt()-токенами (`--p-popover-*`, см.
-// `@primeuix/themes/dist/aura/popover/index.mjs`) — `background` красит и
-// саму коробку, и стрелку-указатель (оба используют один токен), поэтому
-// отдельный `::ng-deep`-селектор на треугольник не нужен. Светлый фон — по
-// прямому запросу пользователя, не унаследованный тёмный фон темы
-// `AdminPreset`.
-//
-// `--p-popover-content-padding` (дефолт `0.625rem`, см.
-// `@primeuix/themes/dist/aura/base/index.mjs` → `overlay.popover.padding`,
-// применяется через `.p-popover-content { padding: dt('popover.content.padding') }`
-// в `@primeuix/styles/dist/popover/index.mjs`) обнуляем, чтобы
-// `.news-filter-panel__calendar` мог физически примыкать к верхнему/правому/
-// нижнему краю попапа — прежний отступ возвращён точечно на
-// `.news-filter-panel__filters` (news-filter-panel.scss), календарь его не
-// получает.
-::ng-deep .news-page__filter-popover.p-popover {
-  --p-popover-background: #{vars.$color-ffffff};
-  --p-popover-border-color: #{vars.$color-e4e4e4};
-  --p-popover-color: #{vars.$color-1e1e1e};
-  --p-popover-content-padding: 0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+  padding: 32px;
 }

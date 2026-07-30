@@ -1,0 +1,250 @@
+@use 'sass:map';
+@use 'variables' as vars;
+
+// `AdminPreset` (core/primeng/admin-preset.ts) — единственная тема PrimeNG,
+// подключена глобально в `app.config.ts` (`providePrimeNG({ theme: { preset:
+// AdminPreset } })`), несмотря на комментарий в самом `admin-preset.ts` про
+// "только админ-панель" — на деле `providePrimeNG()` вызывается один раз на
+// всё приложение, второй темы для публичного сайта нет. `<html>` дополнительно
+// форсирует `.p-dark` (`darkModeSelector: '.p-dark'`, см. `app.config.ts` +
+// `index.html`) — поэтому ЛЮБОЙ PrimeNG-компонент без явного переопределения
+// (в т.ч. `p-drawer`/`p-popover`/`p-overlay-badge` здесь) рисуется тёмной
+// surface-палитрой темы (primitive slate/zinc → `$color-1e1e1e`), а не
+// случайно "унаследовал" тёмный фон откуда-то локально — та же первопричина,
+// что уже была решена для `Select`/`Datepicker`-панелей (см. select.scss/
+// datepicker.scss), здесь применяется тот же приём.
+:host {
+  display: contents;
+
+  // Бейдж-счётчик тегов (`p-overlay-badge`/`p-badge`, `severity="danger"` в
+  // шаблоне) — `p-badge` физически внутри DOM-поддерева этого компонента
+  // (не `appendTo="body"`), поэтому CSS-переменные с `:host` доходят до него
+  // обычным наследованием, `::ng-deep` не нужен (тот же приём, что у `Button`/
+  // `Badge`/`Checkbox` — переопределение dt()-токенов PrimeNG). Цвета — те же,
+  // что у `Button severity="primary"`/`Badge severity="primary"` (по прямому
+  // запросу пользователя), не сам severity="danger" в разметке (значение
+  // осталось прежним, перекрашен только цвет).
+  --p-badge-danger-background: #{vars.$color-f4d2a4};
+  --p-badge-danger-color: #{vars.$color-76511c};
+
+  // `p-drawer` с `position="right"` без явного `appendTo` — дефолт `p-drawer`
+  // `appendTo` (`primeng-config.mjs`, `overlayAppendTo`) — `'self'`, панель
+  // рендерится прямо на месте (не в `<body>`), поэтому переменные с `:host`
+  // тоже доходят обычным наследованием (в отличие от `p-popover` ниже).
+  // Светлый фон/текст (по прямому запросу пользователя) — не унаследованный
+  // тёмный `overlay.modal.background` `AdminPreset`.
+  --p-drawer-background: #{vars.$color-ffffff};
+  --p-drawer-border-color: #{vars.$color-e4e4e4};
+  --p-drawer-color: #{vars.$color-1e1e1e};
+}
+
+.news-filter-sidebar__trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.news-filter-sidebar__period {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  // Белый (по прямому запросу пользователя) — единственное текущее место
+  // использования (`NewsPage`) имеет тёмный фон (`docs/figma/news*.json`),
+  // прежний `$color-333333` на нём не читался.
+  color: vars.$color-ffffff;
+}
+
+// Заголовок ("Фильтры") рендерится собственным шаблоном `p-drawer`
+// (`ViewEncapsulation.None`, `primeng-drawer.mjs`), физически внутри
+// DOM-поддерева этого компонента (тот же `appendTo="self"`, что и выше) —
+// `:host ::ng-deep` (не голый `::ng-deep`), тот же приём, что у
+// `:host ::ng-deep .p-datepicker-input` в datepicker.scss.
+:host ::ng-deep .p-drawer-title {
+  font-family: vars.$font-family-montserrat;
+}
+
+// Ширина — дефолт `p-drawer(position="right")` (20rem/320px, `primeng-drawer.mjs`,
+// хардкод в CSS, не dt()-токен/переменная — переопределить нечем, кроме
+// прямого правила) слишком узкая для двух полей "Дата с"/"Дата по"
+// (`app-datepicker` — фиксированные 240px, datepicker.scss, + 16px gap между
+// ними + паддинги контента `p-drawer`) — оба поля обрезались/переносились.
+// 560px — минимум, при котором оба поля 240px помещаются в ряд с паддингами
+// (по прямому запросу пользователя — увеличить, раскладку в ряд оставить как
+// была). Привязка к персональному `styleClass` (`news-filter-sidebar__drawer`,
+// см. html) — не задевает другие `p-drawer` на сайте.
+:host ::ng-deep .news-filter-sidebar__drawer.p-drawer-right {
+  width: 560px;
+}
+
+.news-filter-sidebar__dates {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.news-filter-sidebar__date-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 4px;
+}
+
+.news-filter-sidebar__date-label {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  color: vars.$color-808080;
+}
+
+.news-filter-sidebar__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+// `p-chip` — `ViewEncapsulation.None` (`primeng-chip.mjs`), физически внутри
+// DOM-поддерева этого компонента — `:host ::ng-deep`, тот же приём, что у
+// заголовка `p-drawer` выше. Токены Chip (`aura/chip`) несут только
+// `fontWeight`/`fontSize`, font-family нет вовсе (тот же случай, что у
+// `p-tag`/`Badge`, см. badge.scss) — переопределяется напрямую свойством, не
+// CSS-переменной.
+:host ::ng-deep .p-chip-label {
+  font-family: vars.$font-family-montserrat;
+}
+
+// Цвет выбранного тега в ряду выше должен совпадать с цветом того же тега в
+// попапе-чекбоксе (по прямому запросу пользователя) — значения ЗДЕСЬ
+// ПРОДУБЛИРОВАНЫ вручную из `$checkbox-severities` в `checkbox.scss`
+// (background/text-color, единственный источник истины для severity-цветов
+// проекта) — при изменении палитры там нужно поправить и здесь. Полноценный
+// общий SCSS-партиал для этой пары значений не заводился: `checkbox.scss`
+// несёт ещё hover/active/border/icon-color, не нужные тут (`p-chip` не имеет
+// hover/active состояний), выносить общий партиал ради 2 полей из 6 —
+// избыточная абстракция на один текущий потребитель.
+$tag-chip-severities: (
+  primary: (
+    background: vars.$color-f4d2a4,
+    text-color: vars.$color-76511c,
+  ),
+  secondary: (
+    background: vars.$color-4445a8,
+    text-color: vars.$color-aeaefb,
+  ),
+  danger: (
+    background: vars.$color-af4141,
+    text-color: vars.$color-ffffff,
+  ),
+  contrast: (
+    background: vars.$color-f9f9f9,
+    text-color: vars.$color-333333,
+  ),
+  info: (
+    background: vars.$color-a4d3f4,
+    text-color: vars.$color-1c5278,
+  ),
+  success: (
+    background: vars.$color-96c6a6,
+    text-color: vars.$color-1c783b,
+  ),
+);
+
+// `p-chip` — `ViewEncapsulation.None`, `:host ::ng-deep` (тот же приём, что и
+// `.p-chip-label` выше) — таргетим свой класс на корневом `.p-chip`, заданный
+// через `[class]` в шаблоне (`tagChipClass()`). Крестик удаления
+// (`.p-chip-remove-icon`) красится СВОИМ dt()-токеном
+// (`chip.remove.icon.color`), не наследует `currentColor` от `.p-chip` —
+// без явного переопределения остался бы тёмным на любом фоне (дефолт темы —
+// `--p-text-muted-color`), поэтому перекрашивается тем же text-color.
+@each $name, $tokens in $tag-chip-severities {
+  :host ::ng-deep .news-filter-sidebar__tag-chip--severity-#{$name} {
+    --p-chip-background: #{map.get($tokens, background)};
+    --p-chip-color: #{map.get($tokens, text-color)};
+    --p-chip-remove-icon-color: #{map.get($tokens, text-color)};
+  }
+}
+
+// Свой цвет тега (`tag.color`) перебивает severity целиком — та же логика,
+// что у `.checkbox--custom-color` в checkbox.scss: рантайм-значение через
+// inline custom property (`tagChipStyle()`, ts), не compile-time SCSS-карта.
+// Текст/крестик — белый (по аналогии с принудительно белой иконкой
+// `.checkbox--custom-color` — для произвольного цвета подходящий текст
+// заранее не подобрать).
+:host ::ng-deep .news-filter-sidebar__tag-chip--custom-color {
+  --p-chip-background: var(--tag-chip-custom-color);
+  --p-chip-color: #{vars.$color-ffffff};
+  --p-chip-remove-icon-color: #{vars.$color-ffffff};
+}
+
+.news-filter-sidebar__tag-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 220px;
+}
+
+.news-filter-sidebar__tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+// Строка тега в списке попапа — `app-checkbox` написан прямо в шаблоне ЭТОГО
+// компонента, поэтому несёт наш scope-атрибут (обычный дочерний Angular-
+// компонент, не PrimeNG-обёртка с `ViewEncapsulation.None`, как выше) —
+// обычный (не `::ng-deep`) селектор на самом `app-checkbox` работает. Фон
+// ховера — те же токены, что `Button severity="primary"`/hover-состояние
+// опций `Select`/дней `Datepicker` (`$color-e1bf90`/`$color-76511c`, см.
+// select.scss:85-89, datepicker.scss:137-140) — по прямому запросу
+// пользователя "primary-цвет проекта". Текст лейбла — внутри собственного
+// шаблона `Checkbox` (`checkbox.scss:86-90`, явный цвет `$color-1e1e1e`,
+// обычная Emulated-инкапсуляция, СВОЙ scope-атрибут) — не достаётся обычным
+// селектором отсюда, нужен `::ng-deep`.
+.news-filter-sidebar__tag-list app-checkbox {
+  display: block;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.news-filter-sidebar__tag-list app-checkbox:hover {
+  background: vars.$color-e1bf90;
+}
+
+.news-filter-sidebar__tag-list app-checkbox:hover ::ng-deep .checkbox__label {
+  color: vars.$color-76511c;
+}
+
+.news-filter-sidebar__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+// Попап добавления тега (`p-popover`, `appendTo` по умолчанию `'body'` —
+// в отличие от `p-drawer` выше, `Popover.appendTo` дефолтится буквально в
+// `'body'`, не в конфиг `overlayAppendTo`, см. `primeng-popover.mjs`) —
+// физически вынесен из DOM-поддерева этого компонента, `:host`-переменные
+// до него не доходят (дерево DOM оборвано). Голый `::ng-deep` (без
+// `:host`-предка) + привязка к персональному `styleClass`
+// (`news-filter-sidebar__tag-popover`, см. html) — тот же приём, что у
+// `.app-select-panel.p-select-overlay` (select.scss) и
+// `.app-datepicker-panel.p-datepicker-panel` (datepicker.scss). `!important` —
+// без Angular-скоупа (`::ng-deep` его снимает) наши правила теряют буст
+// специфичности, которым обладали бы как scoped-компонентные, тот же приём,
+// что в select.scss:53-57.
+// `--p-popover-background`/`-border-color` — те же dt()-токены, что и
+// `background`/`border` ниже, переопределены дополнительно ЕЩЁ и как
+// CSS-переменные: стрелка попапа (`.p-popover:before`/`:after`, глобальный
+// `<style>`, генерируемый PrimeNG из `@primeuix/styles/popover`) красится
+// именно через `var(--p-popover-background)` — без этого сама коробка стала
+// бы белой, а треугольник-стрелка остался бы тёмным.
+::ng-deep .news-filter-sidebar__tag-popover.p-popover {
+  --p-popover-background: #{vars.$color-ffffff};
+  --p-popover-border-color: #{vars.$color-e4e4e4};
+
+  background: #{vars.$color-ffffff} !important;
+  color: #{vars.$color-1e1e1e} !important;
+  border: 1px solid #{vars.$color-e4e4e4} !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+}

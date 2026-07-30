@@ -1,0 +1,66 @@
+<div class="news-filter-sidebar__trigger">
+  @if (periodLabel(); as label) {
+    <span class="news-filter-sidebar__period">{{ label }}</span>
+  }
+
+  @if (tagBadgeValue(); as badgeValue) {
+    <p-overlay-badge [value]="badgeValue" severity="danger">
+      <app-button icon="pi pi-filter" severity="contrast" (click)="open()" />
+    </p-overlay-badge>
+  } @else {
+    <app-button icon="pi pi-filter" severity="contrast" (click)="open()" />
+  }
+</div>
+
+<p-drawer [(visible)]="visible" position="right" header="Фильтры" styleClass="news-filter-sidebar__drawer">
+  <div class="news-filter-sidebar__dates">
+    <div class="news-filter-sidebar__date-field">
+      <label class="news-filter-sidebar__date-label" for="news-filter-sidebar-date-from">Дата с</label>
+      <app-datepicker id="news-filter-sidebar-date-from" [(value)]="draft.leftValue" />
+    </div>
+
+    <div class="news-filter-sidebar__date-field">
+      <label class="news-filter-sidebar__date-label" for="news-filter-sidebar-date-to">Дата по</label>
+      <app-datepicker id="news-filter-sidebar-date-to" [(value)]="draft.rightValue" />
+    </div>
+  </div>
+
+  <div class="news-filter-sidebar__tags">
+    @for (tag of draft.selectedTags(); track tag.id) {
+      <p-chip
+        [label]="tag.name"
+        [removable]="true"
+        [class]="tagChipClass(tag)"
+        [style]="tagChipStyle(tag)"
+        (onRemove)="draft.removeTag(tag.id)"
+      />
+    }
+
+    <app-button icon="pi pi-plus" size="small" (click)="tagPopover.toggle($event)" />
+  </div>
+
+  <p-popover #tagPopover styleClass="news-filter-sidebar__tag-popover">
+    <div class="news-filter-sidebar__tag-popover-body">
+      <app-text-field [(value)]="draft.searchQuery" placeholder="Поиск..." icon="pi pi-search" />
+
+      <div class="news-filter-sidebar__tag-list">
+        @for (tag of draft.filteredTags(); track tag.id) {
+          <app-checkbox
+            [label]="tag.name"
+            [severity]="tag.severity ?? 'primary'"
+            [color]="tag.color"
+            [checked]="draft.isTagSelected(tag.id)"
+            (checkedChange)="draft.toggleTag(tag.id, $event)"
+          />
+        }
+      </div>
+    </div>
+  </p-popover>
+
+  <ng-template #footer>
+    <div class="news-filter-sidebar__footer">
+      <app-button text="Очистить" severity="danger" (click)="clear()" />
+      <app-button text="Применить" severity="success" (click)="apply()" />
+    </div>
+  </ng-template>
+</p-drawer>
