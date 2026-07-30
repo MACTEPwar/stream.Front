@@ -1,0 +1,37 @@
+<div class="news-filter-panel">
+  <div class="news-filter-panel__filters">
+    <div class="news-filter-panel__chips">
+      @for (tag of selectedTags(); track tag.id) {
+        <span class="news-filter-panel__chip">
+          <app-badge [text]="tag.name" [severity]="tag.severity ?? 'primary'" [color]="tag.color" />
+          <button
+            type="button"
+            class="news-filter-panel__chip-remove"
+            [attr.aria-label]="'Убрать тег ' + tag.name"
+            (click)="removeTag(tag.id)"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        </span>
+      }
+    </div>
+
+    <app-text-field [(value)]="searchQuery" placeholder="Поиск..." icon="pi pi-search" />
+
+    <div class="news-filter-panel__tag-list">
+      @for (tag of filteredTags(); track tag.id) {
+        <app-checkbox
+          [label]="tag.name"
+          [severity]="tag.severity ?? 'primary'"
+          [color]="tag.color"
+          [checked]="isTagSelected(tag.id)"
+          (checkedChange)="toggleTag(tag.id, $event)"
+        />
+      }
+    </div>
+  </div>
+
+  <div class="news-filter-panel__calendar">
+    <app-datepicker-range [(leftValue)]="leftValue" [(rightValue)]="rightValue" />
+  </div>
+</div>
