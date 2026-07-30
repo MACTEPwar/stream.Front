@@ -1,8 +1,106 @@
+@use 'variables' as vars;
+
+// Сетка макета (docs/figma/news1.json): колонка 330px, гаттер 20px (широкая
+// карточка 680 = 330 + 20 + 330), панель архива 660px — суммарно 1710px
+// контента, что совпадает с шириной фонового изображения фрейма (1700).
+$grid-column-width: 330px;
+$grid-gap: 20px;
+$archive-width: 660px;
+$content-max-width: $grid-column-width * 3 + $grid-gap * 3 + $archive-width;
+// 680 — высота блока `news_archive` в макете (5 строк по 100 + 4 зазора по 20 +
+// начало шестой строки, обрезанное скроллом).
+$archive-list-height: 680px;
+
+// Фон страницы — белый по самому фрейму макета (`bg: rgb(255, 255, 255)`).
+// Шапка (`Shell`) лежит ВЫШЕ этого контента и остаётся на глобальном тёмном
+// градиенте (`_reset.scss`) — как на макете, где тёмная полоса меню отделена от
+// белой области контента.
 :host {
+  display: block;
+  min-height: 100%;
+  padding: 24px 48px;
+  background: vars.$color-ffffff;
+  color: vars.$color-1e1e1e;
+}
+
+.news-page {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $grid-gap;
+  align-items: flex-start;
+  max-width: $content-max-width;
+  margin: 0 auto;
+}
+
+.news-page__grid {
+  display: grid;
+  flex: 1 1 $grid-column-width;
+  grid-auto-flow: row dense;
+  // auto-fill (а не `repeat(3, ...)`) — на узких вьюпортах колонок становится
+  // меньше, вместо горизонтального скролла страницы.
+  grid-template-columns: repeat(auto-fill, $grid-column-width);
+  gap: $grid-gap;
+  align-items: start;
+  justify-content: start;
+}
+
+.news-page__card--wide {
+  grid-column: span 2;
+}
+
+.news-page__archive {
+  display: flex;
+  flex: 0 1 $archive-width;
+  flex-direction: column;
+  gap: $grid-gap;
+}
+
+// Группа тогглов (120×40) слева, кнопка-воронка фильтра (40×40) справа.
+.news-page__archive-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $grid-gap;
+}
+
+// `border`-компонент макета: прямоугольник 660×1 белого цвета с тенью
+// shadow-3-1 (сам по себе на белом фоне не виден — работает именно тень).
+.news-page__archive-border {
+  height: 1px;
+  border-radius: 1px;
+  background: vars.$color-ffffff;
+  box-shadow: vars.$shadow-3-1;
+}
+
+.news-page__archive-list {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 24px;
-  min-height: 100%;
-  padding: 32px;
+  gap: $grid-gap;
+  max-height: $archive-list-height;
+  // `scroll`-группа макета — полоса 4px с радиусом 2.
+  overflow-y: auto;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    border-radius: 2px;
+    background: vars.$color-f9f9f9;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    // В экспорте у ползунка и дорожки один и тот же `rgb(249, 249, 249)`
+    // (плагин теряет прозрачность), поэтому ползунок взят на тон темнее —
+    // тот же серый, что у разделителя внутри группы тогглов (`line-43`).
+    background: vars.$color-bfbfbf;
+  }
+}
+
+.news-page__empty {
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  line-height: vars.$line-height-18;
 }

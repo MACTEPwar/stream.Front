@@ -1,0 +1,55 @@
+<div class="news-page">
+  <section class="news-page__grid" aria-label="Новости">
+    @for (entry of gridEntries(); track entry.item.id) {
+      <app-news-card
+        class="news-page__card"
+        [class.news-page__card--wide]="entry.variant === 'wide'"
+        [item]="entry.item"
+        [tags]="entry.tags"
+        [variant]="entry.variant"
+      />
+    } @empty {
+      <p class="news-page__empty">По выбранному фильтру новостей нет</p>
+    }
+  </section>
+
+  <aside class="news-page__archive" aria-label="Архив новостей">
+    <div class="news-page__archive-toolbar">
+      <app-button-group>
+        <app-button icon="pi pi-minus" severity="contrast" (click)="resetSort()" />
+
+        <app-checkbox
+          [buttonMode]="true"
+          severity="contrast"
+          [checked]="isSortedBy('views')"
+          (checkedChange)="onSortToggle('views', $event)"
+        >
+          <i class="pi pi-eye" aria-hidden="true"></i>
+        </app-checkbox>
+
+        <app-checkbox
+          [buttonMode]="true"
+          severity="contrast"
+          [checked]="isSortedBy('likes')"
+          (checkedChange)="onSortToggle('likes', $event)"
+        >
+          <i class="pi pi-heart" aria-hidden="true"></i>
+        </app-checkbox>
+      </app-button-group>
+
+      <app-news-filter-sidebar (filterChange)="filter.set($event)" />
+    </div>
+
+    <div class="news-page__archive-border"></div>
+
+    <div class="news-page__archive-list">
+      @for (entry of archiveEntries(); track entry.item.id) {
+        <app-news-archive-item [item]="entry.item" [tags]="entry.tags" />
+      } @empty {
+        <p class="news-page__empty">По выбранному фильтру новостей нет</p>
+      }
+    </div>
+
+    <div class="news-page__archive-border"></div>
+  </aside>
+</div>
