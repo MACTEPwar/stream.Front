@@ -30,6 +30,7 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
+.claude/worktrees/
 /.angular/cache
 .sass-cache/
 /connect.lock
