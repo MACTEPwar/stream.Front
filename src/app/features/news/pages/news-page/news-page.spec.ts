@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
+import { PinnedNewsSlot } from '../../models/pinned-news-slot.model';
 import { NewsService } from '../../services/news.service';
 import { NewsTagService } from '../../services/news-tag.service';
 import { NewsPage } from './news-page';
@@ -30,6 +31,14 @@ function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
 }
 
 const NEWS: NewsItem[] = Array.from({ length: 7 }, (_, index) => newsItem(`news-${index + 1}`));
+
+const PINNED_SLOTS: PinnedNewsSlot[] = NEWS.map((item, index) => ({
+  newsId: item.id,
+  colStart: ((index % 3) + 1) as 1 | 2 | 3,
+  rowStart: index + 1,
+  colSpan: index === 3 ? 2 : 1,
+  rowSpan: 1,
+}));
 
 const ARCHIVE: NewsItem[] = [
   newsItem('archive-1', {
@@ -62,7 +71,10 @@ describe('NewsPage', () => {
       imports: [NewsPage],
       providers: [
         { provide: NewsTagService, useValue: { getTags: () => of(TAGS) } },
-        { provide: NewsService, useValue: { getNews: () => of(NEWS), getArchive: () => of(ARCHIVE) } },
+        {
+          provide: NewsService,
+          useValue: { getNews: () => of(NEWS), getArchive: () => of(ARCHIVE), getPinnedSlots: () => of(PINNED_SLOTS) },
+        },
       ],
     });
   });
@@ -85,12 +97,12 @@ describe('NewsPage', () => {
     expect(host.querySelectorAll('app-news-archive-item').length).toBe(ARCHIVE.length);
   });
 
-  it('широкие карточки занимают две колонки сетки', () => {
+  it('карточка со слотом colSpan: 2 занимает две колонки сетки', () => {
     const fixture = createPage();
-    const wide = (fixture.nativeElement as HTMLElement).querySelectorAll('.news-page__card--wide');
+    const wide = (fixture.nativeElement as HTMLElement).querySelectorAll('app-news-card');
+    const wideCard = Array.from(wide).find((card) => (card as HTMLElement).style.gridColumn.includes('span 2'));
 
-    // Паттерн раскладки: 4-я и 7-я карточки — широкие (см. GRID_VARIANTS).
-    expect(wide.length).toBe(2);
+    expect(wideCard).not.toBeUndefined();
   });
 
   it('теги новости резолвятся в бейджи по id', () => {

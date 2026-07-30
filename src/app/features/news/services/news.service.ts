@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
 import { NewsItem } from '../models/news.model';
+import { PinnedNewsSlot } from '../models/pinned-news-slot.model';
 
 /** Тексты — Lorem ipsum ровно из макета (`docs/figma/news1.json`, `heading`/`text`). */
 const LONG_TITLE = 'Lorem ipsum dolor sit amet consectetur.';
@@ -142,10 +143,32 @@ const MOCK_ARCHIVE: NewsItem[] = [
 ];
 
 /**
+ * Раскладка закреплённых новостей сетки 3×12 (`PinnedNewsSlot`,
+ * `stream.Front#112`) — уже "предзаполнена", как будто админ (через ещё не
+ * существующую админку) расставил её сам. По одному слоту на каждую запись
+ * `MOCK_NEWS`, покрывает сетку без пропусков и пересечений (проверено
+ * `pinned-news-slot.model.spec.ts`): крупная `news-1` — вся левая колонка
+ * сверху, `news-2`/`news-3` — компактные справа сверху, широкая `news-4`
+ * (`colSpan: 2`) — по центру, `news-5` — вторая крупная слева снизу,
+ * `news-6`/`news-7` — компактные справа снизу.
+ */
+const MOCK_PINNED_SLOTS: PinnedNewsSlot[] = [
+  { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7 },
+  { newsId: 'news-2', colStart: 2, rowStart: 1, colSpan: 1, rowSpan: 4 },
+  { newsId: 'news-3', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 4 },
+  { newsId: 'news-4', colStart: 2, rowStart: 5, colSpan: 2, rowSpan: 4 },
+  { newsId: 'news-5', colStart: 1, rowStart: 8, colSpan: 1, rowSpan: 5 },
+  { newsId: 'news-6', colStart: 2, rowStart: 9, colSpan: 1, rowSpan: 4 },
+  { newsId: 'news-7', colStart: 3, rowStart: 9, colSpan: 1, rowSpan: 4 },
+];
+
+/**
  * Мок-источник новостей страницы «Новости» — тот же паттерн, что у
  * `NewsTagService` (реального backend-эндпоинта под новости ещё нет).
- * `getNews()` — карточки сетки слева, `getArchive()` — строки панели архива
- * справа (в макете это два независимых блока: `news` и `news_archive`).
+ * `getNews()` — новости, из которых собирается закреплённая сетка слева
+ * (`getPinnedSlots()` даёт их расположение), `getArchive()` — строки панели
+ * архива справа (в макете это два независимых блока: `news` и
+ * `news_archive`).
  */
 @Injectable({ providedIn: 'root' })
 export class NewsService {
@@ -155,5 +178,9 @@ export class NewsService {
 
   getArchive(): Observable<NewsItem[]> {
     return of(MOCK_ARCHIVE);
+  }
+
+  getPinnedSlots(): Observable<PinnedNewsSlot[]> {
+    return of(MOCK_PINNED_SLOTS);
   }
 }

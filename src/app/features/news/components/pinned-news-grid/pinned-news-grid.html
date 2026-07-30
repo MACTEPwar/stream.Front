@@ -1,0 +1,11 @@
+@for (entry of entries(); track entry.item.id) {
+  <app-news-card
+    class="pinned-news-grid__card"
+    [style.grid-column]="gridColumn(entry.slot)"
+    [style.grid-row]="gridRow(entry.slot)"
+    [item]="entry.item"
+    [tags]="entry.tags"
+  />
+} @empty {
+  <p class="pinned-news-grid__empty">По выбранному фильтру новостей нет</p>
+}

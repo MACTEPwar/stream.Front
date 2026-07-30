@@ -18,42 +18,52 @@ $archive-list-height: 680px;
 // светлыми (собственная подложка `$color-f9f9f9`) — фон меняется только
 // вокруг них, поэтому `.news-page__empty` ниже перекрашен в светлый (это
 // единственный текст страницы, лежащий прямо на фоне, не внутри карточки).
+//
+// `height: 100%` (не `min-height`) — закреплённая сетка слева (`PinnedNewsGrid`,
+// stream.Front#112) должна занять РОВНО доступную высоту, а не "хотя бы", иначе
+// её `grid-template-rows: repeat(12, 1fr)` не от чего вычислять и грид
+// растягивается под контент — тот же приём и то же обоснование, что у
+// `.shell__content`/`.shell` (`shell.scss`): именно эта страница явно берёт на
+// себя роль "занять оставшееся место без скролла" (там же описан общий
+// паттерн для будущих подобных страниц). `overflow: hidden` — то же самое.
 :host {
-  display: block;
-  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 24px 48px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .news-page {
   display: flex;
-  flex-wrap: wrap;
+  flex: 1;
+  min-height: 0;
   gap: $grid-gap;
-  align-items: flex-start;
+  width: 100%;
   max-width: $content-max-width;
   margin: 0 auto;
 }
 
+// Флекс-элемент без `flex-basis` в px — реальную высоту/ширину сетки задают
+// сама grid-раскладка и `flex: 1` (растягивается на всё, что осталось от
+// фиксированной ширины архива справа); высоту по умолчанию `align-items:
+// stretch` родителя ставит равной высоте `.news-page` (`PinnedNewsGrid` сам
+// не вычисляет её, только использует).
 .news-page__grid {
-  display: grid;
-  flex: 1 1 $grid-column-width;
-  grid-auto-flow: row dense;
-  // auto-fill (а не `repeat(3, ...)`) — на узких вьюпортах колонок становится
-  // меньше, вместо горизонтального скролла страницы.
-  grid-template-columns: repeat(auto-fill, $grid-column-width);
-  gap: $grid-gap;
-  align-items: start;
-  justify-content: start;
-}
-
-.news-page__card--wide {
-  grid-column: span 2;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .news-page__archive {
   display: flex;
-  flex: 0 1 $archive-width;
+  flex: 0 0 $archive-width;
   flex-direction: column;
   gap: $grid-gap;
+  // Архив сохраняет исходную (content-based) высоту, а не растягивается на
+  // высоту сетки слева (`align-items: stretch` по умолчанию у `.news-page`) —
+  // список внутри и так ограничен собственным `max-height`/скроллом.
+  align-self: flex-start;
 }
 
 // Группа тогглов (120×40) слева, кнопка-воронка фильтра (40×40) справа.

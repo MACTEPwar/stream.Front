@@ -1,17 +1,5 @@
 <div class="news-page">
-  <section class="news-page__grid" aria-label="Новости">
-    @for (entry of gridEntries(); track entry.item.id) {
-      <app-news-card
-        class="news-page__card"
-        [class.news-page__card--wide]="entry.variant === 'wide'"
-        [item]="entry.item"
-        [tags]="entry.tags"
-        [variant]="entry.variant"
-      />
-    } @empty {
-      <p class="news-page__empty">По выбранному фильтру новостей нет</p>
-    }
-  </section>
+  <app-pinned-news-grid class="news-page__grid" aria-label="Новости" [entries]="gridEntries()" />
 
   <aside class="news-page__archive" aria-label="Архив новостей">
     <div class="news-page__archive-toolbar">

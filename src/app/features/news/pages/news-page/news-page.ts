@@ -5,39 +5,18 @@ import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
 
 import { NewsArchiveItem } from '../../components/news-archive-item/news-archive-item';
-import { NewsCard, NewsCardVariant } from '../../components/news-card/news-card';
 import { NewsFilterSidebar } from '../../components/news-filter-sidebar/news-filter-sidebar';
+import { PinnedNewsGrid, PinnedNewsGridEntry } from '../../components/pinned-news-grid/pinned-news-grid';
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
+import { PinnedNewsSlot } from '../../models/pinned-news-slot.model';
 import { NewsService } from '../../services/news.service';
 import { NewsTagService } from '../../services/news-tag.service';
-
-/**
- * Раскладка карточек сетки. Экспорт плагина Figma отдаёт только размеры (без
- * координат), поэтому конкретное расположение карточек из макета однозначно не
- * восстанавливается — взят паттерн, дающий валидную укладку в трёх колонках по
- * 330px: широкая карточка (680 = 330 + 20 + 330) занимает две колонки.
- * Реальный признак "какая новость крупная" появится вместе с backend'ом —
- * тогда вариант должен приходить с данными, а не из позиции в списке.
- */
-const GRID_VARIANTS: readonly NewsCardVariant[] = [
-  'featured',
-  'compact',
-  'compact',
-  'wide',
-  'compact',
-  'compact',
-  'wide',
-];
 
 interface NewsEntry {
   readonly item: NewsItem;
   readonly tags: NewsTag[];
-}
-
-interface NewsGridEntry extends NewsEntry {
-  readonly variant: NewsCardVariant;
 }
 
 const EMPTY_FILTER: NewsFilter = { dateFrom: null, dateTo: null, tags: [] };
@@ -56,7 +35,9 @@ function endOfDay(date: Date): Date {
 
 /**
  * Страница «Новости» — вариант 1 макета (`docs/figma/news1.json`, node-id
- * `491:3585`): слева сетка карточек (`NewsCard`, три формы), справа панель
+ * `491:3585`): слева закреплённая сетка карточек 3×12 (`PinnedNewsGrid`,
+ * stream.Front#112 — раньше три px-формы `NewsCard` без координат, теперь
+ * произвольные прямоугольники ячеек по `PinnedNewsSlot`), справа панель
  * архива (`NewsArchiveItem`) с тулбаром — группа иконок-тогглов
  * (`ButtonGroup` + `Checkbox` в `buttonMode`) и триггер фильтра
  * (`NewsFilterSidebar`, stream.Front#111, подключён как есть).
@@ -72,11 +53,14 @@ function endOfDay(date: Date): Date {
  * оба независимы и комбинируются через AND; `minus` сбрасывает оба.
  *
  * Фильтр (`filterChange`) применяется и к сетке, и к архиву: сайдбар физически
- * стоит в тулбаре архива, но фильтрует раздел «Новости» целиком.
+ * стоит в тулбаре архива, но фильтрует раздел «Новости» целиком. Закреплённая
+ * новость, чей `PinnedNewsSlot.newsId` отфильтрован из `matching(news())`, из
+ * сетки исчезает (в её ячейке остаётся пустое место — переставлять оставшиеся
+ * слоты не входит в задачу, это ручная раскладка администратора).
  */
 @Component({
   selector: 'app-news-page',
-  imports: [Button, ButtonGroup, Checkbox, NewsArchiveItem, NewsCard, NewsFilterSidebar],
+  imports: [Button, ButtonGroup, Checkbox, NewsArchiveItem, NewsFilterSidebar, PinnedNewsGrid],
   templateUrl: './news-page.html',
   styleUrl: './news-page.scss',
 })
@@ -87,6 +71,7 @@ export class NewsPage implements OnInit {
   private readonly news = signal<NewsItem[]>([]);
   private readonly archive = signal<NewsItem[]>([]);
   private readonly tags = signal<NewsTag[]>([]);
+  private readonly pinnedSlots = signal<PinnedNewsSlot[]>([]);
 
   protected readonly filter = signal<NewsFilter>(EMPTY_FILTER);
   protected readonly showOnlyViewed = signal(false);
@@ -94,13 +79,17 @@ export class NewsPage implements OnInit {
 
   private readonly tagsById = computed(() => new Map(this.tags().map((tag) => [tag.id, tag])));
 
-  protected readonly gridEntries = computed<NewsGridEntry[]>(() =>
-    this.matching(this.news()).map((item, index) => ({
-      item,
-      tags: this.resolveTags(item),
-      variant: GRID_VARIANTS[index % GRID_VARIANTS.length],
-    })),
-  );
+  protected readonly gridEntries = computed<PinnedNewsGridEntry[]>(() => {
+    const newsById = new Map(this.news().map((item) => [item.id, item]));
+    const visibleIds = new Set(this.matching(this.news()).map((item) => item.id));
+
+    return this.pinnedSlots()
+      .filter((slot) => visibleIds.has(slot.newsId))
+      .map((slot) => {
+        const item = newsById.get(slot.newsId)!;
+        return { item, tags: this.resolveTags(item), slot };
+      });
+  });
 
   protected readonly archiveEntries = computed<NewsEntry[]>(() => {
     const onlyViewed = this.showOnlyViewed();
@@ -115,6 +104,7 @@ export class NewsPage implements OnInit {
     this.newsTagService.getTags().subscribe((tags) => this.tags.set(tags));
     this.newsService.getNews().subscribe((news) => this.news.set(news));
     this.newsService.getArchive().subscribe((archive) => this.archive.set(archive));
+    this.newsService.getPinnedSlots().subscribe((slots) => this.pinnedSlots.set(slots));
   }
 
   protected resetArchiveFilters(): void {
