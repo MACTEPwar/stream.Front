@@ -121,8 +121,19 @@ $font-weight-500: 500;
 $font-weight-600: 600;
 $font-weight-700: 700;
 
+// 18/28 — выведены из docs/figma/news1.json (высоты текстовых боксов карточек
+// новостей: Nunito Sans 14 → 18px, Montserrat 22 → 28px).
+$line-height-18: 18px;
 $line-height-24: 24px;
+$line-height-28: 28px;
 $line-height-36: 36px;
+
+// Effects
+// Тени из docs/figma/news1.json (designTokens.effects) — имена по литеральному
+// значению (blur-offsetY), как и у цветов выше.
+$shadow-9-0: 0 0 9px rgba(0, 0, 0, 0.75);
+$shadow-5-2: 0 2px 5px rgba(0, 0, 0, 0.35);
+$shadow-3-1: 0 1px 3px rgba(0, 0, 0, 0.35);
 
 $letter-spacing-3: 0.03em;
 $letter-spacing-8: 0.08em;

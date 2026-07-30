@@ -1,0 +1,170 @@
+@use 'variables' as vars;
+
+// Все числа — из docs/figma/news1.json (фреймы `news`): карточка 330×470 /
+// 330×324 / 680×250, картинка 330×310 / 330×152 / 340×250, контент padding
+// 8/16/16/16 + gap 16, блок заголовок+текст gap 4, строка данных 40 с
+// паддингом 0 16.
+:host {
+  display: block;
+}
+
+.news-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 5px;
+  background: vars.$color-f9f9f9;
+  color: vars.$color-1e1e1e;
+  box-shadow: vars.$shadow-9-0;
+}
+
+.news-card__picture {
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: vars.$color-d9d9d9;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.news-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  // `align.main: end` у `wrapper` в макете — в широкой карточке контент прижат
+  // к низу (картинка 250 выше, чем контент 204 + данные 40).
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.news-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 16px 16px;
+}
+
+// Фиксированная высота + overflow: hidden — так же, как в макете (текст-превью
+// в `featured` при двухстрочном заголовке физически не влезает).
+.news-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+// `flex: 0 0 auto` — иначе заголовок сжимается вместе с текстом-превью (оба
+// флекс-айтема с дефолтным `flex-shrink: 1` в фиксированном по высоте
+// контейнере) и обрезается по строке на половине высоты.
+.news-card__heading {
+  display: -webkit-box;
+  flex: 0 0 auto;
+  overflow: hidden;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-22;
+  font-weight: vars.$font-weight-500;
+  line-height: vars.$line-height-28;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+// Занимает остаток фиксированной высоты блока и обрезается по нему — в
+// `featured` при двухстрочном заголовке остатка не остаётся вовсе (так же, как
+// в макете).
+.news-card__excerpt {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-18;
+  text-align: justify;
+}
+
+.news-card__tags {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.news-card__data {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 16px;
+  // `divider` макета — 1px линия во всю ширину карточки; отдельным боксом её не
+  // рисуем, чтобы суммарная высота осталась ровно 470/324/250.
+  border-top: 1px solid vars.$color-1e1e1e;
+}
+
+.news-card__counters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.news-card__counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-18;
+}
+
+.news-card__date {
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-18;
+  text-align: right;
+}
+
+.news-card--featured {
+  .news-card__picture {
+    height: 310px;
+  }
+
+  .news-card__text {
+    height: 56px;
+  }
+
+  .news-card__heading {
+    -webkit-line-clamp: 2;
+  }
+}
+
+.news-card--compact {
+  .news-card__picture {
+    height: 152px;
+  }
+
+  .news-card__text {
+    height: 68px;
+  }
+}
+
+// 680×250: картинка 340×250 слева, контент справа; тень мягче (shadow-5-2).
+.news-card--wide {
+  flex-direction: row;
+  box-shadow: vars.$shadow-5-2;
+
+  .news-card__picture {
+    flex: 0 0 340px;
+    align-self: stretch;
+    height: 250px;
+  }
+
+  .news-card__text {
+    height: 140px;
+  }
+}

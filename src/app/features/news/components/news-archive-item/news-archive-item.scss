@@ -1,0 +1,117 @@
+@use 'variables' as vars;
+
+// Числа — из docs/figma/news1.json (`news_archive`): строка 660×100, превью
+// 175×100, колонка справа 485, строка данных 38 с паддингом 8, заголовок
+// Montserrat 18, текст Nunito Sans 14.
+:host {
+  display: block;
+}
+
+.news-archive-item {
+  display: flex;
+  height: 100px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: vars.$color-f9f9f9;
+  color: vars.$color-1e1e1e;
+  box-shadow: vars.$shadow-5-2;
+}
+
+.news-archive-item__picture {
+  position: relative;
+  flex: 0 0 175px;
+  overflow: hidden;
+  background: vars.$color-d9d9d9;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.news-archive-item__tags {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 8px;
+  max-width: calc(100% - 16px);
+  height: 24px;
+  overflow: hidden;
+}
+
+.news-archive-item__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.news-archive-item__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 8px 0;
+  overflow: hidden;
+}
+
+// `flex: 0 0 auto` — та же причина, что у `.news-card__heading`: в контейнере
+// фиксированной высоты заголовок иначе сжимается вместе с текстом.
+.news-archive-item__heading {
+  flex: 0 0 auto;
+  overflow: hidden;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-18;
+  font-weight: vars.$font-weight-500;
+  line-height: vars.$line-height-24;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.news-archive-item__excerpt {
+  overflow: hidden;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-18;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.news-archive-item__data {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  padding: 8px;
+  // `divider` макета (1px во всю ширину колонки) — бордером, чтобы суммарная
+  // высота строки осталась ровно 100px.
+  border-top: 1px solid vars.$color-1e1e1e;
+}
+
+.news-archive-item__counters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.news-archive-item__counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-18;
+}
+
+.news-archive-item__date {
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  font-weight: vars.$font-weight-400;
+  line-height: vars.$line-height-18;
+  text-align: right;
+}
