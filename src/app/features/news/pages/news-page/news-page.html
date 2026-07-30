@@ -16,13 +16,13 @@
   <aside class="news-page__archive" aria-label="Архив новостей">
     <div class="news-page__archive-toolbar">
       <app-button-group>
-        <app-button icon="pi pi-minus" severity="contrast" (click)="resetSort()" />
+        <app-button icon="pi pi-minus" severity="contrast" (click)="resetArchiveFilters()" />
 
         <app-checkbox
           [buttonMode]="true"
           severity="contrast"
-          [checked]="isSortedBy('views')"
-          (checkedChange)="onSortToggle('views', $event)"
+          [checked]="showOnlyViewed()"
+          (checkedChange)="showOnlyViewed.set($event)"
         >
           <i class="pi pi-eye" aria-hidden="true"></i>
         </app-checkbox>
@@ -30,8 +30,8 @@
         <app-checkbox
           [buttonMode]="true"
           severity="contrast"
-          [checked]="isSortedBy('likes')"
-          (checkedChange)="onSortToggle('likes', $event)"
+          [checked]="showOnlyLiked()"
+          (checkedChange)="showOnlyLiked.set($event)"
         >
           <i class="pi pi-heart" aria-hidden="true"></i>
         </app-checkbox>

@@ -14,6 +14,8 @@ const ITEM: NewsItem = {
   views: 980,
   likes: 1400,
   publishedAt: new Date(2023, 11, 6),
+  viewedByCurrentUser: false,
+  likedByCurrentUser: false,
 };
 
 const TAGS: NewsTag[] = [

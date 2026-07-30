@@ -23,6 +23,8 @@ function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
     views: 100,
     likes: 100,
     publishedAt: new Date(2023, 11, 6),
+    viewedByCurrentUser: false,
+    likedByCurrentUser: false,
     ...overrides,
   };
 }
@@ -30,9 +32,28 @@ function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
 const NEWS: NewsItem[] = Array.from({ length: 7 }, (_, index) => newsItem(`news-${index + 1}`));
 
 const ARCHIVE: NewsItem[] = [
-  newsItem('archive-1', { views: 10, likes: 300, publishedAt: new Date(2023, 11, 6) }),
-  newsItem('archive-2', { views: 500, likes: 20, publishedAt: new Date(2023, 10, 1), tagIds: ['stream'] }),
-  newsItem('archive-3', { views: 300, likes: 100, publishedAt: new Date(2023, 9, 1) }),
+  newsItem('archive-1', {
+    views: 10,
+    likes: 300,
+    publishedAt: new Date(2023, 11, 6),
+    viewedByCurrentUser: true,
+    likedByCurrentUser: false,
+  }),
+  newsItem('archive-2', {
+    views: 500,
+    likes: 20,
+    publishedAt: new Date(2023, 10, 1),
+    tagIds: ['stream'],
+    viewedByCurrentUser: false,
+    likedByCurrentUser: true,
+  }),
+  newsItem('archive-3', {
+    views: 300,
+    likes: 100,
+    publishedAt: new Date(2023, 9, 1),
+    viewedByCurrentUser: true,
+    likedByCurrentUser: true,
+  }),
 ];
 
 describe('NewsPage', () => {
@@ -79,22 +100,37 @@ describe('NewsPage', () => {
     expect(entry.tags).toEqual([TAGS[0]]);
   });
 
-  it('тоггл «глаз» сортирует архив по просмотрам, «сердце» — по лайкам, тогглы взаимоисключающие', () => {
+  it('тоггл «глаз» показывает только просмотренные текущим пользователем новости архива', () => {
     const page = createPage().componentInstance;
 
-    page['onSortToggle']('views', true);
-    expect(archiveIds(page)).toEqual(['archive-2', 'archive-3', 'archive-1']);
+    page['showOnlyViewed'].set(true);
 
-    page['onSortToggle']('likes', true);
-    expect(page['isSortedBy']('views')).toBe(false);
-    expect(archiveIds(page)).toEqual(['archive-1', 'archive-3', 'archive-2']);
+    expect(archiveIds(page)).toEqual(['archive-1', 'archive-3']);
   });
 
-  it('сброс сортировки возвращает исходный порядок архива', () => {
+  it('тоггл «сердце» показывает только лайкнутые текущим пользователем новости архива', () => {
     const page = createPage().componentInstance;
 
-    page['onSortToggle']('views', true);
-    page['resetSort']();
+    page['showOnlyLiked'].set(true);
+
+    expect(archiveIds(page)).toEqual(['archive-2', 'archive-3']);
+  });
+
+  it('оба тоггла комбинируются через AND', () => {
+    const page = createPage().componentInstance;
+
+    page['showOnlyViewed'].set(true);
+    page['showOnlyLiked'].set(true);
+
+    expect(archiveIds(page)).toEqual(['archive-3']);
+  });
+
+  it('сброс возвращает полный список архива', () => {
+    const page = createPage().componentInstance;
+
+    page['showOnlyViewed'].set(true);
+    page['showOnlyLiked'].set(true);
+    page['resetArchiveFilters']();
 
     expect(archiveIds(page)).toEqual(['archive-1', 'archive-2', 'archive-3']);
   });

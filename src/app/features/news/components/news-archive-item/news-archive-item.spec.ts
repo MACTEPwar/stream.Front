@@ -14,6 +14,8 @@ const ITEM: NewsItem = {
   views: 5300,
   likes: 44,
   publishedAt: new Date(2023, 11, 6),
+  viewedByCurrentUser: false,
+  likedByCurrentUser: false,
 };
 
 const TAGS: NewsTag[] = [{ id: 'tournament', name: 'Турнир', severity: 'danger' }];

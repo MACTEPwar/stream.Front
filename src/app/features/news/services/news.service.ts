@@ -30,6 +30,8 @@ const MOCK_NEWS: NewsItem[] = [
     views: 980,
     likes: 1400,
     publishedAt: new Date(2023, 11, 6),
+    viewedByCurrentUser: true,
+    likedByCurrentUser: false,
   },
   {
     id: 'news-2',
@@ -40,6 +42,8 @@ const MOCK_NEWS: NewsItem[] = [
     views: 743,
     likes: 210,
     publishedAt: new Date(2023, 11, 4),
+    viewedByCurrentUser: false,
+    likedByCurrentUser: false,
   },
   {
     id: 'news-3',
@@ -50,6 +54,8 @@ const MOCK_NEWS: NewsItem[] = [
     views: 2400,
     likes: 890,
     publishedAt: new Date(2023, 10, 28),
+    viewedByCurrentUser: true,
+    likedByCurrentUser: true,
   },
   {
     id: 'news-4',
@@ -60,6 +66,8 @@ const MOCK_NEWS: NewsItem[] = [
     views: 312,
     likes: 96,
     publishedAt: new Date(2023, 10, 21),
+    viewedByCurrentUser: false,
+    likedByCurrentUser: true,
   },
   {
     id: 'news-5',
@@ -70,6 +78,8 @@ const MOCK_NEWS: NewsItem[] = [
     views: 1120,
     likes: 1500,
     publishedAt: new Date(2023, 10, 15),
+    viewedByCurrentUser: true,
+    likedByCurrentUser: false,
   },
   {
     id: 'news-6',
@@ -80,6 +90,8 @@ const MOCK_NEWS: NewsItem[] = [
     views: 640,
     likes: 175,
     publishedAt: new Date(2023, 10, 9),
+    viewedByCurrentUser: false,
+    likedByCurrentUser: false,
   },
   {
     id: 'news-7',
@@ -90,6 +102,8 @@ const MOCK_NEWS: NewsItem[] = [
     views: 5300,
     likes: 2100,
     publishedAt: new Date(2023, 10, 2),
+    viewedByCurrentUser: true,
+    likedByCurrentUser: true,
   },
 ];
 
@@ -110,6 +124,8 @@ const MOCK_ARCHIVE: NewsItem[] = [
     views: 205,
     likes: 44,
     publishedAt: new Date(2023, 9, 27),
+    viewedByCurrentUser: false,
+    likedByCurrentUser: true,
   },
   {
     id: 'archive-8',
@@ -120,6 +136,8 @@ const MOCK_ARCHIVE: NewsItem[] = [
     views: 88,
     likes: 12,
     publishedAt: new Date(2023, 9, 18),
+    viewedByCurrentUser: true,
+    likedByCurrentUser: false,
   },
 ];
 

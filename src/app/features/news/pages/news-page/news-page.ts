@@ -31,9 +31,6 @@ const GRID_VARIANTS: readonly NewsCardVariant[] = [
   'wide',
 ];
 
-/** Ключ сортировки архива — тоггл-кнопки «глаз»/«сердце» над списком (`frame-36` макета). */
-type NewsSortKey = 'views' | 'likes';
-
 interface NewsEntry {
   readonly item: NewsItem;
   readonly tags: NewsTag[];
@@ -69,10 +66,10 @@ function endOfDay(date: Date): Date {
  * и кнопку «Поддержать».
  *
  * Иконки тулбара архива (`minus`/`eyes`/`like` в макете — группа 120×40 с
- * подсвеченной "активной" ячейкой): реализованы как сортировка архива по
- * просмотрам/лайкам (два взаимоисключающих тоггла) и сброс сортировки
- * (`minus`). В экспорте семантика не зафиксирована — требует подтверждения,
- * когда Figma снова будет доступна.
+ * подсвеченной "активной" ячейкой): фильтры архива по личным флагам текущего
+ * пользователя — «глаз» показывает только просмотренные им новости
+ * (`viewedByCurrentUser`), «сердце» — только лайкнутые (`likedByCurrentUser`),
+ * оба независимы и комбинируются через AND; `minus` сбрасывает оба.
  *
  * Фильтр (`filterChange`) применяется и к сетке, и к архиву: сайдбар физически
  * стоит в тулбаре архива, но фильтрует раздел «Новости» целиком.
@@ -92,7 +89,8 @@ export class NewsPage implements OnInit {
   private readonly tags = signal<NewsTag[]>([]);
 
   protected readonly filter = signal<NewsFilter>(EMPTY_FILTER);
-  protected readonly sortKey = signal<NewsSortKey | null>(null);
+  protected readonly showOnlyViewed = signal(false);
+  protected readonly showOnlyLiked = signal(false);
 
   private readonly tagsById = computed(() => new Map(this.tags().map((tag) => [tag.id, tag])));
 
@@ -105,10 +103,12 @@ export class NewsPage implements OnInit {
   );
 
   protected readonly archiveEntries = computed<NewsEntry[]>(() => {
-    const key = this.sortKey();
-    const items = this.matching(this.archive());
-    const sorted = key ? [...items].sort((left, right) => right[key] - left[key]) : items;
-    return sorted.map((item) => ({ item, tags: this.resolveTags(item) }));
+    const onlyViewed = this.showOnlyViewed();
+    const onlyLiked = this.showOnlyLiked();
+    const items = this.matching(this.archive()).filter(
+      (item) => (!onlyViewed || item.viewedByCurrentUser) && (!onlyLiked || item.likedByCurrentUser),
+    );
+    return items.map((item) => ({ item, tags: this.resolveTags(item) }));
   });
 
   ngOnInit(): void {
@@ -117,17 +117,9 @@ export class NewsPage implements OnInit {
     this.newsService.getArchive().subscribe((archive) => this.archive.set(archive));
   }
 
-  protected isSortedBy(key: NewsSortKey): boolean {
-    return this.sortKey() === key;
-  }
-
-  /** Тогглы взаимоисключающие — снятие галочки возвращает список к исходному порядку. */
-  protected onSortToggle(key: NewsSortKey, checked: boolean): void {
-    this.sortKey.set(checked ? key : null);
-  }
-
-  protected resetSort(): void {
-    this.sortKey.set(null);
+  protected resetArchiveFilters(): void {
+    this.showOnlyViewed.set(false);
+    this.showOnlyLiked.set(false);
   }
 
   private matching(items: NewsItem[]): NewsItem[] {

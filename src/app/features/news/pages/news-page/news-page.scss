@@ -11,16 +11,17 @@ $content-max-width: $grid-column-width * 3 + $grid-gap * 3 + $archive-width;
 // начало шестой строки, обрезанное скроллом).
 $archive-list-height: 680px;
 
-// Фон страницы — белый по самому фрейму макета (`bg: rgb(255, 255, 255)`).
-// Шапка (`Shell`) лежит ВЫШЕ этого контента и остаётся на глобальном тёмном
-// градиенте (`_reset.scss`) — как на макете, где тёмная полоса меню отделена от
-// белой области контента.
+// Фон страницы — унаследован от глобального тёмного `radial-gradient`
+// (`_reset.scss`, `html { background: ... }`), НЕ белый фрейма макета
+// (`bg: rgb(255, 255, 255)`) — по прямому запросу пользователя (картинка на
+// этот фон добавится отдельной задачей). Карточки/панель архива сами остаются
+// светлыми (собственная подложка `$color-f9f9f9`) — фон меняется только
+// вокруг них, поэтому `.news-page__empty` ниже перекрашен в светлый (это
+// единственный текст страницы, лежащий прямо на фоне, не внутри карточки).
 :host {
   display: block;
   min-height: 100%;
   padding: 24px 48px;
-  background: vars.$color-ffffff;
-  color: vars.$color-1e1e1e;
 }
 
 .news-page {
@@ -103,4 +104,5 @@ $archive-list-height: 680px;
   font-family: vars.$font-family-nunito-sans;
   font-size: vars.$font-size-14;
   line-height: vars.$line-height-18;
+  color: vars.$color-ffffff;
 }

@@ -13,4 +13,8 @@ export interface NewsItem {
   views: number;
   likes: number;
   publishedAt: Date;
+  /** Личный флаг «текущий пользователь уже просматривал эту новость» — не общий счётчик `views`. Пока мок, реального auth-флага с backend ещё нет. */
+  viewedByCurrentUser: boolean;
+  /** Личный флаг «текущий пользователь лайкнул эту новость» — не общий счётчик `likes`. Пока мок, реального auth-флага с backend ещё нет. */
+  likedByCurrentUser: boolean;
 }
