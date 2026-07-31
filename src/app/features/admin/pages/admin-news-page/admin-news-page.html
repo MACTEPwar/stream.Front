@@ -101,10 +101,41 @@
             [options]="tags()"
             optionLabel="name"
             optionValue="id"
+            display="chip"
+            panelStyleClass="admin-news-page__tag-multiselect-panel"
             [loading]="isLoadingTags()"
             placeholder="Выберите теги"
             [(ngModel)]="selectedTagIds"
-          />
+          >
+            <ng-template #item let-tag>
+              <span
+                class="admin-news-page__tag-option"
+                [style.background]="tag.color"
+                [style.color]="tagTextColor(tag.color)"
+              >
+                {{ tag.name }}
+              </span>
+            </ng-template>
+            <ng-template #selecteditems let-selectedTags let-removeChip="removeChip">
+              @for (tag of selectedTags; track tag.id) {
+                <span
+                  class="admin-news-page__tag-chip"
+                  [style.background]="tag.color"
+                  [style.color]="tagTextColor(tag.color)"
+                >
+                  {{ tag.name }}
+                  <button
+                    type="button"
+                    class="admin-news-page__tag-chip-remove"
+                    aria-label="Убрать тег"
+                    (click)="removeChip(tag, $event)"
+                  >
+                    &times;
+                  </button>
+                </span>
+              }
+            </ng-template>
+          </p-multiselect>
         }
       </div>
 

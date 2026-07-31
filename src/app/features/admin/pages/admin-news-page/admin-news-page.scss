@@ -1,5 +1,168 @@
 @use 'variables' as vars;
 
+// `p-multiselect` (`display="chip"`, тегов в форме) без явного `appendTo` —
+// дефолт `overlayAppendTo` в этом проекте `'self'` (`primeng-config.mjs`,
+// не переопределён в `app.config.ts`), панель списка остаётся физически
+// внутри DOM-поддерева ЭТОГО компонента (в отличие от `Select`, у которого
+// `appendTo="body"` явно вынесен наружу, см. select.ts/select.scss) —
+// поэтому CSS-переменные, заданные на `:host`, доходят до неё обычным
+// наследованием (CSS custom properties наследуются по факту положения в DOM,
+// Angular-скоуп на них не влияет), тот же приём, что у `--p-drawer-*` в
+// `news-filter-sidebar.scss`.
+//
+// Цвета/паддинги/радиус — те же значения, что у `Select`/`TextField`
+// (см. `select.scss`), по прямому запросу пользователя — визуально
+// совпадает в одном ряду формы.
+:host {
+  --p-multiselect-background: #{vars.$color-ffffff};
+  --p-multiselect-border-color: #{vars.$color-e4e4e4};
+  --p-multiselect-hover-border-color: #{vars.$color-e4e4e4};
+  --p-multiselect-focus-border-color: #{vars.$color-e4e4e4};
+  --p-multiselect-focus-ring-shadow: none;
+  --p-multiselect-border-radius: 5px;
+  --p-multiselect-color: #{vars.$color-1e1e1e};
+  --p-multiselect-placeholder-color: #{vars.$color-b2b2b2};
+  --p-multiselect-dropdown-color: #{vars.$color-1e1e1e};
+  --p-multiselect-clear-icon-color: #{vars.$color-1e1e1e};
+  --p-multiselect-font-size: #{vars.$font-size-16};
+  --p-multiselect-font-weight: #{vars.$font-weight-400};
+  --p-multiselect-padding-y: 0px;
+  --p-multiselect-padding-x: 12px;
+
+  // `p-drawer` формы создания/редактирования — без явного `appendTo`, дефолт
+  // `overlayAppendTo` `'self'` (`primeng-config.mjs`) — светлый фон/текст (по
+  // прямому запросу пользователя), не унаследованный тёмный
+  // `overlay.modal.background` `AdminPreset`; тот же приём, что
+  // `--p-drawer-*` в news-filter-sidebar.scss.
+  --p-drawer-background: #{vars.$color-ffffff};
+  --p-drawer-border-color: #{vars.$color-e4e4e4};
+  --p-drawer-color: #{vars.$color-1e1e1e};
+
+  // `p-table` — тоже без явного `appendTo`, рендерится прямо на месте.
+  // Светлая тема (по прямому запросу пользователя) — не унаследованные
+  // тёмные `content.background`/`content.color` `AdminPreset`; hover-строки —
+  // тот же primary-цвет проекта, что hover пунктов `Select`/`p-multiselect`
+  // (`$color-e1bf90`/`$color-76511c`, см. select.scss:85-89). Дублируется в
+  // `admin-news-tags-page.scss` (тот же `p-table`, свой отдельный `:host`) —
+  // общий партиал под 2 текущих потребителя не заводился, тот же принцип, что
+  // `$tag-chip-severities` в news-filter-sidebar.scss.
+  --p-datatable-border-color: #{vars.$color-e4e4e4};
+  --p-datatable-header-cell-background: #{vars.$color-f9f9f9};
+  --p-datatable-header-cell-hover-background: #{vars.$color-f9f9f9};
+  --p-datatable-header-cell-selected-background: #{vars.$color-f9f9f9};
+  --p-datatable-header-cell-border-color: #{vars.$color-e4e4e4};
+  --p-datatable-header-cell-color: #{vars.$color-1e1e1e};
+  --p-datatable-header-cell-hover-color: #{vars.$color-1e1e1e};
+  --p-datatable-header-cell-selected-color: #{vars.$color-1e1e1e};
+  --p-datatable-row-background: #{vars.$color-ffffff};
+  --p-datatable-row-hover-background: #{vars.$color-e1bf90};
+  --p-datatable-row-selected-background: #{vars.$color-ffffff};
+  --p-datatable-row-color: #{vars.$color-1e1e1e};
+  --p-datatable-row-hover-color: #{vars.$color-76511c};
+  --p-datatable-row-selected-color: #{vars.$color-1e1e1e};
+  --p-datatable-body-cell-border-color: #{vars.$color-e4e4e4};
+  --p-paginator-background: #{vars.$color-ffffff};
+  --p-paginator-color: #{vars.$color-1e1e1e};
+  --p-paginator-nav-button-hover-background: #{vars.$color-e1bf90};
+  --p-paginator-nav-button-selected-background: #{vars.$color-cfa97c};
+  --p-paginator-nav-button-color: #{vars.$color-1e1e1e};
+  --p-paginator-nav-button-hover-color: #{vars.$color-76511c};
+  --p-paginator-nav-button-selected-color: #{vars.$color-76511c};
+  --p-paginator-current-page-report-color: #{vars.$color-1e1e1e};
+}
+
+// `<p-multiselect>` пишется прямо в шаблоне ЭТОГО компонента (html) — сам
+// host-элемент компонента `MultiSelect` несёт scope-атрибут ЭТОГО компонента
+// (Angular добавляет его creating-компонентом, независимо от собственного
+// scope дочернего компонента), поэтому обычный (не `::ng-deep`) селектор его
+// достаёт — тот же приём/обоснование, что `.p-select { ... }` в select.scss.
+// Высота = `Select`/`TextField` (40px), по прямому запросу пользователя —
+// строка формы одного роста. `min-height`, не `height` — чипы переносятся на
+// вторую строку при большом числе выбранных тегов, фиксированная `height`
+// обрезала бы перенос.
+.p-multiselect {
+  width: 100%;
+  min-height: 40px;
+  font-family: vars.$font-family-montserrat;
+}
+
+// Всё остальное (`.p-multiselect-label` — вложенный элемент СОБСТВЕННОГО
+// шаблона `MultiSelect`; панель списка и пункты — физически внутри
+// DOM-поддерева этого компонента при дефолтном `appendTo: 'self'`, но тоже
+// разметка чужого шаблона) недостижимо обычным селектором — `:host
+// ::ng-deep <селектор>` (с `:host`-предком, не голый `::ng-deep`) снимает
+// Angular-скоуп только у ПРАВОЙ части, требуя реального DOM-предка с нашим
+// атрибутом слева — тот же приём, что `:host ::ng-deep .p-drawer-title` в
+// news-filter-sidebar.scss, корректно ограничивает эффект только этим
+// экземпляром компонента (не любым `p-multiselect` на странице).
+:host ::ng-deep .p-multiselect-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+// Список — так же светло, как сама коробка (по прямому запросу
+// пользователя), не унаследованный тёмный фон темы `AdminPreset`; бордер и
+// тень — тот же приём, что `.app-select-panel.p-select-overlay`
+// (select.scss). Привязка к персональному `panelStyleClass`
+// (`admin-news-page__tag-multiselect-panel`, html) — не задевает другие
+// `p-multiselect` в приложении.
+:host ::ng-deep .admin-news-page__tag-multiselect-panel.p-multiselect-overlay {
+  background: #{vars.$color-ffffff};
+  color: #{vars.$color-1e1e1e};
+  border: 1px solid #{vars.$color-e4e4e4};
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+// Пункты списка — стандартный чекбокс PrimeNG оставлен как есть (отмечает
+// выбор), красится только САМ пункт (фон/текст цветом тега,
+// `admin-news-page__tag-option`, см. html) — разделитель между пунктами тот
+// же приём, что `.p-select-option` в select.scss.
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-option:not(:last-child) {
+  border-bottom: 1px solid #{vars.$color-e4e4e4};
+}
+
+.admin-news-page__tag-option {
+  display: block;
+  width: 100%;
+  margin: -0.5rem -0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: inherit;
+}
+
+// Кастомный чип выбранного тега (`selecteditems`-шаблон, html) — цвет фона/
+// текста тега из БД (`tag.color`/`tagTextColor()`, см. admin-news-page.ts),
+// не дефолтный `p-chip` PrimeNG (заменён целиком кастомным шаблоном, чтобы
+// покрасить и сам чип, не только текст).
+.admin-news-page__tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 16px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  line-height: vars.$line-height-24;
+}
+
+.admin-news-page__tag-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
 .admin-news-page__toolbar {
   display: flex;
   align-items: center;
@@ -46,10 +209,14 @@
   gap: 6px;
 }
 
+// Тёмный текст (не унаследованный белый цвет тела страницы, см.
+// `_reset.scss`) — drawer этой страницы теперь светлый (см. `--p-drawer-*`
+// выше, по прямому запросу пользователя), белый лейбл на светлом фоне был бы
+// не виден.
 .admin-news-page__label {
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-16;
-  color: vars.$color-ffffff;
+  color: vars.$color-1e1e1e;
 }
 
 // Визуально консистентно с TextField.text-field__control/__input — свой

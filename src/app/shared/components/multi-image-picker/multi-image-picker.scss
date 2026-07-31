@@ -52,6 +52,9 @@
   gap: 8px;
 }
 
+// Тёмный текст (не белый) — единственное место использования
+// (`AdminNewsPage`) теперь на светлом `p-drawer` (см. `admin-news-page.scss`,
+// `--p-drawer-*`), белый на светлом фоне был бы не виден.
 .multi-image-picker__upload-label {
   align-self: flex-start;
   display: inline-flex;
@@ -60,7 +63,7 @@
   cursor: pointer;
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-14;
-  color: vars.$color-ffffff;
+  color: vars.$color-1e1e1e;
 }
 
 .multi-image-picker__link-row {
