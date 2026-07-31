@@ -44,6 +44,22 @@ export const routes: Routes = [
             (m) => m.AdminUsersPage,
           ),
       },
+      {
+        path: 'news',
+        data: { breadcrumb: 'Новости' },
+        loadComponent: () =>
+          import('./features/admin/pages/admin-news-page/admin-news-page').then(
+            (m) => m.AdminNewsPage,
+          ),
+      },
+      {
+        path: 'news-tags',
+        data: { breadcrumb: 'Теги' },
+        loadComponent: () =>
+          import('./features/admin/pages/admin-news-tags-page/admin-news-tags-page').then(
+            (m) => m.AdminNewsTagsPage,
+          ),
+      },
     ],
   },
   // Заглушки (stream.Front#49) — для ручной проверки роутинга/активного

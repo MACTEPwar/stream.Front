@@ -1,0 +1,124 @@
+<div class="admin-news-page">
+  <div class="admin-news-page__toolbar">
+    <div class="admin-news-page__filters">
+      <app-text-field
+        class="admin-news-page__search-field"
+        placeholder="Поиск по заголовку"
+        [(value)]="searchFilter"
+      />
+      <app-select
+        class="admin-news-page__tag-filter"
+        [options]="tagFilterOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(value)]="tagFilter"
+        (valueChange)="onTagFilterChange()"
+      />
+    </div>
+    <app-button text="Добавить" (click)="onAddClick()" />
+  </div>
+
+  @if (hasError()) {
+    <app-error-message message="Не удалось загрузить новости" />
+  } @else {
+    <p-table
+      [value]="news()"
+      [loading]="isLoading()"
+      dataKey="id"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      (onLazyLoad)="onLazyLoad($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th>Заголовок</th>
+          <th>Теги</th>
+          <th>Дата публикации</th>
+          <th>Просмотры / лайки</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-item>
+        <tr>
+          <td>{{ item.title }}</td>
+          <td>
+            @for (tag of item.tags; track tag.id) {
+              <app-badge [text]="tag.name" [color]="tag.color" class="admin-news-page__tag-badge" />
+            }
+          </td>
+          <td>{{ item.publishedAt | date: 'dd.MM.yyyy' }}</td>
+          <td>{{ item.viewCount }} / {{ item.likeCount }}</td>
+          <td>
+            <app-button text="Изменить" size="small" (click)="onEditClick(item)" />
+            <app-button
+              text="Удалить"
+              size="small"
+              severity="danger"
+              (click)="onDeleteClick(item)"
+              class="admin-news-page__delete-button"
+            />
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+
+  <p-drawer
+    [(visible)]="drawerVisible"
+    position="right"
+    [header]="editingNewsId() ? 'Изменить новость' : 'Новая новость'"
+    styleClass="admin-news-page__drawer"
+    [style]="{ width: '480px', 'max-width': '90vw' }"
+  >
+    <div class="admin-news-page__form">
+      <app-text-field label="Заголовок" [(value)]="title" [required]="true" />
+
+      <div class="admin-news-page__field">
+        <label class="admin-news-page__label" for="admin-news-description">Описание</label>
+        <textarea
+          id="admin-news-description"
+          class="admin-news-page__textarea"
+          rows="6"
+          [value]="description()"
+          (input)="onDescriptionInput($event)"
+        ></textarea>
+      </div>
+
+      <div class="admin-news-page__field">
+        <label class="admin-news-page__label" for="admin-news-published-at">Дата публикации</label>
+        <app-datepicker id="admin-news-published-at" [(value)]="publishedAt" />
+      </div>
+
+      <div class="admin-news-page__field">
+        <label class="admin-news-page__label" for="admin-news-tags">Теги</label>
+        @if (hasTagsError()) {
+          <app-error-message message="Не удалось загрузить теги" />
+        } @else {
+          <p-multiselect
+            id="admin-news-tags"
+            [options]="tags()"
+            optionLabel="name"
+            optionValue="id"
+            [loading]="isLoadingTags()"
+            placeholder="Выберите теги"
+            [(ngModel)]="selectedTagIds"
+          />
+        }
+      </div>
+
+      <div class="admin-news-page__field">
+        <span class="admin-news-page__label">Изображения</span>
+        <app-multi-image-picker [(urls)]="imageUrls" />
+      </div>
+
+      <app-button
+        text="Сохранить"
+        [disabled]="isSaving()"
+        (click)="onSaveClick()"
+        class="admin-news-page__save-button"
+      />
+    </div>
+  </p-drawer>
+</div>

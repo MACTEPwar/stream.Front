@@ -1,0 +1,81 @@
+@use 'variables' as vars;
+
+.admin-news-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-news-page__filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+// Тот же приём, что у `AdminUsersPage` (`admin-users-page.scss`) — явный
+// `flex-basis` через `flex: 0 0 <px>` перебивает `width: 100%` на хосте
+// `TextField`/`Select`.
+.admin-news-page__search-field {
+  flex: 0 0 300px;
+}
+
+.admin-news-page__tag-filter {
+  flex: 0 0 200px;
+}
+
+.admin-news-page__delete-button {
+  margin-left: 8px;
+}
+
+.admin-news-page__tag-badge {
+  margin-right: 4px;
+}
+
+.admin-news-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px;
+}
+
+.admin-news-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-news-page__label {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  color: vars.$color-ffffff;
+}
+
+// Визуально консистентно с TextField.text-field__control/__input — свой
+// многострочный вариант не заведён в TextField ради единственного места
+// использования (по прямому указанию задачи).
+.admin-news-page__textarea {
+  resize: vertical;
+  min-height: 120px;
+  border: 1px solid vars.$color-e4e4e4;
+  border-radius: 5px;
+  background: vars.$color-ffffff;
+  padding: 8px 12px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  color: vars.$color-1e1e1e;
+
+  &::placeholder {
+    color: vars.$color-b2b2b2;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.admin-news-page__save-button {
+  align-self: flex-start;
+  margin-top: 8px;
+}
