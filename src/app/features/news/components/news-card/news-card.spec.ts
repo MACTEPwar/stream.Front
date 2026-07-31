@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { NewsCard, NewsCardVariant } from './news-card';
+import { NewsCard } from './news-card';
 
 const ITEM: NewsItem = {
   id: 'news-1',
@@ -26,12 +26,11 @@ const TAGS: NewsTag[] = [
 @Component({
   selector: 'app-news-card-host',
   imports: [NewsCard],
-  template: `<app-news-card [item]="item()" [tags]="tags()" [variant]="variant()" />`,
+  template: `<app-news-card [item]="item()" [tags]="tags()" />`,
 })
 class NewsCardHost {
   readonly item = signal<NewsItem>(ITEM);
   readonly tags = signal<NewsTag[]>(TAGS);
-  readonly variant = signal<NewsCardVariant>('featured');
 }
 
 describe('NewsCard', () => {
@@ -62,15 +61,12 @@ describe('NewsCard', () => {
     expect(card.querySelectorAll('app-badge').length).toBe(TAGS.length);
   });
 
-  it('вариант отражается модификатором класса карточки', () => {
+  it('карточка растягивается на 100% размера своей ячейки (нет фиксированного variant-модификатора)', () => {
     const fixture = createCard();
-    expect(fixture.nativeElement.querySelector('.news-card--featured')).not.toBeNull();
+    const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
 
-    fixture.componentInstance.variant.set('wide');
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.news-card--featured')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.news-card--wide')).not.toBeNull();
+    expect(article).not.toBeNull();
+    expect(article.className.split(' ')).toEqual(['news-card']);
   });
 
   it('без imageUrl картинка не рендерится — остаётся плейсхолдер-прямоугольник', () => {

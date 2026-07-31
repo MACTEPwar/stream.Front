@@ -1,16 +1,26 @@
 @use 'variables' as vars;
 
-// Все числа — из docs/figma/news1.json (фреймы `news`): карточка 330×470 /
-// 330×324 / 680×250, картинка 330×310 / 330×152 / 340×250, контент padding
-// 8/16/16/16 + gap 16, блок заголовок+текст gap 4, строка данных 40 с
-// паддингом 0 16.
+// Раньше — три фиксированных px-варианта (docs/figma/news1.json). С переходом
+// на bento-сетку 3×12 (`PinnedNewsGrid`, stream.Front#112) карточка
+// растягивается на 100% размера своей grid-ячейки, а не диктует его сама —
+// отсюда :host на 100%/100% вместо `display: block` без размеров.
+// `container-type: size` — явно заявляет контейнерный контекст по обоим
+// измерениям (для @container-запроса ниже по `orientation`), безопасно,
+// т.к. :host уже получает конкретные ширину/высоту от родительской
+// grid-ячейки, а не от размера собственного содержимого.
 :host {
   display: block;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  container-name: news-card;
 }
 
 .news-card {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   border-radius: 5px;
   background: vars.$color-f9f9f9;
@@ -19,7 +29,10 @@
 }
 
 .news-card__picture {
-  flex: 0 0 auto;
+  // Растягивается на большую часть высоты карточки, но гибко — картинка
+  // первой уступает место содержимому в маленьких ячейках.
+  flex: 1 1 55%;
+  min-height: 0;
   overflow: hidden;
   background: vars.$color-d9d9d9;
 
@@ -32,33 +45,35 @@
 
 .news-card__body {
   display: flex;
-  flex: 1;
+  flex: 1 1 45%;
   flex-direction: column;
-  // `align.main: end` у `wrapper` в макете — в широкой карточке контент прижат
-  // к низу (картинка 250 выше, чем контент 204 + данные 40).
   justify-content: flex-end;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .news-card__content {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
+  min-height: 0;
   gap: 16px;
   padding: 8px 16px 16px;
+  overflow: hidden;
 }
 
-// Фиксированная высота + overflow: hidden — так же, как в макете (текст-превью
-// в `featured` при двухстрочном заголовке физически не влезает).
+// Гибкая (не фиксированная px) высота + overflow: hidden — текст-превью
+// обрезается по факту доступного места в ячейке, а не растягивает карточку.
 .news-card__text {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
+  min-height: 0;
   gap: 4px;
   overflow: hidden;
 }
 
-// `flex: 0 0 auto` — иначе заголовок сжимается вместе с текстом-превью (оба
-// флекс-айтема с дефолтным `flex-shrink: 1` в фиксированном по высоте
-// контейнере) и обрезается по строке на половине высоты.
 .news-card__heading {
   display: -webkit-box;
   flex: 0 0 auto;
@@ -68,12 +83,9 @@
   font-weight: vars.$font-weight-500;
   line-height: vars.$line-height-28;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
 }
 
-// Занимает остаток фиксированной высоты блока и обрезается по нему — в
-// `featured` при двухстрочном заголовке остатка не остаётся вовсе (так же, как
-// в макете).
 .news-card__excerpt {
   flex: 1 1 auto;
   min-height: 0;
@@ -100,8 +112,7 @@
   justify-content: space-between;
   height: 40px;
   padding: 0 16px;
-  // `divider` макета — 1px линия во всю ширину карточки; отдельным боксом её не
-  // рисуем, чтобы суммарная высота осталась ровно 470/324/250.
+  // `divider` макета — 1px линия во всю ширину карточки.
   border-top: 1px solid vars.$color-1e1e1e;
 }
 
@@ -129,42 +140,24 @@
   text-align: right;
 }
 
-.news-card--featured {
-  .news-card__picture {
-    height: 310px;
+// Широкие/низкие ячейки (например `colSpan: 2` при небольшом `rowSpan`) —
+// картинка слева, контент справа, как у прежнего `wide`-варианта; переключено
+// CSS container-запросом по фактической ориентации ячейки, а не проп'ом,
+// т.к. ориентация зависит от реального соотношения colSpan/rowSpan слота
+// (произвольного, назначаемого админом), а не от заранее известного набора
+// вариантов.
+@container news-card (orientation: landscape) {
+  .news-card {
+    flex-direction: row;
   }
-
-  .news-card__text {
-    height: 56px;
-  }
-
-  .news-card__heading {
-    -webkit-line-clamp: 2;
-  }
-}
-
-.news-card--compact {
-  .news-card__picture {
-    height: 152px;
-  }
-
-  .news-card__text {
-    height: 68px;
-  }
-}
-
-// 680×250: картинка 340×250 слева, контент справа; тень мягче (shadow-5-2).
-.news-card--wide {
-  flex-direction: row;
-  box-shadow: vars.$shadow-5-2;
 
   .news-card__picture {
-    flex: 0 0 340px;
-    align-self: stretch;
-    height: 250px;
+    flex: 0 0 42%;
+    height: 100%;
   }
 
-  .news-card__text {
-    height: 140px;
+  .news-card__body {
+    flex: 1 1 58%;
+    justify-content: center;
   }
 }
