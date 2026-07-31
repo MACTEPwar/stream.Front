@@ -9,8 +9,8 @@ import { AdminNewsTag } from '../../models/news.model';
 import { AdminNewsTagsPage } from './admin-news-tags-page';
 
 const mockTags: AdminNewsTag[] = [
-  { id: 't1', name: 'Турниры', color: '#FF5733', createdAt: '', updatedAt: '' },
-  { id: 't2', name: 'Анонсы', color: '#00FF00', createdAt: '', updatedAt: '' },
+  { id: 't1', name: 'Турниры', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' },
+  { id: 't2', name: 'Анонсы', color: '#00FF00', textColor: '#1E1E1E', createdAt: '', updatedAt: '' },
 ];
 
 describe('AdminNewsTagsPage', () => {
@@ -64,12 +64,13 @@ describe('AdminNewsTagsPage', () => {
     fixture.componentInstance['onAddClick']();
     fixture.componentInstance['name'].set('Стримы');
     fixture.componentInstance['color'].set('#123456');
+    fixture.componentInstance['textColor'].set('#FFFFFF');
     fixture.componentInstance['onSaveClick']();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/admin/news-tags`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ name: 'Стримы', color: '#123456' });
-    req.flush({ id: 't3', name: 'Стримы', color: '#123456', createdAt: '', updatedAt: '' });
+    expect(req.request.body).toEqual({ name: 'Стримы', color: '#123456', textColor: '#FFFFFF' });
+    req.flush({ id: 't3', name: 'Стримы', color: '#123456', textColor: '#FFFFFF', createdAt: '', updatedAt: '' });
 
     expect(fixture.componentInstance['drawerVisible']()).toBe(false);
     expect(fixture.componentInstance['tags']().length).toBe(3);
@@ -84,7 +85,7 @@ describe('AdminNewsTagsPage', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/admin/news-tags/t1`);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ name: 'Турниры', color: '#000000' });
+    expect(req.request.body).toEqual({ name: 'Турниры', color: '#000000', textColor: '#FFFFFF' });
     req.flush({ ...mockTags[0], color: '#000000' });
 
     expect(fixture.componentInstance['tags']()[0].color).toBe('#000000');
@@ -128,7 +129,7 @@ describe('AdminNewsTagsPage', () => {
     fixture.componentInstance['onAddClick']();
     fixture.componentInstance['onSaveClick']();
 
-    expect(showSpy).toHaveBeenCalledWith('Заполните название и цвет', 'error');
+    expect(showSpy).toHaveBeenCalledWith('Заполните название, цвет фона и цвет текста', 'error');
     httpMock.expectNone(`${environment.apiUrl}/admin/news-tags`);
   });
 });

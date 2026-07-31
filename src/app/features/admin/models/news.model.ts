@@ -17,6 +17,7 @@ export interface AdminNewsTag {
   id: string;
   name: string;
   color: string;
+  textColor: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +56,7 @@ export interface AdminNewsListParams {
 export interface CreateNewsTagPayload {
   name: string;
   color: string;
+  textColor: string;
 }
 
 export type UpdateNewsTagPayload = Partial<CreateNewsTagPayload>;

@@ -136,22 +136,6 @@ export class AdminNewsPage {
     return [{ label: 'Все теги', value: null }, ...this.tags().map((tag) => ({ label: tag.name, value: tag.id }))];
   }
 
-  /**
-   * Эвристика цвета текста тега по яркости (luminance) фона (`AdminNewsTag.color`) —
-   * ВРЕМЕННОЕ решение, пока в модели нет собственного `textColor`
-   * (`streamer.API#69`, ещё не готово на момент этой задачи). Когда поле
-   * появится на backend — заменить этот метод на прямое использование
-   * `tag.textColor` вместо вычисления контраста.
-   */
-  protected tagTextColor(hexColor: string): string {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.6 ? '#1e1e1e' : '#ffffff';
-  }
-
   protected onLazyLoad(event: TableLazyLoadEvent): void {
     const first = event.first ?? 0;
     const rows = event.rows ?? PAGE_SIZE;

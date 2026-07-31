@@ -11,8 +11,8 @@ import { AdminNews, AdminNewsTag } from '../../models/news.model';
 import { AdminNewsPage } from './admin-news-page';
 
 const mockTags: AdminNewsTag[] = [
-  { id: 't1', name: 'Турниры', color: '#FF5733', createdAt: '', updatedAt: '' },
-  { id: 't2', name: 'Анонсы', color: '#00FF00', createdAt: '', updatedAt: '' },
+  { id: 't1', name: 'Турниры', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' },
+  { id: 't2', name: 'Анонсы', color: '#00FF00', textColor: '#1E1E1E', createdAt: '', updatedAt: '' },
 ];
 
 const mockNews: AdminNews = {

@@ -16,6 +16,7 @@
         <tr>
           <th>Название</th>
           <th>Цвет</th>
+          <th>Цвет текста</th>
           <th></th>
         </tr>
       </ng-template>
@@ -25,6 +26,10 @@
           <td>
             <span class="admin-news-tags-page__color-swatch" [style.background]="tag.color"></span>
             {{ tag.color }}
+          </td>
+          <td>
+            <span class="admin-news-tags-page__color-swatch" [style.background]="tag.textColor"></span>
+            {{ tag.textColor }}
           </td>
           <td>
             <app-button text="Изменить" size="small" (click)="onEditClick(tag)" />
@@ -59,6 +64,19 @@
             class="admin-news-tags-page__color-input"
             [value]="color()"
             (input)="color.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="admin-news-tags-page__field">
+        <label for="admin-news-tags-text-color">Цвет текста</label>
+        <div class="admin-news-tags-page__color-row">
+          <app-text-field id="admin-news-tags-text-color" placeholder="#FFFFFF" [(value)]="textColor" />
+          <input
+            type="color"
+            class="admin-news-tags-page__color-input"
+            [value]="textColor()"
+            (input)="textColor.set($any($event.target).value)"
           />
         </div>
       </div>

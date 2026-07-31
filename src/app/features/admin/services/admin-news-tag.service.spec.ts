@@ -10,6 +10,7 @@ const mockTag: AdminNewsTag = {
   id: 't1',
   name: 'Турниры',
   color: '#FF5733',
+  textColor: '#FFFFFF',
   createdAt: '2026-07-31T12:00:00.000Z',
   updatedAt: '2026-07-31T12:00:00.000Z',
 };
@@ -43,11 +44,13 @@ describe('AdminNewsTagService', () => {
 
   it('create() бьёт в POST /admin/news-tags', () => {
     let result: AdminNewsTag | undefined;
-    service.create({ name: 'Турниры', color: '#FF5733' }).subscribe((tag) => (result = tag));
+    service
+      .create({ name: 'Турниры', color: '#FF5733', textColor: '#FFFFFF' })
+      .subscribe((tag) => (result = tag));
 
     const req = httpMock.expectOne(`${environment.apiUrl}/admin/news-tags`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ name: 'Турниры', color: '#FF5733' });
+    expect(req.request.body).toEqual({ name: 'Турниры', color: '#FF5733', textColor: '#FFFFFF' });
     req.flush(mockTag);
 
     expect(result).toEqual(mockTag);

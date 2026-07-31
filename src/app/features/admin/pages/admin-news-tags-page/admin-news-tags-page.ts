@@ -18,12 +18,12 @@ import { AdminNewsTagService } from '../../services/admin-news-tag.service';
  * `streamer.API#65`) — тот же CRUD-паттерн, что `AdminUsersPage`/
  * `AdminSchedulePage`: `p-table` (без серверной пагинации — теги не
  * пагинируются на backend, `GET /news-tags` отдаёт весь список сразу),
- * `p-drawer` с формой `name`/`color` для создания И редактирования (одна
- * форма, `editingTagId() === null` отличает режим), удаление — через
+ * `p-drawer` с формой `name`/`color`/`textColor` для создания И редактирования
+ * (одна форма, `editingTagId() === null` отличает режим), удаление — через
  * `ConfirmModal` (тот же паттерн, что `AdminUsersPage.onDeleteClick()`).
- * `color` — обычный `TextField` (`#RRGGBB`, как в примере backend DTO) +
- * нативный `<input type="color">` рядом для визуального подбора, оба
- * биндятся на один и тот же `color` signal.
+ * `color`/`textColor` — обычный `TextField` (`#RRGGBB`, как в примере backend
+ * DTO) + нативный `<input type="color">` рядом для визуального подбора,
+ * каждый биндится на свой собственный signal тем же приёмом.
  *
  * **Поиск по названию (`stream.Front#115`, доработка)** — `searchFilter`
  * signal + `computed()` (`filteredTags`) фильтрует уже загруженный ПОЛНЫЙ
@@ -62,6 +62,7 @@ export class AdminNewsTagsPage {
   protected readonly editingTagId = signal<string | null>(null);
   protected readonly name = signal('');
   protected readonly color = signal('#FF5733');
+  protected readonly textColor = signal('#FFFFFF');
   protected readonly isSaving = signal(false);
 
   constructor() {
@@ -72,6 +73,7 @@ export class AdminNewsTagsPage {
     this.editingTagId.set(null);
     this.name.set('');
     this.color.set('#FF5733');
+    this.textColor.set('#FFFFFF');
     this.drawerVisible.set(true);
   }
 
@@ -79,22 +81,24 @@ export class AdminNewsTagsPage {
     this.editingTagId.set(tag.id);
     this.name.set(tag.name);
     this.color.set(tag.color);
+    this.textColor.set(tag.textColor);
     this.drawerVisible.set(true);
   }
 
   protected onSaveClick(): void {
     const name = this.name().trim();
     const color = this.color().trim();
-    if (!name || !color) {
-      this.notificationService.show('Заполните название и цвет', 'error');
+    const textColor = this.textColor().trim();
+    if (!name || !color || !textColor) {
+      this.notificationService.show('Заполните название, цвет фона и цвет текста', 'error');
       return;
     }
 
     const id = this.editingTagId();
     this.isSaving.set(true);
     const request = id
-      ? this.adminNewsTagService.update(id, { name, color })
-      : this.adminNewsTagService.create({ name, color });
+      ? this.adminNewsTagService.update(id, { name, color, textColor })
+      : this.adminNewsTagService.create({ name, color, textColor });
 
     request.subscribe({
       next: (saved) => {

@@ -45,7 +45,12 @@
           <td>{{ item.title }}</td>
           <td>
             @for (tag of item.tags; track tag.id) {
-              <app-badge [text]="tag.name" [color]="tag.color" class="admin-news-page__tag-badge" />
+              <app-badge
+                [text]="tag.name"
+                [color]="tag.color"
+                [textColor]="tag.textColor"
+                class="admin-news-page__tag-badge"
+              />
             }
           </td>
           <td>{{ item.publishedAt | date: 'dd.MM.yyyy' }}</td>
@@ -111,7 +116,7 @@
               <span
                 class="admin-news-page__tag-option"
                 [style.background]="tag.color"
-                [style.color]="tagTextColor(tag.color)"
+                [style.color]="tag.textColor"
               >
                 {{ tag.name }}
               </span>
@@ -121,7 +126,7 @@
                 <span
                   class="admin-news-page__tag-chip"
                   [style.background]="tag.color"
-                  [style.color]="tagTextColor(tag.color)"
+                  [style.color]="tag.textColor"
                 >
                   {{ tag.name }}
                   <button
