@@ -1,0 +1,97 @@
+@use 'variables' as vars;
+@use 'admin-table';
+
+// `p-drawer` формы и `p-table` списка — без явного `appendTo` (дефолт
+// `overlayAppendTo` `'self'`, `primeng-config.mjs`), рендерятся прямо на
+// месте, поэтому CSS-переменные, заданные здесь на `:host`, доходят до них
+// обычным наследованием (CSS custom properties наследуются по факту
+// положения в DOM, Angular-скоуп на них не влияет) — тот же приём, что у
+// `--p-drawer-*` в `news-filter-sidebar.scss`. Светлая тема таблицы — общий
+// партиал `admin-table` (`stream.Front#115`, "стиль всех таблиц как у
+// новостей") — эта таблица без пагинации (короткий справочник тегов,
+// `$has-paginator: false`).
+:host {
+  @include admin-table.drawer-vars;
+  @include admin-table.table-vars($has-paginator: false);
+}
+
+@include admin-table.header-radius('.admin-news-tags-page');
+
+// Собственный `<label>` в форме (html, без `TextField`) — не белый (не
+// унаследованный цвет тела страницы, `_reset.scss`), drawer теперь светлый
+// (см. `--p-drawer-*` выше, по прямому запросу пользователя).
+.admin-news-tags-page__field label {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  color: vars.$color-1e1e1e;
+}
+
+.admin-news-tags-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+// Тот же приём, что у `AdminUsersPage`/`AdminNewsPage` — `flex: 0 0 <px>`
+// перебивает `width: 100%` на хосте `TextField`.
+.admin-news-tags-page__search-field {
+  flex: 0 0 300px;
+}
+
+// Функциональные кнопки строки — прижаты вправо, сгруппированы под общей
+// обводкой `ButtonGroup` (тот же приём, что в `admin-news-page.scss`).
+.admin-news-tags-page__actions-cell {
+  text-align: right;
+}
+
+.admin-news-tags-page__color-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+  border: 1px solid rgba(vars.$color-ffffff, 0.3);
+}
+
+.admin-news-tags-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+  overflow-x: hidden;
+}
+
+.admin-news-tags-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-news-tags-page__color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  app-text-field {
+    flex: 1 1 auto;
+  }
+}
+
+.admin-news-tags-page__color-input {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid vars.$color-e4e4e4;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+}
+
+.admin-news-tags-page__save-button {
+  align-self: flex-start;
+  margin-top: 8px;
+}

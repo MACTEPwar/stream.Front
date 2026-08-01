@@ -10,6 +10,7 @@ import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { Badge, BadgeSeverity } from '@shared/components/badge/badge';
 import { Button } from '@shared/components/button/button';
+import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { ConfirmModal } from '@shared/components/confirm-modal/confirm-modal';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { Select } from '@shared/components/select/select';
@@ -60,7 +61,7 @@ const ROLE_FILTER_OPTIONS: { label: string; value: AdminUserAnyRole | null }[] =
  */
 @Component({
   selector: 'app-admin-users-page',
-  imports: [TableModule, DrawerModule, Button, Badge, Select, TextField, ErrorMessage, DatePipe],
+  imports: [TableModule, DrawerModule, Button, ButtonGroup, Badge, Select, TextField, ErrorMessage, DatePipe],
   templateUrl: './admin-users-page.html',
   styleUrl: './admin-users-page.scss',
 })

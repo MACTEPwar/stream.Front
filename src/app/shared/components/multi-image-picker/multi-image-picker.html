@@ -1,0 +1,41 @@
+<div class="multi-image-picker">
+  @if (urls().length > 0) {
+    <div class="multi-image-picker__previews">
+      @for (url of urls(); track $index) {
+        <div class="multi-image-picker__preview">
+          <img [src]="previewUrl(url)" alt="" />
+          <button
+            type="button"
+            class="multi-image-picker__remove"
+            aria-label="Удалить изображение"
+            (click)="onRemoveClick($index)"
+          >
+            &times;
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="multi-image-picker__controls">
+    <label class="multi-image-picker__upload-label">
+      Загрузить файл
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        [disabled]="isUploading()"
+        (change)="onFileSelected($event)"
+      />
+    </label>
+
+    <div class="multi-image-picker__link-row">
+      <app-text-field
+        placeholder="Ссылка на изображение"
+        [(value)]="linkInput"
+        (keyup.enter)="onAddLinkClick()"
+      />
+      <app-button text="Добавить" (click)="onAddLinkClick()" />
+    </div>
+  </div>
+</div>

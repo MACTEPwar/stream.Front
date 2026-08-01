@@ -34,12 +34,17 @@ describe('AdminPage', () => {
     harness = await RouterTestingHarness.create();
   });
 
-  it('рендерит 2 пункта сайдбар-меню (Расписание/Пользователи)', async () => {
+  it('рендерит пункты сайдбар-меню, сгруппированные по разделам', async () => {
     await harness.navigateByUrl('/admin/schedule');
 
     const el: HTMLElement = harness.routeNativeElement!;
     const links = Array.from(el.querySelectorAll<HTMLAnchorElement>('.admin-page__nav-link'));
-    expect(links.map((link) => link.textContent?.trim())).toEqual(['Расписание', 'Пользователи']);
+    expect(links.map((link) => link.textContent?.trim())).toEqual([
+      'Расписание',
+      'Пользователи',
+      'Новости',
+      'Теги',
+    ]);
   });
 
   it('пустой /admin редиректит на /admin/schedule', async () => {
@@ -74,21 +79,23 @@ describe('AdminPage', () => {
     expect(el.querySelector('.admin-page__content app-admin-schedule-page')).not.toBeNull();
   });
 
-  it('группа «Справочники» развёрнута по умолчанию и сворачивается по клику (stream.Front#77)', async () => {
+  it('группа «Справочники» развёрнута по умолчанию и сворачивается по клику (stream.Front#77, доработано #115)', async () => {
     await harness.navigateByUrl('/admin/schedule');
 
     const el: HTMLElement = harness.routeNativeElement!;
-    expect(el.querySelector('.admin-page__nav-group-header')?.textContent).toContain('Справочники');
-    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(2);
+    const groupHeaders = el.querySelectorAll<HTMLButtonElement>('.admin-page__nav-group-header');
+    expect(groupHeaders.length).toBe(1);
+    expect(groupHeaders[0]?.textContent).toContain('Справочники');
+    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(4);
 
-    el.querySelector<HTMLButtonElement>('.admin-page__nav-group-header')?.click();
+    groupHeaders[0]?.click();
     harness.detectChanges();
 
     expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(0);
 
-    el.querySelector<HTMLButtonElement>('.admin-page__nav-group-header')?.click();
+    groupHeaders[0]?.click();
     harness.detectChanges();
 
-    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(2);
+    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(4);
   });
 });

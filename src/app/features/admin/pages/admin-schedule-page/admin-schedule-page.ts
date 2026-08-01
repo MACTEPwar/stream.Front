@@ -6,6 +6,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { NotificationService } from '@core/services/notification.service';
 import { Button } from '@shared/components/button/button';
+import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { TextField } from '@shared/components/text-field/text-field';
 import { ScheduleDay, ScheduleService, Weekday } from '../../../main/services/schedule.service';
@@ -47,6 +48,7 @@ const EVENT_TITLE_MAX_LENGTH = 200;
     TableModule,
     DrawerModule,
     Button,
+    ButtonGroup,
     ToggleSwitchModule,
     TextField,
     FormsModule,

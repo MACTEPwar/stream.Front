@@ -18,8 +18,10 @@
           <td>{{ day.isOnline ? 'Онлайн' : 'Оффлайн' }}</td>
           <td>{{ day.eventTitle || '—' }}</td>
           <td>{{ day.time || '—' }}</td>
-          <td>
-            <app-button text="Изменить" size="small" (click)="onEditClick(day)" />
+          <td class="admin-schedule-page__actions-cell">
+            <app-button-group>
+              <app-button text="Изменить" size="small" severity="info" (click)="onEditClick(day)" />
+            </app-button-group>
           </td>
         </tr>
       </ng-template>

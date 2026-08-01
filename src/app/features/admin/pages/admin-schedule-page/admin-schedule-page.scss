@@ -1,3 +1,21 @@
+@use 'admin-table';
+
+// Светлая тема `p-drawer`/`p-table` — общий партиал `admin-table`
+// (`stream.Front#115`, "стиль всех таблиц/сайдбаров как у новостей"), без
+// пагинации — расписание всегда ровно 7 строк (по дням недели).
+:host {
+  @include admin-table.drawer-vars;
+  @include admin-table.table-vars($has-paginator: false);
+}
+
+@include admin-table.header-radius('.admin-schedule-page');
+
+// Функциональная кнопка строки — прижата вправо (по прямому запросу
+// пользователя, тот же приём, что в `admin-news-page.scss`).
+.admin-schedule-page__actions-cell {
+  text-align: right;
+}
+
 .admin-schedule-page__form {
   display: flex;
   flex-direction: column;

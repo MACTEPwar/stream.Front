@@ -30,11 +30,13 @@
 
     <div class="news-page__archive-border"></div>
 
-    <div class="news-page__archive-list">
-      @for (entry of archiveEntries(); track entry.item.id) {
-        <app-news-archive-item [item]="entry.item" [tags]="entry.tags" />
+    <div class="news-page__archive-list" (scroll)="onArchiveScroll($event)">
+      @for (item of archiveEntries(); track item.id) {
+        <app-news-archive-item [item]="item" (likeToggle)="onLikeToggle(item, $event)" />
       } @empty {
-        <p class="news-page__empty">По выбранному фильтру новостей нет</p>
+        @if (!isLoadingArchive()) {
+          <p class="news-page__empty">По выбранному фильтру новостей нет</p>
+        }
       }
     </div>
 

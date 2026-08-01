@@ -108,6 +108,26 @@
   line-height: vars.$line-height-18;
 }
 
+// Лайк — `Checkbox`, не голый счётчик текстом (по прямому запросу
+// пользователя, `stream.Front#118`) — сжат под ту же строку данных 38px
+// высотой: своя коробка чекбокса меньше дефолтной (16px), гэп между ней и
+// спроецированным сердцем/числом — тот же 8px, что у `__counter`-соседа.
+.news-archive-item__like {
+  ::ng-deep .checkbox {
+    gap: 8px;
+    font-family: vars.$font-family-nunito-sans;
+    font-size: vars.$font-size-14;
+    font-weight: vars.$font-weight-400;
+    line-height: vars.$line-height-18;
+    color: inherit;
+  }
+
+  ::ng-deep .p-checkbox {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 .news-archive-item__date {
   font-family: vars.$font-family-nunito-sans;
   font-size: vars.$font-size-14;

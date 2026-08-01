@@ -1,0 +1,337 @@
+@use 'variables' as vars;
+@use 'admin-table';
+
+// `p-multiselect` (`display="chip"`, тегов в форме) без явного `appendTo` —
+// дефолт `overlayAppendTo` в этом проекте `'self'` (`primeng-config.mjs`,
+// не переопределён в `app.config.ts`), панель списка остаётся физически
+// внутри DOM-поддерева ЭТОГО компонента (в отличие от `Select`, у которого
+// `appendTo="body"` явно вынесен наружу, см. select.ts/select.scss) —
+// поэтому CSS-переменные, заданные на `:host`, доходят до неё обычным
+// наследованием (CSS custom properties наследуются по факту положения в DOM,
+// Angular-скоуп на них не влияет), тот же приём, что у `--p-drawer-*` в
+// `news-filter-sidebar.scss`.
+//
+// Цвета/паддинги/радиус — те же значения, что у `Select`/`TextField`
+// (см. `select.scss`), по прямому запросу пользователя — визуально
+// совпадает в одном ряду формы.
+:host {
+  --p-multiselect-background: #{vars.$color-ffffff};
+  --p-multiselect-border-color: #{vars.$color-e4e4e4};
+  --p-multiselect-hover-border-color: #{vars.$color-e4e4e4};
+  --p-multiselect-focus-border-color: #{vars.$color-e4e4e4};
+  --p-multiselect-focus-ring-shadow: none;
+  --p-multiselect-border-radius: 5px;
+  --p-multiselect-color: #{vars.$color-1e1e1e};
+  --p-multiselect-placeholder-color: #{vars.$color-b2b2b2};
+  --p-multiselect-dropdown-color: #{vars.$color-1e1e1e};
+  --p-multiselect-clear-icon-color: #{vars.$color-1e1e1e};
+  --p-multiselect-font-size: #{vars.$font-size-16};
+  --p-multiselect-font-weight: #{vars.$font-weight-400};
+  --p-multiselect-padding-y: 0px;
+  --p-multiselect-padding-x: 12px;
+
+  // `p-drawer` формы создания/редактирования — светлая тема через общий
+  // партиал `admin-table.drawer-vars` (не унаследованный тёмный
+  // `overlay.modal.background` `AdminPreset`), тот же приём, что
+  // `--p-drawer-*` в news-filter-sidebar.scss.
+  @include admin-table.drawer-vars;
+
+  // `p-table` — тоже без явного `appendTo`, рендерится прямо на месте.
+  // Светлая тема — общий партиал `admin-table` (`stream.Front#115`,
+  // переиспользуется News/Tags/Users/Schedule, по прямому запросу
+  // пользователя "стиль всех таблиц как у новостей").
+  @include admin-table.table-vars;
+}
+
+@include admin-table.header-radius('.admin-news-page');
+
+// `<p-multiselect>` пишется прямо в шаблоне ЭТОГО компонента (html) — сам
+// host-элемент компонента `MultiSelect` несёт scope-атрибут ЭТОГО компонента
+// (Angular добавляет его creating-компонентом, независимо от собственного
+// scope дочернего компонента), поэтому обычный (не `::ng-deep`) селектор его
+// достаёт — тот же приём/обоснование, что `.p-select { ... }` в select.scss.
+// Высота = `Select`/`TextField` (40px), по прямому запросу пользователя —
+// строка формы одного роста. `min-height`, не `height` — чипы переносятся на
+// вторую строку при большом числе выбранных тегов, фиксированная `height`
+// обрезала бы перенос.
+.p-multiselect {
+  width: 100%;
+  min-height: 40px;
+  font-family: vars.$font-family-montserrat;
+}
+
+// Всё остальное (`.p-multiselect-label` — вложенный элемент СОБСТВЕННОГО
+// шаблона `MultiSelect`; панель списка и пункты — физически внутри
+// DOM-поддерева этого компонента при дефолтном `appendTo: 'self'`, но тоже
+// разметка чужого шаблона) недостижимо обычным селектором — `:host
+// ::ng-deep <селектор>` (с `:host`-предком, не голый `::ng-deep`) снимает
+// Angular-скоуп только у ПРАВОЙ части, требуя реального DOM-предка с нашим
+// атрибутом слева — тот же приём, что `:host ::ng-deep .p-drawer-title` в
+// news-filter-sidebar.scss, корректно ограничивает эффект только этим
+// экземпляром компонента (не любым `p-multiselect` на странице).
+:host ::ng-deep .p-multiselect-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+// Список — так же светло, как сама коробка (по прямому запросу
+// пользователя), не унаследованный тёмный фон темы `AdminPreset`; бордер и
+// тень — тот же приём, что `.app-select-panel.p-select-overlay`
+// (select.scss). Привязка к персональному `panelStyleClass`
+// (`admin-news-page__tag-multiselect-panel`, html) — не задевает другие
+// `p-multiselect` в приложении.
+:host ::ng-deep .admin-news-page__tag-multiselect-panel.p-multiselect-overlay {
+  background: #{vars.$color-ffffff};
+  color: #{vars.$color-1e1e1e};
+  border: 1px solid #{vars.$color-e4e4e4};
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+// Пункты списка — свой `color` явно (не унаследованный от `.p-multiselect-
+// overlay` выше — PrimeNG пишет собственный светлый `--p-multiselect-option-
+// color` из тёмной темы `AdminPreset` буквально на самом пункте, что
+// перебивает наследование и делает текст белым-на-белом; тот же явный
+// оверрайд, что `.p-select-option { color: ... !important }` в select.scss).
+// Разделитель между пунктами — тот же приём, что там же.
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-option {
+  color: #{vars.$color-1e1e1e};
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #{vars.$color-e4e4e4};
+  }
+}
+
+// Ховер/фокус/выбранный пункт — те же токены, что у `Select`
+// (`select.scss:80-94`), по прямому запросу пользователя ("подсмотри как в
+// селектах") — по умолчанию PrimeNG красит их тёмным фоном `AdminPreset`,
+// не унаследованным светлым `--p-multiselect-*`, заданным на `:host` выше
+// (те переменные покрывают только саму коробку в покое, не пункты списка).
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-option:not(.p-multiselect-option-selected):hover,
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-option:not(.p-multiselect-option-selected).p-focus {
+  background: #{vars.$color-e1bf90};
+  color: #{vars.$color-76511c};
+}
+
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-option.p-multiselect-option-selected {
+  background: #{vars.$color-cfa97c};
+  color: #{vars.$color-76511c};
+}
+
+// Шапка панели (чекбокс "выбрать все" + строка поиска) — по умолчанию тоже
+// унаследовала тёмный `AdminPreset` (не покрывается `--p-multiselect-*` на
+// `:host`, это отдельные dt()-токены `checkbox.*`/`inputtext.*`). Светлая
+// тема — та же primary-палитра, что у `Checkbox` (severity="primary",
+// `checkbox.scss:14-21`) и `TextField`, по прямому запросу пользователя.
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-header {
+  background: #{vars.$color-ffffff};
+  border-bottom: 1px solid #{vars.$color-e4e4e4};
+}
+
+// Точно та же карта цветов, что `$checkbox-severities` → `primary` в
+// `checkbox.scss:14-21` (контур = фон в checked, галочка белая) — не
+// приблизительно, тот же набор значений.
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-header .p-checkbox {
+  --p-checkbox-background: #{vars.$color-ffffff};
+  --p-checkbox-border-color: #{vars.$color-f4d2a4};
+  --p-checkbox-hover-border-color: #{vars.$color-e1bf90};
+  --p-checkbox-checked-background: #{vars.$color-f4d2a4};
+  --p-checkbox-checked-border-color: #{vars.$color-f4d2a4};
+  --p-checkbox-checked-hover-background: #{vars.$color-e1bf90};
+  --p-checkbox-checked-hover-border-color: #{vars.$color-e1bf90};
+  --p-checkbox-icon-checked-color: #{vars.$color-ffffff};
+  --p-checkbox-icon-checked-hover-color: #{vars.$color-ffffff};
+}
+
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-filter {
+  background: #{vars.$color-ffffff};
+  border-color: #{vars.$color-e4e4e4};
+  color: #{vars.$color-1e1e1e};
+
+  &::placeholder {
+    color: #{vars.$color-b2b2b2};
+  }
+}
+
+// Дефолтная иконка-лупа рендерится инлайн-`<svg data-p-icon="search">`, не
+// внутри `.p-multiselect-filter-icon` (тот класс только у кастомного
+// `filtericon`-шаблона, которым мы не пользуемся, см. `primeng-multiselect.mjs`).
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-filter-container svg {
+  color: #{vars.$color-1e1e1e};
+}
+
+// Нативный `p-checkbox` PrimeNG внутри пункта списка — скрыт (клик по всей
+// строке `<li>` по-прежнему обрабатывает сам PrimeNG, обработчик висит на
+// `<li>`, не на самом чекбоксе, см. `MultiSelectItem` в
+// `primeng-multiselect.mjs` — скрытие визуального представления клика не
+// ломает). Вместо него — свой индикатор `.admin-news-page__tag-checkbox`
+// (см. ниже), т.к. `p-checkbox` физически СОСЕД (не потомок) содержимого
+// нашего `#item`-шаблона внутри одного `<li>` — раскрасить именно ЕГО контур/
+// заливку цветом тега напрямую из нашего шаблона невозможно (CSS custom
+// properties наследуются только вниз по DOM, не между соседями).
+:host ::ng-deep .admin-news-page__tag-multiselect-panel .p-multiselect-option .p-checkbox {
+  display: none;
+}
+
+.admin-news-page__tag-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: -0.5rem -0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: inherit;
+}
+
+// Тот же визуальный приём, что `.checkbox--custom-color` в
+// `checkbox.scss` (переиспользуемый `Checkbox`) — контур цвета тега в покое,
+// сплошная заливка тем же цветом когда отмечен (`--tag-color`, runtime custom
+// property со значением `tag.color`, html). Белая галочка — тот же выбор
+// цвета иконки, что у `Checkbox` для произвольного `color()`.
+.admin-news-page__tag-checkbox {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--tag-color);
+  background: #{vars.$color-ffffff};
+  position: relative;
+}
+
+.admin-news-page__tag-checkbox--checked {
+  background: var(--tag-color);
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid #{vars.$color-ffffff};
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+}
+
+// Кастомный чип выбранного тега (`selecteditems`-шаблон, html) — цвет фона/
+// текста тега из БД (`tag.color`/`tagTextColor()`, см. admin-news-page.ts),
+// не дефолтный `p-chip` PrimeNG (заменён целиком кастомным шаблоном, чтобы
+// покрасить и сам чип, не только текст).
+.admin-news-page__tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 16px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  line-height: vars.$line-height-24;
+}
+
+.admin-news-page__tag-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.admin-news-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-news-page__filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+// Тот же приём, что у `AdminUsersPage` (`admin-users-page.scss`) — явный
+// `flex-basis` через `flex: 0 0 <px>` перебивает `width: 100%` на хосте
+// `TextField`/`Select`.
+.admin-news-page__search-field {
+  flex: 0 0 300px;
+}
+
+.admin-news-page__tag-filter {
+  flex: 0 0 200px;
+}
+
+// Функциональные кнопки строки — прижаты вправо (по прямому запросу
+// пользователя), сгруппированы под общей обводкой `ButtonGroup`
+// (`app-button-group`, тот же приём, что у тулбара архива на публичной
+// странице новостей, `stream.Front#95`).
+.admin-news-page__actions-cell {
+  text-align: right;
+}
+
+.admin-news-page__tag-badge {
+  margin-right: 4px;
+}
+
+.admin-news-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px;
+  overflow-x: hidden;
+}
+
+.admin-news-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// Тёмный текст (не унаследованный белый цвет тела страницы, см.
+// `_reset.scss`) — drawer этой страницы теперь светлый (см. `--p-drawer-*`
+// выше, по прямому запросу пользователя), белый лейбл на светлом фоне был бы
+// не виден.
+.admin-news-page__label {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  color: vars.$color-1e1e1e;
+}
+
+// Визуально консистентно с TextField.text-field__control/__input — свой
+// многострочный вариант не заведён в TextField ради единственного места
+// использования (по прямому указанию задачи).
+.admin-news-page__textarea {
+  resize: vertical;
+  min-height: 120px;
+  border: 1px solid vars.$color-e4e4e4;
+  border-radius: 5px;
+  background: vars.$color-ffffff;
+  padding: 8px 12px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  color: vars.$color-1e1e1e;
+
+  &::placeholder {
+    color: vars.$color-b2b2b2;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.admin-news-page__save-button {
+  align-self: flex-start;
+  margin-top: 8px;
+}
