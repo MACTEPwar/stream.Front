@@ -1,12 +1,12 @@
 <article class="news-archive-item">
   <div class="news-archive-item__picture">
-    @if (item().imageUrl; as imageUrl) {
-      <img [src]="imageUrl" alt="" />
+    @if (imageUrl(); as url) {
+      <img [src]="url" alt="" />
     }
 
     <div class="news-archive-item__tags">
-      @for (tag of tags(); track tag.id) {
-        <app-badge [text]="tag.name" [severity]="tag.severity ?? 'primary'" [color]="tag.color" />
+      @for (tag of item().tags; track tag.id) {
+        <app-badge [text]="tag.name" [color]="tag.color" [textColor]="tag.textColor" />
       }
     </div>
   </div>
@@ -14,7 +14,7 @@
   <div class="news-archive-item__body">
     <div class="news-archive-item__text">
       <h3 class="news-archive-item__heading">{{ item().title }}</h3>
-      <p class="news-archive-item__excerpt">{{ item().excerpt }}</p>
+      <p class="news-archive-item__excerpt">{{ item().description }}</p>
     </div>
 
     <div class="news-archive-item__data">
@@ -23,10 +23,16 @@
           <i class="pi pi-eye" aria-hidden="true"></i>
           {{ viewsLabel() }}
         </span>
-        <span class="news-archive-item__counter">
+
+        <app-checkbox
+          class="news-archive-item__like"
+          severity="primary"
+          [checked]="isLiked()"
+          (checkedChange)="onLikeToggle($event)"
+        >
           <i class="pi pi-heart" aria-hidden="true"></i>
           {{ likesLabel() }}
-        </span>
+        </app-checkbox>
       </div>
 
       <span class="news-archive-item__date">{{ dateLabel() }}</span>

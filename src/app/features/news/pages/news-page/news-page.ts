@@ -1,5 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
+import { NotificationService } from '@core/services/notification.service';
+import { AdminNews } from '@features/admin/models/news.model';
 import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
@@ -11,15 +14,13 @@ import { NewsFilter } from '../../models/news-filter.model';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import { NewsArchiveService } from '../../services/news-archive.service';
 import { NewsService } from '../../services/news.service';
 import { NewsTagService } from '../../services/news-tag.service';
 
-interface NewsEntry {
-  readonly item: NewsItem;
-  readonly tags: NewsTag[];
-}
-
-const EMPTY_FILTER: NewsFilter = { dateFrom: null, dateTo: null, tags: [] };
+const ARCHIVE_PAGE_SIZE = 10;
+/** Запускает подгрузку следующей страницы архива, когда до низа списка остаётся меньше этого расстояния (px). */
+const ARCHIVE_SCROLL_THRESHOLD_PX = 80;
 
 function startOfDay(date: Date): Date {
   const result = new Date(date);
@@ -36,27 +37,42 @@ function endOfDay(date: Date): Date {
 /**
  * Страница «Новости» — вариант 1 макета (`docs/figma/news1.json`, node-id
  * `491:3585`): слева закреплённая сетка карточек 3×12 (`PinnedNewsGrid`,
- * stream.Front#112 — раньше три px-формы `NewsCard` без координат, теперь
- * произвольные прямоугольники ячеек по `PinnedNewsSlot`), справа панель
- * архива (`NewsArchiveItem`) с тулбаром — группа иконок-тогглов
- * (`ButtonGroup` + `Checkbox` в `buttonMode`) и триггер фильтра
- * (`NewsFilterSidebar`, stream.Front#111, подключён как есть).
+ * stream.Front#112, **на моках `NewsService`, эта задача её не трогает**),
+ * справа панель архива (`NewsArchiveItem`) — теперь на реальном API
+ * (`stream.Front#118`, поверх `streamer.API#65`/`#67`, `NewsArchiveService`).
  *
  * Шапка сайта здесь не рендерится — она уже есть глобально (`Shell` в
  * `app.html`, stream.Front#48/#49), включая лого, меню с `NavActiveIndicator`
  * и кнопку «Поддержать».
  *
- * Иконки тулбара архива (`minus`/`eyes`/`like` в макете — группа 120×40 с
- * подсвеченной "активной" ячейкой): фильтры архива по личным флагам текущего
- * пользователя — «глаз» показывает только просмотренные им новости
- * (`viewedByCurrentUser`), «сердце» — только лайкнутые (`likedByCurrentUser`),
- * оба независимы и комбинируются через AND; `minus` сбрасывает оба.
+ * **Архив (реальные данные)** — `GET /news`, подгрузка по скроллу
+ * (`onArchiveScroll()`, `.news-page__archive-list` уже имеет `overflow-y:
+ * auto`/`max-height`, см. `news-page.scss`): при приближении к низу списка
+ * (`ARCHIVE_SCROLL_THRESHOLD_PX`) грузится следующая страница и
+ * ДОБАВЛЯЕТСЯ к уже загруженным (не заменяет). Сортировка — по умолчанию на
+ * бэке (`publishedAt desc`, "новые сначала"), клиентской сортировки не нужно.
+ * Картинка строки — первая по `order` из `images[]` (см. `NewsArchiveItem`).
  *
- * Фильтр (`filterChange`) применяется и к сетке, и к архиву: сайдбар физически
- * стоит в тулбаре архива, но фильтрует раздел «Новости» целиком. Закреплённая
- * новость, чей `PinnedNewsSlot.newsId` отфильтрован из `matching(news())`, из
- * сетки исчезает (в её ячейке остаётся пустое место — переставлять оставшиеся
- * слоты не входит в задачу, это ручная раскладка администратора).
+ * Иконки тулбара архива (`minus`/`eyes`/`like` в макете — группа 120×40 с
+ * подсвеченной "активной" ячейкой): «сердце» фильтрует уже загруженные строки
+ * по `likedByCurrentUser` (реальный флаг с бэка). **«Глаз» — намеренно
+ * ничего не фильтрует** (по прямому запросу пользователя): реальный API пока
+ * не отдаёт флаг "просмотрено мной" (view-tracking — отдельная будущая
+ * задача), кнопка оставлена в интерфейсе, но её сигнал `showOnlyViewed`
+ * никуда не подставляется. `minus` сбрасывает оба тоггла.
+ *
+ * **Лайк** — `NewsArchiveItem.likeToggle` эмитит желаемое состояние,
+ * `onLikeToggle()` здесь: оптимистично патчит локальный сигнал (мгновенный
+ * визуальный отклик), шлёт `POST`/`DELETE /news/:id/like`, на успехе —
+ * подтверждает актуальными `likeCount`/`likedByCurrentUser` из ответа, на
+ * ошибке — откатывает патч и показывает toast (401 без сессии — "войдите,
+ * чтобы поставить лайк", остальное — общая ошибка).
+ *
+ * Фильтр по датам/тегам (`NewsFilterSidebar.filterChange`) применяется
+ * ТОЛЬКО к закреплённой сетке слева (мок, свой `tagId`-namespace) — на архив
+ * (реальный API, другой `tagId`-namespace) больше не накладывается: полноценная
+ * интеграция серверного фильтра `GET /news?tagId=`/периода — отдельная
+ * будущая задача (нет диапазона дат в текущем контракте `GET /news`).
  */
 @Component({
   selector: 'app-news-page',
@@ -67,13 +83,19 @@ function endOfDay(date: Date): Date {
 export class NewsPage implements OnInit {
   private readonly newsService = inject(NewsService);
   private readonly newsTagService = inject(NewsTagService);
+  private readonly newsArchiveService = inject(NewsArchiveService);
+  private readonly notificationService = inject(NotificationService);
 
   private readonly news = signal<NewsItem[]>([]);
-  private readonly archive = signal<NewsItem[]>([]);
   private readonly tags = signal<NewsTag[]>([]);
   private readonly pinnedSlots = signal<PinnedNewsSlot[]>([]);
 
-  protected readonly filter = signal<NewsFilter>(EMPTY_FILTER);
+  private readonly archiveItems = signal<AdminNews[]>([]);
+  private readonly archivePage = signal(0);
+  private readonly archiveTotalPages = signal(1);
+  protected readonly isLoadingArchive = signal(false);
+
+  protected readonly filter = signal<NewsFilter>({ dateFrom: null, dateTo: null, tags: [] });
   protected readonly showOnlyViewed = signal(false);
   protected readonly showOnlyLiked = signal(false);
 
@@ -91,25 +113,75 @@ export class NewsPage implements OnInit {
       });
   });
 
-  protected readonly archiveEntries = computed<NewsEntry[]>(() => {
-    const onlyViewed = this.showOnlyViewed();
+  protected readonly archiveEntries = computed<AdminNews[]>(() => {
     const onlyLiked = this.showOnlyLiked();
-    const items = this.matching(this.archive()).filter(
-      (item) => (!onlyViewed || item.viewedByCurrentUser) && (!onlyLiked || item.likedByCurrentUser),
-    );
-    return items.map((item) => ({ item, tags: this.resolveTags(item) }));
+    return this.archiveItems().filter((item) => !onlyLiked || item.likedByCurrentUser);
   });
 
   ngOnInit(): void {
     this.newsTagService.getTags().subscribe((tags) => this.tags.set(tags));
     this.newsService.getNews().subscribe((news) => this.news.set(news));
-    this.newsService.getArchive().subscribe((archive) => this.archive.set(archive));
     this.newsService.getPinnedSlots().subscribe((slots) => this.pinnedSlots.set(slots));
+    this.loadArchivePage(1);
   }
 
   protected resetArchiveFilters(): void {
     this.showOnlyViewed.set(false);
     this.showOnlyLiked.set(false);
+  }
+
+  protected onArchiveScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distanceToBottom > ARCHIVE_SCROLL_THRESHOLD_PX) {
+      return;
+    }
+    if (this.isLoadingArchive() || this.archivePage() >= this.archiveTotalPages()) {
+      return;
+    }
+    this.loadArchivePage(this.archivePage() + 1);
+  }
+
+  protected onLikeToggle(item: AdminNews, checked: boolean): void {
+    const previousLikeCount = item.likeCount;
+    const previousLiked = item.likedByCurrentUser;
+    this.patchArchiveItem(item.id, {
+      likedByCurrentUser: checked,
+      likeCount: previousLikeCount + (checked ? 1 : -1),
+    });
+
+    const request = checked ? this.newsArchiveService.like(item.id) : this.newsArchiveService.unlike(item.id);
+    request.subscribe({
+      next: (response) =>
+        this.patchArchiveItem(item.id, {
+          likeCount: response.likeCount,
+          likedByCurrentUser: response.likedByCurrentUser,
+        }),
+      error: (error: HttpErrorResponse) => {
+        this.patchArchiveItem(item.id, { likeCount: previousLikeCount, likedByCurrentUser: previousLiked });
+        this.notificationService.show(
+          error.status === 401 ? 'Войдите, чтобы поставить лайк' : 'Не удалось поставить лайк',
+          'error',
+        );
+      },
+    });
+  }
+
+  private loadArchivePage(page: number): void {
+    this.isLoadingArchive.set(true);
+    this.newsArchiveService.getPage(page, ARCHIVE_PAGE_SIZE).subscribe({
+      next: (response) => {
+        this.archiveItems.update((items) => (page === 1 ? response.items : [...items, ...response.items]));
+        this.archivePage.set(response.meta.page);
+        this.archiveTotalPages.set(response.meta.totalPages);
+        this.isLoadingArchive.set(false);
+      },
+      error: () => this.isLoadingArchive.set(false),
+    });
+  }
+
+  private patchArchiveItem(id: string, patch: Partial<AdminNews>): void {
+    this.archiveItems.update((items) => items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   }
 
   private matching(items: NewsItem[]): NewsItem[] {
