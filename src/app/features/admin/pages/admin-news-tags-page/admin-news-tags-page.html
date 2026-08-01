@@ -31,15 +31,11 @@
             <span class="admin-news-tags-page__color-swatch" [style.background]="tag.textColor"></span>
             {{ tag.textColor }}
           </td>
-          <td>
-            <app-button text="Изменить" size="small" (click)="onEditClick(tag)" />
-            <app-button
-              text="Удалить"
-              size="small"
-              severity="danger"
-              (click)="onDeleteClick(tag)"
-              class="admin-news-tags-page__delete-button"
-            />
+          <td class="admin-news-tags-page__actions-cell">
+            <app-button-group>
+              <app-button text="Изменить" size="small" severity="info" (click)="onEditClick(tag)" />
+              <app-button text="Удалить" size="small" severity="danger" (click)="onDeleteClick(tag)" />
+            </app-button-group>
           </td>
         </tr>
       </ng-template>
@@ -51,6 +47,7 @@
     position="right"
     [header]="editingTagId() ? 'Изменить тег' : 'Новый тег'"
     styleClass="admin-news-tags-page__drawer"
+    [style]="{ width: '480px', 'max-width': '90vw' }"
   >
     <div class="admin-news-tags-page__form">
       <app-text-field label="Название" [(value)]="name" [required]="true" />

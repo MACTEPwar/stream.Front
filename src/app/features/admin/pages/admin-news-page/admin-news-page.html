@@ -55,15 +55,11 @@
           </td>
           <td>{{ item.publishedAt | date: 'dd.MM.yyyy' }}</td>
           <td>{{ item.viewCount }} / {{ item.likeCount }}</td>
-          <td>
-            <app-button text="Изменить" size="small" (click)="onEditClick(item)" />
-            <app-button
-              text="Удалить"
-              size="small"
-              severity="danger"
-              (click)="onDeleteClick(item)"
-              class="admin-news-page__delete-button"
-            />
+          <td class="admin-news-page__actions-cell">
+            <app-button-group>
+              <app-button text="Изменить" size="small" severity="info" (click)="onEditClick(item)" />
+              <app-button text="Удалить" size="small" severity="danger" (click)="onDeleteClick(item)" />
+            </app-button-group>
           </td>
         </tr>
       </ng-template>
@@ -75,7 +71,7 @@
     position="right"
     [header]="editingNewsId() ? 'Изменить новость' : 'Новая новость'"
     styleClass="admin-news-page__drawer"
-    [style]="{ width: '480px', 'max-width': '90vw' }"
+    [style]="{ width: '560px', 'max-width': '90vw' }"
   >
     <div class="admin-news-page__form">
       <app-text-field label="Заголовок" [(value)]="title" [required]="true" />
@@ -111,13 +107,16 @@
             [loading]="isLoadingTags()"
             placeholder="Выберите теги"
             [(ngModel)]="selectedTagIds"
+            [selectAll]="isAllTagsSelected()"
+            (onSelectAllChange)="onTagSelectAllChange($event)"
           >
             <ng-template #item let-tag>
-              <span
-                class="admin-news-page__tag-option"
-                [style.background]="tag.color"
-                [style.color]="tag.textColor"
-              >
+              <span class="admin-news-page__tag-option">
+                <span
+                  class="admin-news-page__tag-checkbox"
+                  [class.admin-news-page__tag-checkbox--checked]="isTagSelected(tag.id)"
+                  [style.--tag-color]="tag.color"
+                ></span>
                 {{ tag.name }}
               </span>
             </ng-template>

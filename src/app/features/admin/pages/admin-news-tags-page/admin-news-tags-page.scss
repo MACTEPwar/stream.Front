@@ -1,43 +1,21 @@
 @use 'variables' as vars;
+@use 'admin-table';
 
 // `p-drawer` формы и `p-table` списка — без явного `appendTo` (дефолт
 // `overlayAppendTo` `'self'`, `primeng-config.mjs`), рендерятся прямо на
 // месте, поэтому CSS-переменные, заданные здесь на `:host`, доходят до них
 // обычным наследованием (CSS custom properties наследуются по факту
 // положения в DOM, Angular-скоуп на них не влияет) — тот же приём, что у
-// `--p-drawer-*` в `news-filter-sidebar.scss`. Дублирует набор переменных из
-// `admin-news-page.scss` (тот же `p-drawer`/`p-table`, свой отдельный
-// `:host`) — общий партиал под 2 текущих потребителя не заводился, тот же
-// принцип, что `$tag-chip-severities` в news-filter-sidebar.scss.
+// `--p-drawer-*` в `news-filter-sidebar.scss`. Светлая тема таблицы — общий
+// партиал `admin-table` (`stream.Front#115`, "стиль всех таблиц как у
+// новостей") — эта таблица без пагинации (короткий справочник тегов,
+// `$has-paginator: false`).
 :host {
-  --p-drawer-background: #{vars.$color-ffffff};
-  --p-drawer-border-color: #{vars.$color-e4e4e4};
-  --p-drawer-color: #{vars.$color-1e1e1e};
-
-  --p-datatable-border-color: #{vars.$color-e4e4e4};
-  --p-datatable-header-cell-background: #{vars.$color-f9f9f9};
-  --p-datatable-header-cell-hover-background: #{vars.$color-f9f9f9};
-  --p-datatable-header-cell-selected-background: #{vars.$color-f9f9f9};
-  --p-datatable-header-cell-border-color: #{vars.$color-e4e4e4};
-  --p-datatable-header-cell-color: #{vars.$color-1e1e1e};
-  --p-datatable-header-cell-hover-color: #{vars.$color-1e1e1e};
-  --p-datatable-header-cell-selected-color: #{vars.$color-1e1e1e};
-  --p-datatable-row-background: #{vars.$color-ffffff};
-  --p-datatable-row-hover-background: #{vars.$color-e1bf90};
-  --p-datatable-row-selected-background: #{vars.$color-ffffff};
-  --p-datatable-row-color: #{vars.$color-1e1e1e};
-  --p-datatable-row-hover-color: #{vars.$color-76511c};
-  --p-datatable-row-selected-color: #{vars.$color-1e1e1e};
-  --p-datatable-body-cell-border-color: #{vars.$color-e4e4e4};
-  --p-paginator-background: #{vars.$color-ffffff};
-  --p-paginator-color: #{vars.$color-1e1e1e};
-  --p-paginator-nav-button-hover-background: #{vars.$color-e1bf90};
-  --p-paginator-nav-button-selected-background: #{vars.$color-cfa97c};
-  --p-paginator-nav-button-color: #{vars.$color-1e1e1e};
-  --p-paginator-nav-button-hover-color: #{vars.$color-76511c};
-  --p-paginator-nav-button-selected-color: #{vars.$color-76511c};
-  --p-paginator-current-page-report-color: #{vars.$color-1e1e1e};
+  @include admin-table.drawer-vars;
+  @include admin-table.table-vars($has-paginator: false);
 }
+
+@include admin-table.header-radius('.admin-news-tags-page');
 
 // Собственный `<label>` в форме (html, без `TextField`) — не белый (не
 // унаследованный цвет тела страницы, `_reset.scss`), drawer теперь светлый
@@ -62,8 +40,10 @@
   flex: 0 0 300px;
 }
 
-.admin-news-tags-page__delete-button {
-  margin-left: 8px;
+// Функциональные кнопки строки — прижаты вправо, сгруппированы под общей
+// обводкой `ButtonGroup` (тот же приём, что в `admin-news-page.scss`).
+.admin-news-tags-page__actions-cell {
+  text-align: right;
 }
 
 .admin-news-tags-page__color-swatch {
@@ -81,6 +61,7 @@
   flex-direction: column;
   gap: 16px;
   padding: 4px;
+  overflow-x: hidden;
 }
 
 .admin-news-tags-page__field {

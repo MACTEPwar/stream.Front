@@ -1,0 +1,77 @@
+// Светлая тема `p-table`/`p-paginator` в админке — вынесено в общий партиал
+// (stream.Front#115), т.к. по прямому запросу пользователя ("сделай стиль
+// всех таблиц как таблица новостей") её теперь применяют 4+ страницы
+// (News/Tags/Users/Schedule) — до этого дублировалось только между News и
+// Tags и партиал сознательно не заводился (см. историю в git), но при таком
+// числе потребителей дублирование уже неоправданно.
+//
+// Не унаследованные тёмные `content.background`/`content.color`/`overlay.*`
+// темы `AdminPreset` — hover-строки/пункты используют тот же primary-цвет
+// проекта, что `Select`/`p-multiselect` (`select.scss:85-89`).
+@use 'variables' as vars;
+
+// Подключается ВНУТРИ `:host { ... }` компонента страницы (не на верхнем
+// уровне файла) — сами переменные наследуются по DOM независимо от
+// Angular-скоупа, `::ng-deep` для них не нужен (см. обоснование в
+// `news-filter-sidebar.scss`/`select.scss`).
+@mixin table-vars($has-paginator: true) {
+  --p-datatable-border-color: #{vars.$color-e4e4e4};
+  --p-datatable-header-cell-background: #{vars.$color-f9f9f9};
+  --p-datatable-header-cell-hover-background: #{vars.$color-f9f9f9};
+  --p-datatable-header-cell-selected-background: #{vars.$color-f9f9f9};
+  --p-datatable-header-cell-border-color: #{vars.$color-e4e4e4};
+  --p-datatable-header-cell-color: #{vars.$color-1e1e1e};
+  --p-datatable-header-cell-hover-color: #{vars.$color-1e1e1e};
+  --p-datatable-header-cell-selected-color: #{vars.$color-1e1e1e};
+  --p-datatable-row-background: #{vars.$color-ffffff};
+  --p-datatable-row-hover-background: #{vars.$color-e1bf90};
+  --p-datatable-row-selected-background: #{vars.$color-ffffff};
+  --p-datatable-row-color: #{vars.$color-1e1e1e};
+  --p-datatable-row-hover-color: #{vars.$color-76511c};
+  --p-datatable-row-selected-color: #{vars.$color-1e1e1e};
+  --p-datatable-body-cell-border-color: #{vars.$color-e4e4e4};
+
+  @if $has-paginator {
+    --p-paginator-background: #{vars.$color-ffffff};
+    --p-paginator-color: #{vars.$color-1e1e1e};
+    --p-paginator-nav-button-hover-background: #{vars.$color-e1bf90};
+    --p-paginator-nav-button-selected-background: #{vars.$color-cfa97c};
+    --p-paginator-nav-button-color: #{vars.$color-1e1e1e};
+    --p-paginator-nav-button-hover-color: #{vars.$color-76511c};
+    --p-paginator-nav-button-selected-color: #{vars.$color-76511c};
+    --p-paginator-current-page-report-color: #{vars.$color-1e1e1e};
+
+    // Пагинация округлена ТОЛЬКО снизу (шапка таблицы скруглена сверху
+    // отдельно, см. `header-radius()` ниже), кнопки страниц — квадрат со
+    // скруглением, не круг (дефолт темы Aura — `50%`, `@primeuix/themes/
+    // dist/aura/paginator/index.mjs`), по прямому запросу пользователя.
+    --p-paginator-border-radius: 0 0 5px 5px;
+    --p-paginator-nav-button-border-radius: 5px;
+  }
+}
+
+// Светлая тема `p-drawer` (сайдбар форм) — та же логика/наследование, что
+// `table-vars()`, вынесена сюда же по прямому запросу пользователя ("сайдбары
+// так же везде должны быть светлые в админке") — до этого была только у
+// News/Tags, добавляется Users/Schedule.
+@mixin drawer-vars {
+  --p-drawer-background: #{vars.$color-ffffff};
+  --p-drawer-border-color: #{vars.$color-e4e4e4};
+  --p-drawer-color: #{vars.$color-1e1e1e};
+}
+
+// Подключается на ВЕРХНЕМ уровне файла (не внутри `:host`) — генерирует
+// собственные селекторы. `$wrapper` — корневой класс страницы (например
+// `.admin-news-page`), под которым лежит `<p-table>` с СОБСТВЕННЫМ
+// `#header`-шаблоном страницы (обычные `<th>`, не PrimeNG-разметка — поэтому
+// `::ng-deep` не нужен, тот же приём, что уже был у `admin-news-page.scss`
+// до выноса в партиал).
+@mixin header-radius($wrapper) {
+  #{$wrapper} th:first-child {
+    border-top-left-radius: 5px;
+  }
+
+  #{$wrapper} th:last-child {
+    border-top-right-radius: 5px;
+  }
+}

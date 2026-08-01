@@ -7,6 +7,7 @@ import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { Button } from '@shared/components/button/button';
+import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { ConfirmModal } from '@shared/components/confirm-modal/confirm-modal';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { TextField } from '@shared/components/text-field/text-field';
@@ -36,7 +37,7 @@ import { AdminNewsTagService } from '../../services/admin-news-tag.service';
  */
 @Component({
   selector: 'app-admin-news-tags-page',
-  imports: [TableModule, DrawerModule, Button, TextField, ErrorMessage],
+  imports: [TableModule, DrawerModule, Button, ButtonGroup, TextField, ErrorMessage],
   templateUrl: './admin-news-tags-page.html',
   styleUrl: './admin-news-tags-page.scss',
 })

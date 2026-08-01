@@ -11,6 +11,7 @@ import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { Badge } from '@shared/components/badge/badge';
 import { Button } from '@shared/components/button/button';
+import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { ConfirmModal } from '@shared/components/confirm-modal/confirm-modal';
 import { Datepicker } from '@shared/components/datepicker/datepicker';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
@@ -51,6 +52,27 @@ interface TagFilterOption {
  * **Дата публикации без времени** — то же ограничение `Datepicker`, что было
  * в форме создания первой итерации, см. историю в git.
  *
+ * **Чекбоксы тегов в мультиселекте** — нативный `p-checkbox` PrimeNG внутри
+ * `.p-multiselect-option` скрыт (`display: none`, см. `admin-news-page.scss`)
+ * и заменён собственным индикатором в `#item`-шаблоне (`.admin-news-page__
+ * tag-checkbox`), окрашенным цветом тега — тем же визуальным приёмом, что
+ * `.checkbox--custom-color` у переиспользуемого `Checkbox`
+ * (`shared/components/checkbox/checkbox.scss`: контур цвета тега в состоянии
+ * покоя, сплошная заливка тем же цветом когда отмечен). Состояние "отмечен"
+ * берётся не из PrimeNG (у `#item`-шаблона в контексте нет `selected`), а из
+ * собственного сигнала `selectedTagIds` (`isTagSelected()`) — клик по строке
+ * по-прежнему обрабатывает сам PrimeNG (`(click)` висит на всём `<li>`, не на
+ * скрытом чекбоксе), визуальный индикатор только отражает состояние.
+ *
+ * **"Выбрать все" в шапке панели** — управляется вручную через `[selectAll]`/
+ * `(onSelectAllChange)` (официально поддерживаемый в PrimeNG режим ручного
+ * управления — `selectAll() != null` в `onToggleAll()` делегирует всю логику
+ * потребителю, не трогая модель сам), а не встроенным авто-режимом: при
+ * снятии галочки встроенная логика не очищала `selectedTagIds` (воспроизведено
+ * вручную — теги оставались выбранными после снятия "выбрать все"), поэтому
+ * обе стороны (`isAllTagsSelected()`/`onTagSelectAllChange()`) считаются
+ * напрямую по `tags()`/`selectedTagIds()`.
+ *
  * **Изображения при редактировании** — `news.images` (`AdminNewsImage[]`)
  * сортируются по `order` и мапятся в голый список `url` (тот же формат,
  * что `CreateNewsPayload.imageUrls` — уже загруженные `/uploads/*`-пути или
@@ -73,6 +95,7 @@ interface TagFilterOption {
     MultiSelectModule,
     Badge,
     Button,
+    ButtonGroup,
     Datepicker,
     ErrorMessage,
     MultiImagePicker,
@@ -130,6 +153,19 @@ export class AdminNewsPage {
       clearTimeout(this.searchDebounceTimer);
       this.searchDebounceTimer = setTimeout(() => this.loadPage(1), SEARCH_DEBOUNCE_MS);
     });
+  }
+
+  protected isTagSelected(tagId: string): boolean {
+    return this.selectedTagIds().includes(tagId);
+  }
+
+  protected isAllTagsSelected(): boolean {
+    const tags = this.tags();
+    return tags.length > 0 && tags.every((tag) => this.selectedTagIds().includes(tag.id));
+  }
+
+  protected onTagSelectAllChange(event: { checked: boolean }): void {
+    this.selectedTagIds.set(event.checked ? this.tags().map((tag) => tag.id) : []);
   }
 
   protected tagFilterOptions(): TagFilterOption[] {

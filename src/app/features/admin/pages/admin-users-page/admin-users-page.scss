@@ -1,5 +1,20 @@
-.admin-users-page__delete-button {
-  margin-left: 8px;
+@use 'admin-table';
+
+// Светлая тема `p-drawer`/`p-table`/`p-paginator` — общий партиал
+// `admin-table` (`stream.Front#115`, "стиль всех таблиц/сайдбаров как у
+// новостей"), эта таблица с серверной пагинацией (`[paginator]="true"`,
+// см. html), два `p-drawer` (изменение роли + карточка пользователя).
+:host {
+  @include admin-table.drawer-vars;
+  @include admin-table.table-vars;
+}
+
+@include admin-table.header-radius('.admin-users-page');
+
+// Функциональные кнопки строки — прижаты вправо, сгруппированы под общей
+// обводкой `ButtonGroup` (тот же приём, что в `admin-news-page.scss`).
+.admin-users-page__actions-cell {
+  text-align: right;
 }
 
 .admin-users-page__filters {
