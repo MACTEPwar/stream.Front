@@ -63,23 +63,14 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  min-height: 100%;
-  gap: 4px;
+  min-height: 0;
+  gap: 16px;
   overflow: hidden;
 }
 
 .news-card__heading {
   display: -webkit-box;
   flex: 0 0 auto;
-  // Гарантированная высота под 2 строки (line-height 28px × 2) — без неё, при
-  // сжатом бюджете высоты `.news-card__text` (например `imageSizePercent`,
-  // близкий к 90% в редакторе стиля, `PinnedGridEditor`), `-webkit-line-clamp`
-  // может получить от flex-родителя высоту меньше двух строк на промежуточном
-  // layout-проходе и обрезать (`overflow: hidden`) текст ДО того, как второй
-  // проход выправит высоту — карточка остаётся с пустой областью под
-  // заголовок вместо текста. `min-height` резервирует место сразу, а не
-  // постфактум.
-  min-height: calc(#{vars.$line-height-28} * 2);
   overflow: hidden;
   // Форсирует собственный composite/paint-слой — тот же приём, что и обход
   // известного в этом проекте класса бага "Chromium не перерисовывает
@@ -122,7 +113,9 @@
   display: flex;
   flex: 0 0 auto;
   gap: 8px;
-  height: 24px;
+  // 24px по макету не хватало на реальный рендер Badge (текст обрезался
+  // сверху/снизу) — по прямому запросу пользователя поднято до 26px.
+  height: 26px;
   overflow: hidden;
 }
 
