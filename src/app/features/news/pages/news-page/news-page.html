@@ -34,8 +34,6 @@
       <app-news-filter-sidebar (filterChange)="filter.set($event)" />
     </div>
 
-    <div class="news-page__archive-border"></div>
-
     <div class="news-page__archive-list" (scroll)="onArchiveScroll($event)">
       @for (item of archiveEntries(); track item.id) {
         <app-news-archive-item [item]="item" (likeToggle)="onLikeToggle(item, $event)" />
@@ -45,7 +43,5 @@
         }
       }
     </div>
-
-    <div class="news-page__archive-border"></div>
   </aside>
 </div>

@@ -136,6 +136,17 @@ button:not(.p-button-sm) {
   font-size: vars.$font-size-16;
 }
 
+// Icon-only — квадрат 40×40 (по прямому запросу пользователя, PrimeNG-токен
+// `button.icon.only.width` сам по себе не гарантирует ширину = высоте) +
+// иконка чуть крупнее дефолта primeicons.
+button.p-button-icon-only:not(.p-button-sm) {
+  width: 40px;
+
+  i {
+    font-size: 18px;
+  }
+}
+
 :host {
   @each $name, $tokens in $button-severities {
     --p-button-#{$name}-background: #{map.get($tokens, background)};

@@ -75,15 +75,6 @@ $archive-list-height: 680px;
   gap: $grid-gap;
 }
 
-// `border`-компонент макета: прямоугольник 660×1 белого цвета с тенью
-// shadow-3-1 (сам по себе на белом фоне не виден — работает именно тень).
-.news-page__archive-border {
-  height: 1px;
-  border-radius: 1px;
-  background: vars.$color-ffffff;
-  box-shadow: vars.$shadow-3-1;
-}
-
 .news-page__archive-list {
   display: flex;
   flex-direction: column;
