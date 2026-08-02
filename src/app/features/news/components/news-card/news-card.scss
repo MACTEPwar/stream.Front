@@ -63,7 +63,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  min-height: 0;
+  min-height: 100%;
   gap: 4px;
   overflow: hidden;
 }
@@ -96,6 +96,7 @@
   font-size: vars.$font-size-22;
   font-weight: vars.$font-weight-500;
   line-height: vars.$line-height-28;
+  letter-spacing: vars.$letter-spacing-8;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -108,7 +109,13 @@
   font-size: vars.$font-size-14;
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-18;
+  letter-spacing: vars.$letter-spacing-3;
   text-align: justify;
+  // Стиль "Body Small" из Figma-текстовых стилей несёт собственный размер/
+  // интерлиньяж/трекинг, но 60%-я непрозрачность описания в макете (news1.json
+  // не хранит `opacity` — экспортер его не выгружает) задана самим слоем
+  // поверх стиля, не текстовым пресетом.
+  opacity: 0.6;
 }
 
 .news-card__tags {
