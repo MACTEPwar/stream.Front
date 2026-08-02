@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { NotificationService } from '@core/services/notification.service';
 import { AdminNews } from '../../models/news.model';
 import { AdminNewsService } from '../../services/admin-news.service';
 import { DEFAULT_CARD_STYLE, PinnedGridLayout, PinnedGridViewport } from '../../../news/models/pinned-news-slot.model';
-import { NewsService } from '../../../news/services/news.service';
+import { PinnedGridService } from '../../../news/services/pinned-grid.service';
 import { AdminNewsPinnedPage } from './admin-news-pinned-page';
 
 function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
@@ -25,8 +25,18 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
   };
 }
 
+const emptyLayout: PinnedGridLayout = { config: { columns: 3, rows: 12 }, slots: [] };
+
+function pinnedLayout(newsId: string): PinnedGridLayout {
+  return {
+    config: { columns: 3, rows: 12 },
+    slots: [{ newsId, colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE, coverImageUrl: null }],
+  };
+}
+
 describe('AdminNewsPinnedPage', () => {
   let getAllSpy: ReturnType<typeof vi.fn>;
+  let getLayoutSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     getAllSpy = vi.fn().mockReturnValue(
@@ -43,24 +53,31 @@ describe('AdminNewsPinnedPage', () => {
         meta: { page: 1, limit: 100, total: 2, totalPages: 1 },
       }),
     );
+    getLayoutSpy = vi.fn((viewport: PinnedGridViewport) => of(pinnedLayout(`news-a-${viewport}`)));
 
     TestBed.configureTestingModule({
       imports: [AdminNewsPinnedPage],
-      providers: [{ provide: AdminNewsService, useValue: { getAll: getAllSpy } }],
+      providers: [
+        { provide: AdminNewsService, useValue: { getAll: getAllSpy } },
+        { provide: PinnedGridService, useValue: { getLayout: getLayoutSpy, updateLayout: vi.fn() } },
+      ],
     });
   });
 
-  it('грузит справочник новостей через AdminNewsService и раскладки всех трёх вьюпортов через NewsService', () => {
+  it('грузит справочник новостей через AdminNewsService и раскладки всех трёх вьюпортов через PinnedGridService', () => {
     const fixture = TestBed.createComponent(AdminNewsPinnedPage);
     fixture.detectChanges();
 
     expect(fixture.componentInstance['hasError']()).toBe(false);
     expect(getAllSpy).toHaveBeenCalledWith(1, 100);
+    expect(getLayoutSpy).toHaveBeenCalledWith('small');
+    expect(getLayoutSpy).toHaveBeenCalledWith('middle');
+    expect(getLayoutSpy).toHaveBeenCalledWith('large');
 
     const layouts = fixture.componentInstance['layouts']();
-    expect(layouts.small.slots.length).toBeGreaterThan(0);
+    expect(layouts.small.slots[0].newsId).toBe('news-a-small');
     expect(layouts.middle.config).toEqual({ columns: 3, rows: 12 });
-    expect(layouts.large.slots.length).toBeGreaterThan(0);
+    expect(layouts.large.slots[0].newsId).toBe('news-a-large');
     expect(fixture.nativeElement.querySelector('app-pinned-grid-editor')).not.toBeNull();
   });
 
@@ -78,13 +95,13 @@ describe('AdminNewsPinnedPage', () => {
     expect(withImages?.imageUrls.map((url) => url.split('/uploads/')[1])).toEqual(['1.png', '2.png']);
   });
 
-  it('«save» из редактора вызывает NewsService.updateLayout на каждый из трёх вьюпортов и показывает toast', () => {
+  it('«save» из редактора вызывает PinnedGridService.updateLayout на каждый из трёх вьюпортов и показывает toast', () => {
     const fixture = TestBed.createComponent(AdminNewsPinnedPage);
     fixture.detectChanges();
 
-    const newsService = TestBed.inject(NewsService);
+    const pinnedGridService = TestBed.inject(PinnedGridService);
     const notificationService = TestBed.inject(NotificationService);
-    const updateLayoutSpy = vi.spyOn(newsService, 'updateLayout');
+    vi.spyOn(pinnedGridService, 'updateLayout').mockReturnValue(of(emptyLayout));
     const showSpy = vi.spyOn(notificationService, 'show');
 
     const layout: PinnedGridLayout = {
@@ -94,9 +111,31 @@ describe('AdminNewsPinnedPage', () => {
     const payload: Record<PinnedGridViewport, PinnedGridLayout> = { small: layout, middle: layout, large: layout };
     fixture.componentInstance['onSave'](payload);
 
-    expect(updateLayoutSpy).toHaveBeenCalledWith('small', layout);
-    expect(updateLayoutSpy).toHaveBeenCalledWith('middle', layout);
-    expect(updateLayoutSpy).toHaveBeenCalledWith('large', layout);
+    expect(pinnedGridService.updateLayout).toHaveBeenCalledWith('small', layout);
+    expect(pinnedGridService.updateLayout).toHaveBeenCalledWith('middle', layout);
+    expect(pinnedGridService.updateLayout).toHaveBeenCalledWith('large', layout);
     expect(showSpy).toHaveBeenCalledWith('Раскладка сохранена', 'success');
+  });
+
+  it('«save» показывает error-тост и не сбрасывает редактор, если updateLayout падает', () => {
+    const fixture = TestBed.createComponent(AdminNewsPinnedPage);
+    fixture.detectChanges();
+
+    const pinnedGridService = TestBed.inject(PinnedGridService);
+    const notificationService = TestBed.inject(NotificationService);
+    vi.spyOn(pinnedGridService, 'updateLayout').mockReturnValue(
+      throwError(() => ({ error: { message: 'Некорректная раскладка' } })),
+    );
+    const showSpy = vi.spyOn(notificationService, 'show');
+
+    const layout: PinnedGridLayout = {
+      config: { columns: 4, rows: 16 },
+      slots: [{ newsId: 'news-a', colStart: 1, rowStart: 1, colSpan: 3, rowSpan: 12, style: DEFAULT_CARD_STYLE, coverImageUrl: null }],
+    };
+    const payload: Record<PinnedGridViewport, PinnedGridLayout> = { small: layout, middle: layout, large: layout };
+    fixture.componentInstance['onSave'](payload);
+
+    expect(showSpy).toHaveBeenCalledWith('Некорректная раскладка', 'error');
+    expect(fixture.nativeElement.querySelector('app-pinned-grid-editor')).not.toBeNull();
   });
 });

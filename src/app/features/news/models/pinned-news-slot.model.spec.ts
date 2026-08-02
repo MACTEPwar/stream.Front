@@ -1,4 +1,3 @@
-import { NewsService } from '../services/news.service';
 import {
   DEFAULT_CARD_STYLE,
   DEFAULT_GRID_COLUMNS,
@@ -57,15 +56,18 @@ describe('validatePinnedNewsSlots', () => {
     expect(errors).toEqual([]);
   });
 
-  it('реальные моковые слоты (NewsService.getPinnedSlots) валидны — защита от регрессии', () => {
-    const service = new NewsService();
-    let slots: PinnedNewsSlot[] = [];
-    service.getPinnedSlots().subscribe((value) => (slots = value));
-    let config = { columns: DEFAULT_GRID_COLUMNS, rows: DEFAULT_GRID_ROWS };
-    service.getGridConfig().subscribe((value) => (config = value));
+  it('раскладка сетки 3×12 из семи слотов без пропусков/пересечений валидна — защита от регрессии', () => {
+    const slots: PinnedNewsSlot[] = [
+      slot({ newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7 }),
+      slot({ newsId: 'news-2', colStart: 2, rowStart: 1, colSpan: 1, rowSpan: 4 }),
+      slot({ newsId: 'news-3', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 4 }),
+      slot({ newsId: 'news-4', colStart: 2, rowStart: 5, colSpan: 2, rowSpan: 4 }),
+      slot({ newsId: 'news-5', colStart: 1, rowStart: 8, colSpan: 1, rowSpan: 5 }),
+      slot({ newsId: 'news-6', colStart: 2, rowStart: 9, colSpan: 1, rowSpan: 4 }),
+      slot({ newsId: 'news-7', colStart: 3, rowStart: 9, colSpan: 1, rowSpan: 4 }),
+    ];
 
-    expect(validatePinnedNewsSlots(slots, config.columns, config.rows)).toEqual([]);
-    expect(slots.length).toBeGreaterThan(0);
+    expect(validatePinnedNewsSlots(slots, DEFAULT_GRID_COLUMNS, DEFAULT_GRID_ROWS)).toEqual([]);
   });
 });
 

@@ -1,6 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
+import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { ImageUrlService } from '@core/services/image-url.service';
 import { NotificationService } from '@core/services/notification.service';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
@@ -15,7 +17,7 @@ import {
   PinnedGridLayout,
   PinnedGridViewport,
 } from '../../../news/models/pinned-news-slot.model';
-import { NewsService } from '../../../news/services/news.service';
+import { PinnedGridService } from '../../../news/services/pinned-grid.service';
 
 /** Сколько новостей грузить сразу (`AdminNewsService.getAll()` пагинирован, но справочник новостей для этого редактора небольшой — постраничный подбор был бы преждевременным усложнением). */
 const NEWS_PAGE_SIZE = 100;
@@ -23,31 +25,35 @@ const NEWS_PAGE_SIZE = 100;
 const DEFAULT_LAYOUT: PinnedGridLayout = { config: { columns: DEFAULT_GRID_COLUMNS, rows: DEFAULT_GRID_ROWS }, slots: [] };
 
 /**
- * Страница админки «Закреплённые новости» (`stream.Front#118`) — хостит
- * `PinnedGridEditor`. Раскладки по-прежнему грузит из `NewsService` (мок,
- * `getLayout()` на каждый из трёх пресетов вьюпорта — `PINNED_GRID_VIEWPORTS`
- * — backend-эндпоинта для их сохранения ещё нет), а вот САМ СПИСОК новостей
- * для выбора (`news` input редактора) — из уже реализованного справочника
- * «Новости» (`AdminNewsService.getAll()`, `GET /news`, тот же источник, что
- * `AdminNewsPage`), не из мок-семёрки `NewsService.getNews()` — по прямому
- * запросу пользователя. `toNewsItem()` адаптирует реальный `AdminNews`
- * (`images[]`, `viewCount`, `likeCount`, ...) под мок-модель `NewsItem`,
- * которую понимает `PinnedGridEditor`/`NewsCard` (полная унификация моделей
- * — отдельная будущая задача, см. `AdminNewsService`/`NewsArchiveItem`):
- * все картинки по `order`, резолвятся через `ImageUrlService.resolve()`
- * (`/uploads/*` валиден только относительно backend origin, тот же приём,
- * что `NewsArchiveItem`) — `imageUrl` первая из них, `imageUrls` — все.
+ * Страница админки «Закреплённые новости» (`stream.Front#118`, раскладка —
+ * реальный API со `stream.Front#119`) — хостит `PinnedGridEditor`. Раскладки
+ * грузит из `PinnedGridService.getLayout()` на каждый из трёх пресетов
+ * вьюпорта (`PINNED_GRID_VIEWPORTS`, `GET /news/pinned-layout/:viewport`), а
+ * САМ СПИСОК новостей для выбора (`news` input редактора) — из уже
+ * реализованного справочника «Новости» (`AdminNewsService.getAll()`,
+ * `GET /news`, тот же источник, что `AdminNewsPage`), не из мок-семёрки
+ * `NewsService.getNews()` — по прямому запросу пользователя. `toNewsItem()`
+ * адаптирует реальный `AdminNews` (`images[]`, `viewCount`, `likeCount`, ...)
+ * под мок-модель `NewsItem`, которую понимает `PinnedGridEditor`/`NewsCard`
+ * (полная унификация моделей — отдельная будущая задача, см.
+ * `AdminNewsService`/`NewsArchiveItem`): все картинки по `order`, резолвятся
+ * через `ImageUrlService.resolve()` (`/uploads/*` валиден только
+ * относительно backend origin, тот же приём, что `NewsArchiveItem`) —
+ * `imageUrl` первая из них, `imageUrls` — все.
  *
- * `PinnedNewsSlot.newsId` теперь ссылается на РЕАЛЬНЫЕ id из этого
- * справочника — старые моковые слоты (`'news-1'` и т.п. из
- * `NewsService`'s `MOCK_PINNED_SLOTS`) больше ни на что не указывают,
+ * `PinnedNewsSlot.newsId` ссылается на РЕАЛЬНЫЕ id справочника новостей —
+ * старые моковые слоты (`'news-1'` и т.п.) больше ни на что не указывают,
  * `PinnedGridEditor` отбрасывает их сам при загрузке.
  *
- * `(save)` вызывает `NewsService.updateLayout()` на каждый из трёх пресетов
- * (редактор эмитит их все разом, `Record<PinnedGridViewport, PinnedGridLayout>`)
- * и показывает toast — сама страница не знает деталей drag/resize/
- * добавления/стиля/переключения вьюпорта, только загрузка/сохранение, вся
- * интерактивность — в самом редакторе.
+ * `(save)` вызывает `PinnedGridService.updateLayout()` на каждый из трёх
+ * пресетов (редактор эмитит их все разом, `Record<PinnedGridViewport,
+ * PinnedGridLayout>`) и показывает toast; на ошибке любого из трёх запросов
+ * — error-тост (`extractApiErrorMessage`), редактор НЕ откатывает и не
+ * закрывает визуальное состояние (полная замена по кнопке, не toggle) —
+ * пользователь может поправить раскладку и нажать «Сохранить» ещё раз. Сама
+ * страница не знает деталей drag/resize/добавления/стиля/переключения
+ * вьюпорта, только загрузка/сохранение, вся интерактивность — в самом
+ * редакторе.
  */
 @Component({
   selector: 'app-admin-news-pinned-page',
@@ -56,7 +62,7 @@ const DEFAULT_LAYOUT: PinnedGridLayout = { config: { columns: DEFAULT_GRID_COLUM
   styleUrl: './admin-news-pinned-page.scss',
 })
 export class AdminNewsPinnedPage {
-  private readonly newsService = inject(NewsService);
+  private readonly pinnedGridService = inject(PinnedGridService);
   private readonly adminNewsService = inject(AdminNewsService);
   private readonly imageUrlService = inject(ImageUrlService);
   private readonly notificationService = inject(NotificationService);
@@ -76,8 +82,15 @@ export class AdminNewsPinnedPage {
 
   protected onSave(layouts: Record<PinnedGridViewport, PinnedGridLayout>): void {
     forkJoin(
-      PINNED_GRID_VIEWPORTS.map((viewport) => this.newsService.updateLayout(viewport, layouts[viewport])),
-    ).subscribe(() => this.notificationService.show('Раскладка сохранена', 'success'));
+      PINNED_GRID_VIEWPORTS.map((viewport) => this.pinnedGridService.updateLayout(viewport, layouts[viewport])),
+    ).subscribe({
+      next: () => this.notificationService.show('Раскладка сохранена', 'success'),
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.show(
+          extractApiErrorMessage(error) ?? 'Не удалось сохранить раскладку',
+          'error',
+        ),
+    });
   }
 
   private load(): void {
@@ -87,9 +100,9 @@ export class AdminNewsPinnedPage {
       next: (response) => {
         this.news.set(response.items.map((item) => this.toNewsItem(item)));
         forkJoin([
-          this.newsService.getLayout('small'),
-          this.newsService.getLayout('middle'),
-          this.newsService.getLayout('large'),
+          this.pinnedGridService.getLayout('small'),
+          this.pinnedGridService.getLayout('middle'),
+          this.pinnedGridService.getLayout('large'),
         ]).subscribe({
           next: ([small, middle, large]) => {
             this.layouts.set({ small, middle, large });

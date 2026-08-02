@@ -430,7 +430,7 @@ export class PinnedGridEditor {
   protected onSaveClick(): void {
     // Отбрасываем осиротевшие слоты и в сохраняемых данных, не только в
     // рендере (`localSlots()` уже отфильтрован) — иначе они молча копились бы
-    // в `NewsService` навсегда.
+    // на backend навсегда.
     const layouts = this.localLayouts();
     const newsIds = new Set(this.news().map((item) => item.id));
     const cleaned = Object.fromEntries(

@@ -17,6 +17,7 @@ import { DEFAULT_GRID_COLUMNS, DEFAULT_GRID_ROWS, PinnedGridConfig, PinnedNewsSl
 import { NewsArchiveService } from '../../services/news-archive.service';
 import { NewsService } from '../../services/news.service';
 import { NewsTagService } from '../../services/news-tag.service';
+import { PinnedGridService } from '../../services/pinned-grid.service';
 
 const ARCHIVE_PAGE_SIZE = 10;
 /** Запускает подгрузку следующей страницы архива, когда до низа списка остаётся меньше этого расстояния (px). */
@@ -36,10 +37,13 @@ function endOfDay(date: Date): Date {
 
 /**
  * Страница «Новости» — вариант 1 макета (`docs/figma/news1.json`, node-id
- * `491:3585`): слева закреплённая сетка карточек 3×12 (`PinnedNewsGrid`,
- * stream.Front#112, **на моках `NewsService`, эта задача её не трогает**),
- * справа панель архива (`NewsArchiveItem`) — теперь на реальном API
- * (`stream.Front#118`, поверх `streamer.API#65`/`#67`, `NewsArchiveService`).
+ * `491:3585`): слева закреплённая сетка карточек (`PinnedNewsGrid`,
+ * stream.Front#112), раскладка (`PinnedGridConfig`/`PinnedNewsSlot`) — на
+ * реальном API (`stream.Front#119`, поверх `streamer.API#71`,
+ * `PinnedGridService.getLayout('large')`), сами новости слотов — по-прежнему
+ * мок (`NewsService.getNews()`, отдельная будущая задача), справа панель
+ * архива (`NewsArchiveItem`) — тоже на реальном API (`stream.Front#118`,
+ * поверх `streamer.API#65`/`#67`, `NewsArchiveService`).
  *
  * Шапка сайта здесь не рендерится — она уже есть глобально (`Shell` в
  * `app.html`, stream.Front#48/#49), включая лого, меню с `NavActiveIndicator`
@@ -84,6 +88,7 @@ export class NewsPage implements OnInit {
   private readonly newsService = inject(NewsService);
   private readonly newsTagService = inject(NewsTagService);
   private readonly newsArchiveService = inject(NewsArchiveService);
+  private readonly pinnedGridService = inject(PinnedGridService);
   private readonly notificationService = inject(NotificationService);
 
   private readonly news = signal<NewsItem[]>([]);
@@ -122,8 +127,10 @@ export class NewsPage implements OnInit {
   ngOnInit(): void {
     this.newsTagService.getTags().subscribe((tags) => this.tags.set(tags));
     this.newsService.getNews().subscribe((news) => this.news.set(news));
-    this.newsService.getPinnedSlots().subscribe((slots) => this.pinnedSlots.set(slots));
-    this.newsService.getGridConfig().subscribe((config) => this.gridConfig.set(config));
+    this.pinnedGridService.getLayout('large').subscribe((layout) => {
+      this.pinnedSlots.set(layout.slots);
+      this.gridConfig.set(layout.config);
+    });
     this.loadArchivePage(1);
   }
 

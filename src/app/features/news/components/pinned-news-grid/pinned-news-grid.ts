@@ -16,7 +16,7 @@ export interface PinnedNewsGridEntry {
  * `columns`×`rows` (`pinned-news-slot.model.ts`), каждая закреплённая новость
  * занимает произвольный прямоугольник ячеек по координатам своего
  * `PinnedNewsSlot` (`grid-column`/`grid-row`, не auto-placement). Сама
- * раскладка приходит извне (`NewsPage`, из `NewsService.getPinnedSlots()`) —
+ * раскладка приходит извне (`NewsPage`, из `PinnedGridService.getLayout()`) —
  * этот компонент только рендерит уже готовые записи, ничего не валидирует и
  * не переставляет сам.
  *
@@ -31,7 +31,7 @@ export interface PinnedNewsGridEntry {
  *
  * **Размер сетки — входы, не константы** (`stream.Front#118`): `columns`/
  * `rows` — реальная настраиваемая величина (`PinnedGridConfig`,
- * `NewsService.getGridConfig()`, меняется через `PinnedGridEditor`), не
+ * `PinnedGridService.getLayout()`, меняется через `PinnedGridEditor`), не
  * зафиксированные 3×12; дефолты (`DEFAULT_GRID_COLUMNS`/`DEFAULT_GRID_ROWS`)
  * только на случай, если родитель их не передал. `grid-template-columns`/
  * `grid-template-rows` собираются в TS (`repeat(N, ...)`) и применяются через

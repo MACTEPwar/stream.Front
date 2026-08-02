@@ -10,6 +10,7 @@ import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slo
 import { LikeResponse, NewsArchiveService } from '../../services/news-archive.service';
 import { NewsService } from '../../services/news.service';
 import { NewsTagService } from '../../services/news-tag.service';
+import { PinnedGridService } from '../../services/pinned-grid.service';
 import { NewsPage } from './news-page';
 
 const TAGS: NewsTag[] = [
@@ -81,13 +82,10 @@ describe('NewsPage', () => {
       imports: [NewsPage],
       providers: [
         { provide: NewsTagService, useValue: { getTags: () => of(TAGS) } },
+        { provide: NewsService, useValue: { getNews: () => of(NEWS) } },
         {
-          provide: NewsService,
-          useValue: {
-            getNews: () => of(NEWS),
-            getPinnedSlots: () => of(PINNED_SLOTS),
-            getGridConfig: () => of({ columns: 3, rows: 12 }),
-          },
+          provide: PinnedGridService,
+          useValue: { getLayout: () => of({ config: { columns: 3, rows: 12 }, slots: PINNED_SLOTS }) },
         },
         {
           provide: NewsArchiveService,

@@ -1,16 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
 import { NewsItem } from '../models/news.model';
-import {
-  DEFAULT_CARD_STYLE,
-  DEFAULT_GRID_COLUMNS,
-  DEFAULT_GRID_ROWS,
-  PinnedGridConfig,
-  PinnedGridLayout,
-  PinnedGridViewport,
-  PinnedNewsSlot,
-} from '../models/pinned-news-slot.model';
 
 /** Тексты — Lorem ipsum ровно из макета (`docs/figma/news1.json`, `heading`/`text`). */
 const LONG_TITLE = 'Lorem ipsum dolor sit amet consectetur.';
@@ -123,123 +114,17 @@ const MOCK_NEWS: NewsItem[] = [
   },
 ];
 
-const MOCK_ARCHIVE: NewsItem[] = [
-  ...MOCK_NEWS.slice(1).map(
-    (item, index): NewsItem => ({
-      ...item,
-      id: `archive-${index + 1}`,
-      excerpt: SHORT_EXCERPT,
-    }),
-  ),
-  {
-    id: 'archive-7',
-    title: LONG_TITLE,
-    excerpt: SHORT_EXCERPT,
-    imageUrl: null,
-    imageUrls: [],
-    tagIds: ['announcement'],
-    views: 205,
-    likes: 44,
-    publishedAt: new Date(2023, 9, 27),
-    viewedByCurrentUser: false,
-    likedByCurrentUser: true,
-  },
-  {
-    id: 'archive-8',
-    title: SHORT_TITLE,
-    excerpt: SHORT_EXCERPT,
-    imageUrl: TEST_IMAGE_0,
-    imageUrls: [TEST_IMAGE_0],
-    tagIds: ['stream'],
-    views: 88,
-    likes: 12,
-    publishedAt: new Date(2023, 9, 18),
-    viewedByCurrentUser: true,
-    likedByCurrentUser: false,
-  },
-];
-
 /**
- * Раскладка закреплённых новостей сетки 3×12 (`PinnedNewsSlot`,
- * `stream.Front#112`) — уже "предзаполнена", как будто админ (через ещё не
- * существующую админку) расставил её сам. По одному слоту на каждую запись
- * `MOCK_NEWS`, покрывает сетку без пропусков и пересечений (проверено
- * `pinned-news-slot.model.spec.ts`): крупная `news-1` — вся левая колонка
- * сверху, `news-2`/`news-3` — компактные справа сверху, широкая `news-4`
- * (`colSpan: 2`) — по центру, `news-5` — вторая крупная слева снизу,
- * `news-6`/`news-7` — компактные справа снизу.
- */
-const MOCK_PINNED_SLOTS: PinnedNewsSlot[] = [
-  { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
-  { newsId: 'news-2', colStart: 2, rowStart: 1, colSpan: 1, rowSpan: 4, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
-  { newsId: 'news-3', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 4, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
-  { newsId: 'news-4', colStart: 2, rowStart: 5, colSpan: 2, rowSpan: 4, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
-  { newsId: 'news-5', colStart: 1, rowStart: 8, colSpan: 1, rowSpan: 5, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
-  { newsId: 'news-6', colStart: 2, rowStart: 9, colSpan: 1, rowSpan: 4, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
-  { newsId: 'news-7', colStart: 3, rowStart: 9, colSpan: 1, rowSpan: 4, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
-];
-
-const DEFAULT_LAYOUT: PinnedGridLayout = {
-  config: { columns: DEFAULT_GRID_COLUMNS, rows: DEFAULT_GRID_ROWS },
-  slots: MOCK_PINNED_SLOTS,
-};
-
-/**
- * Мок-источник новостей страницы «Новости» — тот же паттерн, что у
- * `NewsTagService` (реального backend-эндпоинта под новости ещё нет).
- * `getNews()` — новости, из которых собирается закреплённая сетка слева,
- * `getArchive()` — строки панели архива справа (в макете это два
- * независимых блока: `news` и `news_archive`).
- *
- * **Раскладка — мутируемое состояние, не константа, и своя на каждый пресет
- * вьюпорта** (`layouts`, `stream.Front#118`, доработка: "колонки/строки и
- * карточки — свои у каждого вьюпорта", тот же принцип, что реальный
- * responsive-дизайн): `signal<Record<PinnedGridViewport, PinnedGridLayout>>`,
- * все три пресета изначально засеяны одной и той же `MOCK_PINNED_SLOTS`
- * (проходит `validatePinnedNewsSlots()` без ошибок, `pinned-news-slot.model.spec.ts`) —
- * `PinnedGridEditor` их дальше разводит независимо. `getLayout()`/
- * `updateLayout()` — на конкретный `PinnedGridViewport`. Backend-эндпоинта
- * для сохранения ещё нет — `providedIn: 'root'` делает сервис синглтоном на
- * всё приложение, поэтому правки в `PinnedGridEditor` админки сразу видны на
- * публичной странице «Новости» в рамках той же сессии (без перезагрузки),
- * имитируя будущее сохранение на backend.
- *
- * **Публичная страница «Новости» пока не выбирает пресет по реальному
- * устройству посетителя** (отдельная будущая задача) — `getPinnedSlots()`/
- * `getGridConfig()` остаются для обратной совместимости с `NewsPage` и
- * отдают раскладку пресета `'large'` (десктоп) как единственную, что видит
- * посетитель сейчас.
+ * Мок-источник новостей закреплённой сетки страницы «Новости» — тот же
+ * паттерн, что у `NewsTagService` (реального справочника новостей под
+ * `PinnedNewsGrid` ещё нет, id ссылаются на моки, а не на реальные записи
+ * бэкенда). Раскладка сетки (`PinnedGridLayout`/`PinnedNewsSlot`) больше не
+ * мок — `stream.Front#119` перевёл её на реальный backend
+ * (`streamer.API#71`), см. `PinnedGridService`.
  */
 @Injectable({ providedIn: 'root' })
 export class NewsService {
-  private readonly layouts = signal<Record<PinnedGridViewport, PinnedGridLayout>>({
-    small: DEFAULT_LAYOUT,
-    middle: DEFAULT_LAYOUT,
-    large: DEFAULT_LAYOUT,
-  });
-
   getNews(): Observable<NewsItem[]> {
     return of(MOCK_NEWS);
-  }
-
-  getArchive(): Observable<NewsItem[]> {
-    return of(MOCK_ARCHIVE);
-  }
-
-  getLayout(viewport: PinnedGridViewport): Observable<PinnedGridLayout> {
-    return of(this.layouts()[viewport]);
-  }
-
-  updateLayout(viewport: PinnedGridViewport, layout: PinnedGridLayout): Observable<PinnedGridLayout> {
-    this.layouts.update((layouts) => ({ ...layouts, [viewport]: layout }));
-    return of(layout);
-  }
-
-  getPinnedSlots(): Observable<PinnedNewsSlot[]> {
-    return of(this.layouts().large.slots);
-  }
-
-  getGridConfig(): Observable<PinnedGridConfig> {
-    return of(this.layouts().large.config);
   }
 }
