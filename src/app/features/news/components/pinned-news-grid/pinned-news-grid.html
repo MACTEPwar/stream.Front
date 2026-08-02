@@ -3,8 +3,9 @@
     class="pinned-news-grid__card"
     [style.grid-column]="gridColumn(entry.slot)"
     [style.grid-row]="gridRow(entry.slot)"
-    [item]="entry.item"
+    [item]="effectiveItem(entry)"
     [tags]="entry.tags"
+    [cardStyle]="entry.slot.style"
   />
 } @empty {
   <p class="pinned-news-grid__empty">По выбранному фильтру новостей нет</p>

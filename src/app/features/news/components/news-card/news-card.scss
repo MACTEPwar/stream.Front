@@ -4,35 +4,29 @@
 // на bento-сетку 3×12 (`PinnedNewsGrid`, stream.Front#112) карточка
 // растягивается на 100% размера своей grid-ячейки, а не диктует его сама —
 // отсюда :host на 100%/100% вместо `display: block` без размеров.
-// `container-type: size` — явно заявляет контейнерный контекст по обоим
-// измерениям (для @container-запроса ниже по `orientation`), безопасно,
-// т.к. :host уже получает конкретные ширину/высоту от родительской
-// grid-ячейки, а не от размера собственного содержимого.
 :host {
   display: block;
   width: 100%;
   height: 100%;
-  container-type: size;
-  container-name: news-card;
 }
 
+// `background`/`color`/`flex-direction` — инлайн-стилями из `PinnedNewsCardStyle`
+// (`news-card.ts`, `stream.Front#118`), не здесь — значения по умолчанию
+// живут в `DEFAULT_CARD_STYLE` (`pinned-news-slot.model.ts`), не в SCSS.
 .news-card {
   display: flex;
-  flex-direction: column;
   width: 100%;
   height: 100%;
   overflow: hidden;
   border-radius: 5px;
-  background: vars.$color-f9f9f9;
-  color: vars.$color-1e1e1e;
   box-shadow: vars.$shadow-9-0;
 }
 
 .news-card__picture {
-  // Растягивается на большую часть высоты карточки, но гибко — картинка
-  // первой уступает место содержимому в маленьких ячейках.
-  flex: 1 1 55%;
+  // `flex` (basis без grow/shrink, доля от `imageSizePercent`) — инлайн-стилем
+  // из `news-card.ts`; тело добирает остаток через `flex: 1 1 auto` ниже.
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
   background: vars.$color-d9d9d9;
 
@@ -45,7 +39,7 @@
 
 .news-card__body {
   display: flex;
-  flex: 1 1 45%;
+  flex: 1 1 auto;
   flex-direction: column;
   justify-content: flex-end;
   min-width: 0;
@@ -69,7 +63,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  min-height: 0;
+  min-height: 100%;
   gap: 4px;
   overflow: hidden;
 }
@@ -77,11 +71,32 @@
 .news-card__heading {
   display: -webkit-box;
   flex: 0 0 auto;
+  // Гарантированная высота под 2 строки (line-height 28px × 2) — без неё, при
+  // сжатом бюджете высоты `.news-card__text` (например `imageSizePercent`,
+  // близкий к 90% в редакторе стиля, `PinnedGridEditor`), `-webkit-line-clamp`
+  // может получить от flex-родителя высоту меньше двух строк на промежуточном
+  // layout-проходе и обрезать (`overflow: hidden`) текст ДО того, как второй
+  // проход выправит высоту — карточка остаётся с пустой областью под
+  // заголовок вместо текста. `min-height` резервирует место сразу, а не
+  // постфактум.
+  min-height: calc(#{vars.$line-height-28} * 2);
   overflow: hidden;
+  // Форсирует собственный composite/paint-слой — тот же приём, что и обход
+  // известного в этом проекте класса бага "Chromium не перерисовывает
+  // контент при реактивной мутации стиля предка" (см. заметку про SVG
+  // filter/gradient, `project_svg_filter_dynamic_attr_bug`): цвет заголовка
+  // наследуется от `[style.color]` на `<article class="news-card">`
+  // (`news-card.html`), который в редакторе стиля (`PinnedGridEditor`)
+  // меняется вживую на каждое движение цветового пикера — на этой же связке
+  // "-webkit-line-clamp + реактивно мутирующий предок" Chromium иногда не
+  // перекрашивает/не перерисовывает уже обрезанный текст, оставляя видимое
+  // место под заголовком пустым до следующего непричастного репейнта.
+  transform: translateZ(0);
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-22;
   font-weight: vars.$font-weight-500;
   line-height: vars.$line-height-28;
+  letter-spacing: vars.$letter-spacing-8;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -94,7 +109,13 @@
   font-size: vars.$font-size-14;
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-18;
+  letter-spacing: vars.$letter-spacing-3;
   text-align: justify;
+  // Стиль "Body Small" из Figma-текстовых стилей несёт собственный размер/
+  // интерлиньяж/трекинг, но 60%-я непрозрачность описания в макете (news1.json
+  // не хранит `opacity` — экспортер его не выгружает) задана самим слоем
+  // поверх стиля, не текстовым пресетом.
+  opacity: 0.6;
 }
 
 .news-card__tags {
@@ -112,8 +133,9 @@
   justify-content: space-between;
   height: 40px;
   padding: 0 16px;
-  // `divider` макета — 1px линия во всю ширину карточки.
-  border-top: 1px solid vars.$color-1e1e1e;
+  // `divider` макета — 1px линия во всю ширину карточки; цвет — инлайн-стилем
+  // из `style().textColor` (html), чтобы оставаться видимой на любом фоне.
+  border-top: 1px solid;
 }
 
 .news-card__counters {
@@ -138,26 +160,4 @@
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-18;
   text-align: right;
-}
-
-// Широкие/низкие ячейки (например `colSpan: 2` при небольшом `rowSpan`) —
-// картинка слева, контент справа, как у прежнего `wide`-варианта; переключено
-// CSS container-запросом по фактической ориентации ячейки, а не проп'ом,
-// т.к. ориентация зависит от реального соотношения colSpan/rowSpan слота
-// (произвольного, назначаемого админом), а не от заранее известного набора
-// вариантов.
-@container news-card (orientation: landscape) {
-  .news-card {
-    flex-direction: row;
-  }
-
-  .news-card__picture {
-    flex: 0 0 42%;
-    height: 100%;
-  }
-
-  .news-card__body {
-    flex: 1 1 58%;
-    justify-content: center;
-  }
 }

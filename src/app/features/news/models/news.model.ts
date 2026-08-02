@@ -9,6 +9,8 @@ export interface NewsItem {
   excerpt: string;
   /** `null` — картинки нет, рисуется серый плейсхолдер (`picture`-прямоугольник макета, `rgb(217, 217, 217)`). */
   imageUrl: string | null;
+  /** Все картинки новости, в порядке (`stream.Front#118`) — источник выбора обложки для конкретного пина в `PinnedGridEditor` (`coverImageUrl`); отдельно от `imageUrl`, т.к. у новости может быть несколько картинок, а `imageUrl` — только "своя" (первая по порядку). */
+  imageUrls: string[];
   tagIds: string[];
   views: number;
   likes: number;

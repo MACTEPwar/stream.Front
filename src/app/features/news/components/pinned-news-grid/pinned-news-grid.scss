@@ -7,10 +7,11 @@ $grid-gap: 20px;
 // стретчит этот элемент по флекс-оси до реальной доступной высоты, сетка
 // делит её на 12 равных строк (`1fr`), а не на фикс. px — так все 12 строк
 // гарантированно помещаются без скролла на любом экране.
+// `grid-template-columns`/`grid-template-rows` — не здесь, а инлайн-стилем из
+// `gridTemplateColumns()`/`gridTemplateRows()` (`pinned-news-grid.ts`,
+// `stream.Front#118`) — размер сетки настраиваемый, не хардкод 3×12.
 :host {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(12, 1fr);
   gap: $grid-gap;
   width: 100%;
   height: 100%;

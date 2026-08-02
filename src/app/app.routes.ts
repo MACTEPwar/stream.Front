@@ -60,6 +60,14 @@ export const routes: Routes = [
             (m) => m.AdminNewsTagsPage,
           ),
       },
+      {
+        path: 'news-pinned',
+        data: { breadcrumb: 'Закреплённые новости' },
+        loadComponent: () =>
+          import('./features/admin/pages/admin-news-pinned-page/admin-news-pinned-page').then(
+            (m) => m.AdminNewsPinnedPage,
+          ),
+      },
     ],
   },
   // Заглушки (stream.Front#49) — для ручной проверки роутинга/активного

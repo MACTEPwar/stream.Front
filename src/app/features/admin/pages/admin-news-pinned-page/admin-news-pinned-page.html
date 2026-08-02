@@ -1,0 +1,12 @@
+<div class="admin-news-pinned-page">
+  @if (hasError()) {
+    <app-error-message message="Не удалось загрузить закреплённые новости" />
+  } @else {
+    <app-pinned-grid-editor
+      class="admin-news-pinned-page__editor"
+      [news]="news()"
+      [layouts]="layouts()"
+      (save)="onSave($event)"
+    />
+  }
+</div>

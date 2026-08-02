@@ -16,7 +16,8 @@ interface AdminMenuGroup {
 /**
  * Сайдбар-меню (`stream.Front#74`) сгруппировано по разделам — единственная
  * группа «Справочники» (`schedule` → `stream.Front#76`, `users` →
- * `stream.Front#77`, `news`/`news-tags` → `stream.Front#115`) сворачиваемая
+ * `stream.Front#77`, `news`/`news-tags` → `stream.Front#115`, `news-pinned` →
+ * `stream.Front#118`) сворачиваемая
  * (по прямому запросу пользователя при расширении #77). Отдельная группа
  * «Новости» из первой итерации `#115` объединена сюда же — «Новости» это
  * такой же справочник, как «Расписание»/«Пользователи», отдельная группа
@@ -30,6 +31,7 @@ const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
       { path: 'users', label: 'Пользователи' },
       { path: 'news', label: 'Новости' },
       { path: 'news-tags', label: 'Теги' },
+      { path: 'news-pinned', label: 'Закреплённые новости' },
     ],
   },
 ];
