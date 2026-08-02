@@ -6,7 +6,7 @@ import { PaginatedResponse } from '@features/admin/services/admin-users.service'
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
 import { LikeResponse, NewsArchiveService } from '../../services/news-archive.service';
 import { NewsService } from '../../services/news.service';
 import { NewsTagService } from '../../services/news-tag.service';
@@ -23,6 +23,7 @@ function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
     title: 'Заголовок',
     excerpt: 'Lorem ipsum dolor sit amet consectetur.',
     imageUrl: null,
+    imageUrls: [],
     tagIds: ['tournament'],
     views: 100,
     likes: 100,
@@ -37,10 +38,11 @@ const NEWS: NewsItem[] = Array.from({ length: 7 }, (_, index) => newsItem(`news-
 
 const PINNED_SLOTS: PinnedNewsSlot[] = NEWS.map((item, index) => ({
   newsId: item.id,
-  colStart: ((index % 3) + 1) as 1 | 2 | 3,
+  colStart: (index % 3) + 1,
   rowStart: index + 1,
   colSpan: index === 3 ? 2 : 1,
   rowSpan: 1,
+  style: DEFAULT_CARD_STYLE, coverImageUrl: null,
 }));
 
 function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
@@ -81,7 +83,11 @@ describe('NewsPage', () => {
         { provide: NewsTagService, useValue: { getTags: () => of(TAGS) } },
         {
           provide: NewsService,
-          useValue: { getNews: () => of(NEWS), getPinnedSlots: () => of(PINNED_SLOTS) },
+          useValue: {
+            getNews: () => of(NEWS),
+            getPinnedSlots: () => of(PINNED_SLOTS),
+            getGridConfig: () => of({ columns: 3, rows: 12 }),
+          },
         },
         {
           provide: NewsArchiveService,

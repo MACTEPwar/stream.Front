@@ -1,0 +1,305 @@
+@use 'variables' as vars;
+@use 'admin-table';
+
+$grid-gap: 20px;
+$handle-size: 10px;
+
+// `p-drawer` формы добавления новости — светлая тема через общий партиал
+// `admin-table.drawer-vars` (`stream.Front#115`/`#77`, "сайдбары так же
+// везде должны быть светлые в админке"), не унаследованный тёмный фон темы
+// `AdminPreset` — тот же приём, что у `AdminNewsTagsPage`/`AdminUsersPage`.
+// Без явного `appendTo` на `<p-drawer>` (html) оверлей рендерится прямо
+// здесь, в DOM-поддереве этого компонента, поэтому CSS-переменные на `:host`
+// доходят до него обычным наследованием.
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+
+  @include admin-table.drawer-vars;
+}
+
+.pinned-grid-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pinned-grid-editor__toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.pinned-grid-editor__grid-size-field,
+.pinned-grid-editor__checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  color: vars.$color-ffffff;
+  white-space: nowrap;
+}
+
+.pinned-grid-editor__number-input {
+  width: 70px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid vars.$color-e4e4e4;
+  border-radius: 5px;
+  background: vars.$color-ffffff;
+  color: vars.$color-1e1e1e;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+}
+
+.pinned-grid-editor__placement-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 5px;
+  background: rgba(vars.$color-19a2e6, 0.15);
+  color: vars.$color-ffffff;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+}
+
+// Симулятор вьюпорта (`viewportPreset`) — `.pinned-grid-editor__viewport`
+// зажат в фиксированные width/height пресета (инлайн-стилем из
+// `viewportSize()`, ts) — имитирует экран мобильного/планшета без реального
+// ресайза окна браузера; wrapper центрирует и скроллит, если пресет меньше
+// содержимого.
+.pinned-grid-editor__viewport-wrapper {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
+  overflow: auto;
+}
+
+.pinned-grid-editor__viewport {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px dashed rgba(vars.$color-ffffff, 0.3);
+}
+
+.pinned-grid-editor__viewport-select {
+  min-width: 220px;
+}
+
+// `flex: 1; min-height: 0` (не фикс. px) — по прямому запросу пользователя
+// весь грид обязан помещаться во вьюпорт целиком, без скролла: строки/
+// колонки (`1fr` в `gridTemplateRows()`/`gridTemplateColumns()`, ts) сами
+// сжимаются под фактическую высоту/ширину `.pinned-grid-editor__viewport`
+// (её задаёт пресет симулятора), а не диктуют собственный минимум.
+.pinned-grid-editor__grid {
+  position: relative;
+  display: grid;
+  gap: $grid-gap;
+  flex: 1;
+  min-height: 0;
+  padding: $grid-gap;
+}
+
+.pinned-grid-editor__card {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.pinned-grid-editor__card--invalid .pinned-grid-editor__preview {
+  outline: 2px solid vars.$color-af4141;
+  outline-offset: -2px;
+}
+
+// Подсветка карточки, чей стиль сейчас редактируется в drawer'е
+// (`stream.Front#118`, доработка — панель контролов вынесена ИЗ карточки,
+// эта рамка — единственный визуальный маркер "редактируется именно эта",
+// сама карточка ничем больше не перекрывается и живо отражает правки
+// `draftStyle` через `previewStyle()`, ts).
+.pinned-grid-editor__card--editing .pinned-grid-editor__preview {
+  outline: 2px solid vars.$color-19a2e6;
+  outline-offset: -2px;
+}
+
+.pinned-grid-editor__preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pinned-grid-editor__card-controls {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+}
+
+.pinned-grid-editor__news-select {
+  max-width: 160px;
+}
+
+// В drawer'е (обычный поток документа, не абсолютный оверлей поверх
+// карточки, — `stream.Front#118` доработка "вне карточки").
+.pinned-grid-editor__style-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: vars.$font-family-montserrat;
+    font-size: vars.$font-size-14;
+    color: vars.$color-1e1e1e;
+  }
+}
+
+.pinned-grid-editor__style-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pinned-grid-editor__handle {
+  position: absolute;
+  z-index: 1;
+  touch-action: none;
+}
+
+.pinned-grid-editor__handle--col {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: $handle-size;
+  cursor: ew-resize;
+}
+
+.pinned-grid-editor__handle--row {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: $handle-size;
+  cursor: ns-resize;
+}
+
+.pinned-grid-editor__empty {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  align-self: center;
+  justify-self: center;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  line-height: vars.$line-height-18;
+  color: vars.$color-b2b2b2;
+}
+
+.pinned-grid-editor__highlight-cell {
+  z-index: 0;
+  pointer-events: none;
+  border: 1px dashed rgba(vars.$color-ffffff, 0.4);
+}
+
+.pinned-grid-editor__placement-cell {
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: crosshair;
+  color: rgba(vars.$color-ffffff, 0.6);
+}
+
+.pinned-grid-editor__placement-cell--free {
+  background: rgba(vars.$color-ffffff, 0.06);
+}
+
+.pinned-grid-editor__placement-rect {
+  z-index: 3;
+  pointer-events: none;
+  background: rgba(vars.$color-47be61, 0.35);
+  border: 2px solid vars.$color-47be61;
+}
+
+.pinned-grid-editor__placement-rect--invalid {
+  background: rgba(vars.$color-af4141, 0.35);
+  border-color: vars.$color-af4141;
+}
+
+.pinned-grid-editor__add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: vars.$font-family-montserrat;
+    font-size: vars.$font-size-14;
+    color: vars.$color-1e1e1e;
+  }
+}
+
+// Обложка — выбор ОДНОЙ из уже имеющихся у выбранной новости картинок
+// (`stream.Front#118`, доработка), не загрузка нового файла.
+.pinned-grid-editor__cover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  color: vars.$color-1e1e1e;
+}
+
+.pinned-grid-editor__cover-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pinned-grid-editor__cover-thumb {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  background: vars.$color-e4e4e4;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.pinned-grid-editor__cover-thumb--selected {
+  border-color: vars.$color-19a2e6;
+}
+
+.pinned-grid-editor__cover-empty {
+  margin: 0;
+  color: vars.$color-b2b2b2;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+}

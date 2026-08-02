@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
+import { DEFAULT_CARD_STYLE, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
 import { NewsCard } from './news-card';
 
 const ITEM: NewsItem = {
@@ -10,6 +11,7 @@ const ITEM: NewsItem = {
   title: 'Lorem ipsum dolor sit amet consectetur.',
   excerpt: 'Lorem ipsum dolor sit amet consectetur. Enim ultricies varius iaculis.',
   imageUrl: '/images/main-carousel/slide-0-test.png',
+  imageUrls: ['/images/main-carousel/slide-0-test.png'],
   tagIds: ['tournament', 'mlbb'],
   views: 980,
   likes: 1400,
@@ -26,11 +28,12 @@ const TAGS: NewsTag[] = [
 @Component({
   selector: 'app-news-card-host',
   imports: [NewsCard],
-  template: `<app-news-card [item]="item()" [tags]="tags()" />`,
+  template: `<app-news-card [item]="item()" [tags]="tags()" [cardStyle]="cardStyle()" />`,
 })
 class NewsCardHost {
   readonly item = signal<NewsItem>(ITEM);
   readonly tags = signal<NewsTag[]>(TAGS);
+  readonly cardStyle = signal<PinnedNewsCardStyle>(DEFAULT_CARD_STYLE);
 }
 
 describe('NewsCard', () => {
@@ -76,5 +79,31 @@ describe('NewsCard', () => {
 
     expect(fixture.nativeElement.querySelector('.news-card__picture')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.news-card__picture img')).toBeNull();
+  });
+
+  it('применяет style: фон/цвет текста/направление по imagePosition', () => {
+    const fixture = createCard();
+    fixture.componentInstance.cardStyle.set({
+      imagePosition: 'left',
+      imageSizePercent: 30,
+      imageScale: 1.5,
+      imageOffsetX: 20,
+      imageOffsetY: 80,
+      backgroundColor: '#123456',
+      textColor: '#abcdef',
+    });
+    fixture.detectChanges();
+
+    const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
+    expect(article.style.flexDirection).toBe('row');
+    expect(article.style.background).toContain('rgb(18, 52, 86)');
+    expect(article.style.color).toContain('rgb(171, 205, 239)');
+
+    const picture = fixture.nativeElement.querySelector('.news-card__picture') as HTMLElement;
+    expect(picture.style.flex).toBe('0 0 30%');
+
+    const img = fixture.nativeElement.querySelector('.news-card__picture img') as HTMLElement;
+    expect(img.style.transform).toBe('scale(1.5)');
+    expect(img.style.objectPosition).toBe('20% 80%');
   });
 });

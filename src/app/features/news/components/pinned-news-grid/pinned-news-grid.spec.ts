@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NewsItem } from '../../models/news.model';
-import { PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
 import { PinnedNewsGrid, PinnedNewsGridEntry } from './pinned-news-grid';
 
 function newsItem(id: string): NewsItem {
@@ -10,6 +10,7 @@ function newsItem(id: string): NewsItem {
     title: `Заголовок ${id}`,
     excerpt: 'Lorem ipsum dolor sit amet consectetur.',
     imageUrl: null,
+    imageUrls: [],
     tagIds: [],
     views: 10,
     likes: 5,
@@ -20,7 +21,7 @@ function newsItem(id: string): NewsItem {
 }
 
 function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
-  return { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 1, ...overrides };
+  return { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 1, style: DEFAULT_CARD_STYLE, coverImageUrl: null, ...overrides };
 }
 
 describe('PinnedNewsGrid', () => {
@@ -28,9 +29,11 @@ describe('PinnedNewsGrid', () => {
     TestBed.configureTestingModule({ imports: [PinnedNewsGrid] });
   });
 
-  function createGrid(entries: PinnedNewsGridEntry[]) {
+  function createGrid(entries: PinnedNewsGridEntry[], columns?: number, rows?: number) {
     const fixture = TestBed.createComponent(PinnedNewsGrid);
     fixture.componentRef.setInput('entries', entries);
+    if (columns !== undefined) fixture.componentRef.setInput('columns', columns);
+    if (rows !== undefined) fixture.componentRef.setInput('rows', rows);
     fixture.detectChanges();
     return fixture;
   }
@@ -61,5 +64,21 @@ describe('PinnedNewsGrid', () => {
     const fixture = createGrid([]);
     expect(fixture.nativeElement.querySelector('.pinned-news-grid__empty')).not.toBeNull();
     expect(fixture.nativeElement.querySelectorAll('app-news-card').length).toBe(0);
+  });
+
+  it('размер сетки — из columns/rows, не хардкод 3×12', () => {
+    const fixture = createGrid([], 5, 20);
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))');
+    expect(host.style.gridTemplateRows).toBe('repeat(20, 1fr)');
+  });
+
+  it('без явных columns/rows использует дефолт 3×12', () => {
+    const fixture = createGrid([]);
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.style.gridTemplateColumns).toBe('repeat(3, minmax(0, 1fr))');
+    expect(host.style.gridTemplateRows).toBe('repeat(12, 1fr)');
   });
 });

@@ -44,6 +44,7 @@ describe('AdminPage', () => {
       'Пользователи',
       'Новости',
       'Теги',
+      'Закреплённые новости',
     ]);
   });
 
@@ -86,7 +87,7 @@ describe('AdminPage', () => {
     const groupHeaders = el.querySelectorAll<HTMLButtonElement>('.admin-page__nav-group-header');
     expect(groupHeaders.length).toBe(1);
     expect(groupHeaders[0]?.textContent).toContain('Справочники');
-    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(4);
+    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(5);
 
     groupHeaders[0]?.click();
     harness.detectChanges();
@@ -96,6 +97,6 @@ describe('AdminPage', () => {
     groupHeaders[0]?.click();
     harness.detectChanges();
 
-    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(4);
+    expect(el.querySelectorAll('.admin-page__nav-link').length).toBe(5);
   });
 });

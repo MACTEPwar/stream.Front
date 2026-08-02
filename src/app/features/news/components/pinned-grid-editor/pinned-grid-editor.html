@@ -1,0 +1,289 @@
+<div class="pinned-grid-editor__toolbar">
+  <div class="pinned-grid-editor__toolbar-group">
+    <app-button text="Добавить новость" icon="pi pi-plus" [disabled]="pendingNews() !== null" (click)="onAddClick()" />
+
+    <label class="pinned-grid-editor__grid-size-field">
+      Колонки
+      <input
+        type="number"
+        min="1"
+        class="pinned-grid-editor__number-input"
+        [value]="columnsDraft()"
+        (input)="columnsDraft.set($any($event.target).valueAsNumber)"
+      />
+    </label>
+    <label class="pinned-grid-editor__grid-size-field">
+      Строки
+      <input
+        type="number"
+        min="1"
+        class="pinned-grid-editor__number-input"
+        [value]="rowsDraft()"
+        (input)="rowsDraft.set($any($event.target).valueAsNumber)"
+      />
+    </label>
+    <app-button text="Применить размер" size="small" (click)="onApplyGridSizeClick()" />
+  </div>
+
+  <div class="pinned-grid-editor__toolbar-group">
+    <label class="pinned-grid-editor__checkbox-field">
+      <input type="checkbox" [checked]="gridHighlightEnabled()" (change)="gridHighlightEnabled.set($any($event.target).checked)" />
+      Подсветка сетки
+    </label>
+
+    <label class="pinned-grid-editor__grid-size-field">
+      Вьюпорт
+      <app-select
+        class="pinned-grid-editor__viewport-select"
+        [options]="viewportPresetOptions"
+        optionLabel="label"
+        optionValue="value"
+        [value]="viewportPreset()"
+        (valueChange)="onViewportPresetChange($event)"
+      />
+    </label>
+
+    @if (viewportPreset() === 'small') {
+      <label class="pinned-grid-editor__grid-size-field">
+        Высота, px
+        <input
+          type="number"
+          min="1"
+          class="pinned-grid-editor__number-input"
+          [value]="smallViewportHeightPx()"
+          (input)="onSmallViewportHeightInput($any($event.target).value)"
+        />
+      </label>
+    }
+
+    <app-button text="Сохранить" (click)="onSaveClick()" />
+  </div>
+</div>
+
+@if (pendingNews()) {
+  <div class="pinned-grid-editor__placement-banner">
+    Выберите область на сетке для новой карточки — зажмите и потяните по свободным ячейкам.
+    <app-button text="Отменить добавление" size="small" severity="danger" (click)="onCancelPlacement()" />
+  </div>
+}
+
+<div class="pinned-grid-editor__viewport-wrapper">
+  <div class="pinned-grid-editor__viewport" [style.width.px]="viewportSize().width" [style.height.px]="viewportSize().height">
+    <div
+      class="pinned-grid-editor__grid"
+      [style.grid-template-columns]="gridTemplateColumns()"
+      [style.grid-template-rows]="gridTemplateRows()"
+    >
+      @for (entry of entries(); track entry.slot.newsId) {
+        <div
+          class="pinned-grid-editor__card"
+          [class.pinned-grid-editor__card--invalid]="isDraggingInvalid(entry.slot.newsId)"
+          [class.pinned-grid-editor__card--editing]="editingNewsId() === entry.slot.newsId"
+          [style.grid-column]="gridColumn(displaySlot(entry.slot))"
+          [style.grid-row]="gridRow(displaySlot(entry.slot))"
+          (pointerdown)="onPointerDown($event, entry.slot, 'move')"
+        >
+          <app-news-card class="pinned-grid-editor__preview" [item]="entry.item" [tags]="emptyTags" [cardStyle]="previewStyle(entry.slot)" />
+
+          <div class="pinned-grid-editor__card-controls" (pointerdown)="$event.stopPropagation()">
+            <app-button icon="pi pi-pencil" size="small" (click)="onEditStyleClick(entry.slot)" />
+            <app-button icon="pi pi-times" size="small" severity="danger" (click)="onRemoveSlot(entry.slot.newsId)" />
+          </div>
+
+          <div
+            class="pinned-grid-editor__handle pinned-grid-editor__handle--col"
+            (pointerdown)="onPointerDown($event, entry.slot, 'col')"
+          ></div>
+          <div
+            class="pinned-grid-editor__handle pinned-grid-editor__handle--row"
+            (pointerdown)="onPointerDown($event, entry.slot, 'row')"
+          ></div>
+        </div>
+      } @empty {
+        <p class="pinned-grid-editor__empty">Нет закреплённых новостей</p>
+      }
+
+      @if (gridHighlightEnabled()) {
+        @for (cell of cells(); track cell.col + '-' + cell.row) {
+          <div class="pinned-grid-editor__highlight-cell" [style.grid-column]="cellGridColumn(cell)" [style.grid-row]="cellGridRow(cell)"></div>
+        }
+      }
+
+      @if (pendingNews()) {
+        @for (cell of cells(); track cell.col + '-' + cell.row) {
+          <div
+            class="pinned-grid-editor__placement-cell"
+            [class.pinned-grid-editor__placement-cell--free]="!isCellOccupied(cell)"
+            [style.grid-column]="cellGridColumn(cell)"
+            [style.grid-row]="cellGridRow(cell)"
+            (pointerdown)="onPlacementCellPointerDown(cell)"
+            (pointerenter)="onPlacementCellPointerEnter(cell)"
+          >
+            @if (!isCellOccupied(cell)) {
+              <i class="pi pi-plus" aria-hidden="true"></i>
+            }
+          </div>
+        }
+
+        @if (placementRect(); as rect) {
+          <div
+            class="pinned-grid-editor__placement-rect"
+            [class.pinned-grid-editor__placement-rect--invalid]="!placementValid()"
+            [style.grid-column]="placementRectGridColumn()"
+            [style.grid-row]="placementRectGridRow()"
+          ></div>
+        }
+      }
+    </div>
+  </div>
+</div>
+
+<p-drawer [(visible)]="addDrawerVisible" position="right" header="Добавить новость" styleClass="pinned-grid-editor__drawer" [style]="{ width: '480px', 'max-width': '90vw' }">
+  <div class="pinned-grid-editor__add-form">
+    <label>
+      Новость
+      <app-select
+        [options]="unusedNewsForAdd()"
+        optionLabel="title"
+        optionValue="id"
+        [filter]="true"
+        placeholder="Выберите новость"
+        [value]="addFormNewsId()"
+        (valueChange)="onAddFormNewsChange($event)"
+      />
+    </label>
+
+    @if (addFormNewsId()) {
+      <div class="pinned-grid-editor__cover-field">
+        Обложка
+        @if (addFormNewsImages().length > 0) {
+          <div class="pinned-grid-editor__cover-gallery">
+            @for (url of addFormNewsImages(); track url) {
+              <button
+                type="button"
+                class="pinned-grid-editor__cover-thumb"
+                [class.pinned-grid-editor__cover-thumb--selected]="addFormCoverUrl() === url"
+                (click)="addFormCoverUrl.set(url)"
+              >
+                <img [src]="url" alt="" />
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="pinned-grid-editor__cover-empty">У новости нет изображений — обложки не будет.</p>
+        }
+      </div>
+    }
+
+    <app-button text="Продолжить" [disabled]="!canSubmitAddForm()" (click)="onAddFormSubmit()" />
+  </div>
+</p-drawer>
+
+<p-drawer
+  [visible]="editingNewsId() !== null"
+  (visibleChange)="onStyleDrawerVisibleChange($event)"
+  position="right"
+  header="Редактировать карточку"
+  styleClass="pinned-grid-editor__drawer"
+  [style]="{ width: '420px', 'max-width': '90vw' }"
+>
+  @if (draftStyle(); as draft) {
+    @if (editingSlot(); as slot) {
+      <div class="pinned-grid-editor__style-form">
+        <label>
+          Новость
+          <app-select
+            [options]="optionsForSlot(slot.newsId)"
+            optionLabel="title"
+            optionValue="id"
+            [filter]="true"
+            [value]="slot.newsId"
+            (valueChange)="onEditFormNewsChange(slot.newsId, $event)"
+          />
+        </label>
+
+        <app-button
+          text="Переключить ориентацию"
+          icon="pi pi-refresh"
+          size="small"
+          [disabled]="!canToggleOrientation(slot)"
+          (click)="onToggleOrientation(slot)"
+        />
+
+        <label>
+          Сторона картинки
+          <app-select
+            [options]="imagePositionOptions"
+            optionLabel="label"
+            optionValue="value"
+            [value]="draft.imagePosition"
+            (valueChange)="onImagePositionChange($event)"
+          />
+        </label>
+
+        <label>
+          Площадь под картинку, {{ draft.imageSizePercent }}%
+          <input
+            type="range"
+            min="10"
+            max="90"
+            step="5"
+            [value]="draft.imageSizePercent"
+            (input)="onDraftStyleNumberInput('imageSizePercent', $any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          Масштаб картинки, ×{{ draft.imageScale }}
+          <input
+            type="range"
+            min="1"
+            max="3"
+            step="0.1"
+            [value]="draft.imageScale"
+            (input)="onDraftStyleNumberInput('imageScale', $any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          Смещение X, {{ draft.imageOffsetX }}%
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="draft.imageOffsetX"
+            (input)="onDraftStyleNumberInput('imageOffsetX', $any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          Смещение Y, {{ draft.imageOffsetY }}%
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="draft.imageOffsetY"
+            (input)="onDraftStyleNumberInput('imageOffsetY', $any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          Фон карточки
+          <input type="color" [value]="draft.backgroundColor" (input)="onDraftColorInput('backgroundColor', $any($event.target).value)" />
+        </label>
+
+        <label>
+          Цвет текста
+          <input type="color" [value]="draft.textColor" (input)="onDraftColorInput('textColor', $any($event.target).value)" />
+        </label>
+
+        <div class="pinned-grid-editor__style-panel-actions">
+          <app-button text="Сохранить" (click)="onSaveStyleClick()" />
+          <app-button text="Отмена" severity="info" (click)="onCancelStyleClick()" />
+        </div>
+      </div>
+    }
+  }
+</p-drawer>

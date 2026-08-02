@@ -1,5 +1,11 @@
 <div class="news-page">
-  <app-pinned-news-grid class="news-page__grid" aria-label="Новости" [entries]="gridEntries()" />
+  <app-pinned-news-grid
+    class="news-page__grid"
+    aria-label="Новости"
+    [entries]="gridEntries()"
+    [columns]="gridConfig().columns"
+    [rows]="gridConfig().rows"
+  />
 
   <aside class="news-page__archive" aria-label="Архив новостей">
     <div class="news-page__archive-toolbar">

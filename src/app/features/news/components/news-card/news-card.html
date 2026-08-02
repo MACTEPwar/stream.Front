@@ -1,7 +1,17 @@
-<article class="news-card">
-  <div class="news-card__picture">
+<article
+  class="news-card"
+  [style.flex-direction]="flexDirection()"
+  [style.background]="cardStyle().backgroundColor"
+  [style.color]="cardStyle().textColor"
+>
+  <div class="news-card__picture" [style.flex]="pictureFlexBasis()">
     @if (item().imageUrl; as imageUrl) {
-      <img [src]="imageUrl" alt="" />
+      <img
+        [src]="imageUrl"
+        alt=""
+        [style.transform]="imageTransform()"
+        [style.object-position]="imageObjectPosition()"
+      />
     }
   </div>
 
@@ -19,7 +29,7 @@
       </div>
     </div>
 
-    <div class="news-card__data">
+    <div class="news-card__data" [style.border-top-color]="cardStyle().textColor">
       <div class="news-card__counters">
         <span class="news-card__counter">
           <i class="pi pi-eye" aria-hidden="true"></i>

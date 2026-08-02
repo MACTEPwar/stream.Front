@@ -13,7 +13,7 @@ import { PinnedNewsGrid, PinnedNewsGridEntry } from '../../components/pinned-new
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import { DEFAULT_GRID_COLUMNS, DEFAULT_GRID_ROWS, PinnedGridConfig, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
 import { NewsArchiveService } from '../../services/news-archive.service';
 import { NewsService } from '../../services/news.service';
 import { NewsTagService } from '../../services/news-tag.service';
@@ -89,6 +89,7 @@ export class NewsPage implements OnInit {
   private readonly news = signal<NewsItem[]>([]);
   private readonly tags = signal<NewsTag[]>([]);
   private readonly pinnedSlots = signal<PinnedNewsSlot[]>([]);
+  protected readonly gridConfig = signal<PinnedGridConfig>({ columns: DEFAULT_GRID_COLUMNS, rows: DEFAULT_GRID_ROWS });
 
   private readonly archiveItems = signal<AdminNews[]>([]);
   private readonly archivePage = signal(0);
@@ -122,6 +123,7 @@ export class NewsPage implements OnInit {
     this.newsTagService.getTags().subscribe((tags) => this.tags.set(tags));
     this.newsService.getNews().subscribe((news) => this.news.set(news));
     this.newsService.getPinnedSlots().subscribe((slots) => this.pinnedSlots.set(slots));
+    this.newsService.getGridConfig().subscribe((config) => this.gridConfig.set(config));
     this.loadArchivePage(1);
   }
 

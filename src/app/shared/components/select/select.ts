@@ -6,7 +6,10 @@ import { SelectModule } from 'primeng/select';
  * Тонкая обёртка над `p-select` (stream.Front#94) — не полный проксирующий
  * враппер PrimeNG API, только пропсы, реально нужные текущему usage
  * (`AdminUsersPage`: фильтр по роли + селект роли в drawer «Изменить роль»):
- * `options`/`optionLabel`/`optionValue` и двусторонний `[(value)]`.
+ * `options`/`optionLabel`/`optionValue` и двусторонний `[(value)]`, плюс
+ * опциональный `filter` (`stream.Front#118`, поиск по `optionLabel()`-полю
+ * через `filterBy`) — выключен по умолчанию, включается там, где список
+ * опций может быть длинным (выбор новости в `PinnedGridEditor`).
  *
  * `value` — `model()`, как у `TextField` (не `ReactiveFormsModule` наружу) —
  * внутри мапится на `[ngModel]`/`(ngModelChange)`, поскольку `p-select` сам
@@ -52,5 +55,7 @@ export class Select<TOption = unknown, TValue = unknown> {
   readonly optionLabel = input<string>();
   readonly optionValue = input<string>();
   readonly placeholder = input<string>();
+  /** Строка поиска над списком опций (`p-select filter`, `stream.Front#118`) — по умолчанию выключена, включается там, где список может быть длинным (например выбор новости в `PinnedGridEditor`). */
+  readonly filter = input(false);
   readonly value = model<TValue | null>(null);
 }
