@@ -7,6 +7,10 @@ import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { CardImagePosition, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
 import { formatCompactCount } from '../../utils/format-compact-count';
+import { hexToRgba } from '../../utils/hex-to-rgba';
+
+/** Прозрачность разделителя над блоком просмотров/лайков — 10% от `textColor` карточки, не сплошной цвет (`docs/figma`, `stream.Front#121`). */
+const DIVIDER_OPACITY = 0.1;
 
 /** Направление `flex-direction` карточки по выбранной админом стороне картинки (`stream.Front#118`). */
 const FLEX_DIRECTION_BY_IMAGE_POSITION: Record<CardImagePosition, string> = {
@@ -55,4 +59,5 @@ export class NewsCard {
   protected readonly imageObjectPosition = computed(
     () => `${this.cardStyle().imageOffsetX}% ${this.cardStyle().imageOffsetY}%`,
   );
+  protected readonly dividerColor = computed(() => hexToRgba(this.cardStyle().textColor, DIVIDER_OPACITY));
 }

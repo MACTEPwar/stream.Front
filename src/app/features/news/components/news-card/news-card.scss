@@ -53,7 +53,7 @@
   flex-direction: column;
   min-height: 0;
   gap: 16px;
-  padding: 8px 16px 16px;
+  padding: 8px 16px;
   overflow: hidden;
 }
 
@@ -152,6 +152,11 @@
   font-size: vars.$font-size-14;
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-18;
+  letter-spacing: vars.$letter-spacing-3;
+  // 75% — на самом счётчике (иконка+текст), не на `.news-card__data`, у
+  // которой уже своя 10%-я прозрачность на `border-top-color` (иначе две
+  // прозрачности перемножились бы и разделитель стал бы почти невидимым).
+  opacity: 0.75;
 }
 
 .news-card__date {
@@ -159,5 +164,7 @@
   font-size: vars.$font-size-14;
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-18;
+  letter-spacing: vars.$letter-spacing-3;
   text-align: right;
+  opacity: 0.75;
 }
