@@ -5,4 +5,5 @@ export interface NewsTag {
   name: string;
   severity?: CheckboxSeverity;
   color?: string;
+  textColor?: string;
 }

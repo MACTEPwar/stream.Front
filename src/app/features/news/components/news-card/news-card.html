@@ -24,7 +24,12 @@
 
       <div class="news-card__tags">
         @for (tag of tags(); track tag.id) {
-          <app-badge [text]="tag.name" [severity]="tag.severity ?? 'primary'" [color]="tag.color" />
+          <app-badge
+            [text]="tag.name"
+            [severity]="tag.severity ?? 'primary'"
+            [color]="tag.color"
+            [textColor]="tag.textColor"
+          />
         }
       </div>
     </div>

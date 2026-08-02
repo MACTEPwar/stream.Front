@@ -3,6 +3,8 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { NotificationService } from '@core/services/notification.service';
 import { AdminNews } from '@features/admin/models/news.model';
+import { AdminNewsService } from '@features/admin/services/admin-news.service';
+import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
 import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
@@ -15,11 +17,12 @@ import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { DEFAULT_GRID_COLUMNS, DEFAULT_GRID_ROWS, PinnedGridConfig, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
 import { NewsArchiveService } from '../../services/news-archive.service';
-import { NewsService } from '../../services/news.service';
-import { NewsTagService } from '../../services/news-tag.service';
+import { NewsItemAdapterService } from '../../services/news-item-adapter.service';
 import { PinnedGridService } from '../../services/pinned-grid.service';
 
 const ARCHIVE_PAGE_SIZE = 10;
+/** Сколько новостей грузить сразу для закреплённой сетки (тот же паттерн/значение, что `AdminNewsPinnedPage`). */
+const NEWS_PAGE_SIZE = 100;
 /** Запускает подгрузку следующей страницы архива, когда до низа списка остаётся меньше этого расстояния (px). */
 const ARCHIVE_SCROLL_THRESHOLD_PX = 80;
 
@@ -40,10 +43,13 @@ function endOfDay(date: Date): Date {
  * `491:3585`): слева закреплённая сетка карточек (`PinnedNewsGrid`,
  * stream.Front#112), раскладка (`PinnedGridConfig`/`PinnedNewsSlot`) — на
  * реальном API (`stream.Front#119`, поверх `streamer.API#71`,
- * `PinnedGridService.getLayout('large')`), сами новости слотов — по-прежнему
- * мок (`NewsService.getNews()`, отдельная будущая задача), справа панель
- * архива (`NewsArchiveItem`) — тоже на реальном API (`stream.Front#118`,
- * поверх `streamer.API#65`/`#67`, `NewsArchiveService`).
+ * `PinnedGridService.getLayout('large')`), сами новости слотов — тоже
+ * реальный API (`stream.Front#121`, поверх `streamer.API#65`/`#67`,
+ * `AdminNewsService.getAll()`/`AdminNewsTagService.getAll()`, адаптированные
+ * в `NewsItem`/`NewsTag` через общий `NewsItemAdapterService` — тот же
+ * адаптер, что `AdminNewsPinnedPage`), справа панель архива
+ * (`NewsArchiveItem`) — тоже на реальном API (`stream.Front#118`, поверх
+ * `streamer.API#65`/`#67`, `NewsArchiveService`).
  *
  * Шапка сайта здесь не рендерится — она уже есть глобально (`Shell` в
  * `app.html`, stream.Front#48/#49), включая лого, меню с `NavActiveIndicator`
@@ -73,10 +79,15 @@ function endOfDay(date: Date): Date {
  * чтобы поставить лайк", остальное — общая ошибка).
  *
  * Фильтр по датам/тегам (`NewsFilterSidebar.filterChange`) применяется
- * ТОЛЬКО к закреплённой сетке слева (мок, свой `tagId`-namespace) — на архив
- * (реальный API, другой `tagId`-namespace) больше не накладывается: полноценная
- * интеграция серверного фильтра `GET /news?tagId=`/периода — отдельная
- * будущая задача (нет диапазона дат в текущем контракте `GET /news`).
+ * ТОЛЬКО к архиву справа (клиентская фильтрация уже загруженных строк, тот же
+ * приём, что и `showOnlyLiked`) — на закреплённую сетку слева (ручная
+ * расстановка админа) не накладывается: слот, отфильтрованный по тегу/дате,
+ * не должен пропадать из сетки, это не список кандидатов, а фиксированная
+ * витрина. Полноценная интеграция серверного фильтра `GET /news?tagId=`/
+ * периода (сейчас фильтрация — над уже загруженной страницей архива, новые
+ * страницы по скроллу подгружаются без фильтра на бэке и проходят тот же
+ * клиентский фильтр при рендере) — отдельная будущая задача (нет диапазона
+ * дат в текущем контракте `GET /news`, `tagId` — только один, не массив).
  */
 @Component({
   selector: 'app-news-page',
@@ -85,8 +96,9 @@ function endOfDay(date: Date): Date {
   styleUrl: './news-page.scss',
 })
 export class NewsPage implements OnInit {
-  private readonly newsService = inject(NewsService);
-  private readonly newsTagService = inject(NewsTagService);
+  private readonly adminNewsService = inject(AdminNewsService);
+  private readonly adminNewsTagService = inject(AdminNewsTagService);
+  private readonly newsItemAdapter = inject(NewsItemAdapterService);
   private readonly newsArchiveService = inject(NewsArchiveService);
   private readonly pinnedGridService = inject(PinnedGridService);
   private readonly notificationService = inject(NotificationService);
@@ -109,10 +121,9 @@ export class NewsPage implements OnInit {
 
   protected readonly gridEntries = computed<PinnedNewsGridEntry[]>(() => {
     const newsById = new Map(this.news().map((item) => [item.id, item]));
-    const visibleIds = new Set(this.matching(this.news()).map((item) => item.id));
 
     return this.pinnedSlots()
-      .filter((slot) => visibleIds.has(slot.newsId))
+      .filter((slot) => newsById.has(slot.newsId))
       .map((slot) => {
         const item = newsById.get(slot.newsId)!;
         return { item, tags: this.resolveTags(item), slot };
@@ -121,12 +132,26 @@ export class NewsPage implements OnInit {
 
   protected readonly archiveEntries = computed<AdminNews[]>(() => {
     const onlyLiked = this.showOnlyLiked();
-    return this.archiveItems().filter((item) => !onlyLiked || item.likedByCurrentUser);
+    const { dateFrom, dateTo, tags } = this.filter();
+
+    return this.archiveItems().filter((item) => {
+      if (onlyLiked && !item.likedByCurrentUser) return false;
+
+      const publishedAt = new Date(item.publishedAt);
+      if (dateFrom && publishedAt < startOfDay(dateFrom)) return false;
+      if (dateTo && publishedAt > endOfDay(dateTo)) return false;
+
+      return tags.length === 0 || item.tags.some((tag) => tags.includes(tag.id));
+    });
   });
 
   ngOnInit(): void {
-    this.newsTagService.getTags().subscribe((tags) => this.tags.set(tags));
-    this.newsService.getNews().subscribe((news) => this.news.set(news));
+    this.adminNewsTagService
+      .getAll()
+      .subscribe((tags) => this.tags.set(tags.map((tag) => this.newsItemAdapter.toNewsTag(tag))));
+    this.adminNewsService
+      .getAll(1, NEWS_PAGE_SIZE)
+      .subscribe((response) => this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item))));
     this.pinnedGridService.getLayout('large').subscribe((layout) => {
       this.pinnedSlots.set(layout.slots);
       this.gridConfig.set(layout.config);
@@ -191,19 +216,6 @@ export class NewsPage implements OnInit {
 
   private patchArchiveItem(id: string, patch: Partial<AdminNews>): void {
     this.archiveItems.update((items) => items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-  }
-
-  private matching(items: NewsItem[]): NewsItem[] {
-    const { dateFrom, dateTo, tags } = this.filter();
-    if (!dateFrom && !dateTo && tags.length === 0) {
-      return items;
-    }
-
-    return items.filter((item) => {
-      if (dateFrom && item.publishedAt < startOfDay(dateFrom)) return false;
-      if (dateTo && item.publishedAt > endOfDay(dateTo)) return false;
-      return tags.length === 0 || item.tagIds.some((tagId) => tags.includes(tagId));
-    });
   }
 
   private resolveTags(item: NewsItem): NewsTag[] {

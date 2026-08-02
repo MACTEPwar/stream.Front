@@ -3,10 +3,8 @@ import { Component, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { extractApiErrorMessage } from '@core/models/api-error.model';
-import { ImageUrlService } from '@core/services/image-url.service';
 import { NotificationService } from '@core/services/notification.service';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
-import { AdminNews } from '../../models/news.model';
 import { AdminNewsService } from '../../services/admin-news.service';
 import { PinnedGridEditor } from '../../../news/components/pinned-grid-editor/pinned-grid-editor';
 import { NewsItem } from '../../../news/models/news.model';
@@ -17,6 +15,7 @@ import {
   PinnedGridLayout,
   PinnedGridViewport,
 } from '../../../news/models/pinned-news-slot.model';
+import { NewsItemAdapterService } from '../../../news/services/news-item-adapter.service';
 import { PinnedGridService } from '../../../news/services/pinned-grid.service';
 
 /** Сколько новостей грузить сразу (`AdminNewsService.getAll()` пагинирован, но справочник новостей для этого редактора небольшой — постраничный подбор был бы преждевременным усложнением). */
@@ -32,14 +31,16 @@ const DEFAULT_LAYOUT: PinnedGridLayout = { config: { columns: DEFAULT_GRID_COLUM
  * САМ СПИСОК новостей для выбора (`news` input редактора) — из уже
  * реализованного справочника «Новости» (`AdminNewsService.getAll()`,
  * `GET /news`, тот же источник, что `AdminNewsPage`), не из мок-семёрки
- * `NewsService.getNews()` — по прямому запросу пользователя. `toNewsItem()`
- * адаптирует реальный `AdminNews` (`images[]`, `viewCount`, `likeCount`, ...)
- * под мок-модель `NewsItem`, которую понимает `PinnedGridEditor`/`NewsCard`
- * (полная унификация моделей — отдельная будущая задача, см.
- * `AdminNewsService`/`NewsArchiveItem`): все картинки по `order`, резолвятся
- * через `ImageUrlService.resolve()` (`/uploads/*` валиден только
- * относительно backend origin, тот же приём, что `NewsArchiveItem`) —
- * `imageUrl` первая из них, `imageUrls` — все.
+ * `NewsService.getNews()` — по прямому запросу пользователя. Адаптация
+ * реального `AdminNews` (`images[]`, `viewCount`, `likeCount`, ...) в
+ * `NewsItem`, которую понимает `PinnedGridEditor`/`NewsCard` (полная
+ * унификация моделей — отдельная будущая задача, см.
+ * `AdminNewsService`/`NewsArchiveItem`), вынесена в общий
+ * `NewsItemAdapterService.toNewsItem()` (`stream.Front#121`, тот же адаптер
+ * использует и `NewsPage`): все картинки по `order`, резолвятся через
+ * `ImageUrlService.resolve()` (`/uploads/*` валиден только относительно
+ * backend origin, тот же приём, что `NewsArchiveItem`) — `imageUrl` первая
+ * из них, `imageUrls` — все.
  *
  * `PinnedNewsSlot.newsId` ссылается на РЕАЛЬНЫЕ id справочника новостей —
  * старые моковые слоты (`'news-1'` и т.п.) больше ни на что не указывают,
@@ -64,7 +65,7 @@ const DEFAULT_LAYOUT: PinnedGridLayout = { config: { columns: DEFAULT_GRID_COLUM
 export class AdminNewsPinnedPage {
   private readonly pinnedGridService = inject(PinnedGridService);
   private readonly adminNewsService = inject(AdminNewsService);
-  private readonly imageUrlService = inject(ImageUrlService);
+  private readonly newsItemAdapter = inject(NewsItemAdapterService);
   private readonly notificationService = inject(NotificationService);
 
   protected readonly isLoading = signal(true);
@@ -98,7 +99,7 @@ export class AdminNewsPinnedPage {
     this.hasError.set(false);
     this.adminNewsService.getAll(1, NEWS_PAGE_SIZE).subscribe({
       next: (response) => {
-        this.news.set(response.items.map((item) => this.toNewsItem(item)));
+        this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item)));
         forkJoin([
           this.pinnedGridService.getLayout('small'),
           this.pinnedGridService.getLayout('middle'),
@@ -119,25 +120,5 @@ export class AdminNewsPinnedPage {
         this.isLoading.set(false);
       },
     });
-  }
-
-  private toNewsItem(admin: AdminNews): NewsItem {
-    const imageUrls = admin.images
-      .slice()
-      .sort((a, b) => a.order - b.order)
-      .map((image) => this.imageUrlService.resolve(image.url));
-    return {
-      id: admin.id,
-      title: admin.title,
-      excerpt: admin.description,
-      imageUrl: imageUrls[0] ?? null,
-      imageUrls,
-      tagIds: admin.tags.map((tag) => tag.id),
-      views: admin.viewCount,
-      likes: admin.likeCount,
-      publishedAt: new Date(admin.publishedAt),
-      viewedByCurrentUser: false,
-      likedByCurrentUser: admin.likedByCurrentUser ?? false,
-    };
   }
 }
