@@ -29,6 +29,7 @@ const mockNews: AdminNews = {
     { id: 'i1', url: '/uploads/1.jpg', order: 1 },
   ],
   tags: [mockTags[0]],
+  hasNoImage: false,
   createdAt: '2026-07-31T00:00:00.000Z',
   updatedAt: '2026-07-31T00:00:00.000Z',
 };
@@ -139,6 +140,24 @@ describe('AdminNewsPage', () => {
     expect(fixture.componentInstance['title']()).toBe('Заголовок');
     expect(fixture.componentInstance['selectedTagIds']()).toEqual(['t1']);
     expect(fixture.componentInstance['imageUrls']()).toEqual(['/uploads/1.jpg', '/uploads/2.jpg']);
+    expect(fixture.componentInstance['hasNoImage']()).toBe(false);
+  });
+
+  it('«Изменить» подхватывает hasNoImage: true из новости', async () => {
+    const fixture = await createComponent();
+
+    fixture.componentInstance['onEditClick']({ ...mockNews, hasNoImage: true });
+
+    expect(fixture.componentInstance['hasNoImage']()).toBe(true);
+  });
+
+  it('«Добавить» сбрасывает hasNoImage в false', async () => {
+    const fixture = await createComponent();
+
+    fixture.componentInstance['hasNoImage'].set(true);
+    fixture.componentInstance['onAddClick']();
+
+    expect(fixture.componentInstance['hasNoImage']()).toBe(false);
   });
 
   it('создаёт новость и перезапрашивает страницу', async () => {
@@ -147,10 +166,12 @@ describe('AdminNewsPage', () => {
     fixture.componentInstance['onAddClick']();
     fixture.componentInstance['title'].set('Новый заголовок');
     fixture.componentInstance['description'].set('Новое описание');
+    fixture.componentInstance['hasNoImage'].set(true);
     fixture.componentInstance['onSaveClick']();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/admin/news`);
     expect(req.request.method).toBe('POST');
+    expect(req.request.body.hasNoImage).toBe(true);
     req.flush(mockNews);
 
     expect(fixture.componentInstance['drawerVisible']()).toBe(false);

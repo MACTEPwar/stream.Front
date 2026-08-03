@@ -33,6 +33,7 @@ export interface AdminNews {
   viewedByCurrentUser: boolean | null;
   images: AdminNewsImage[];
   tags: AdminNewsTag[];
+  hasNoImage: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -45,6 +46,8 @@ export interface CreateNewsPayload {
   /** ISO-строка, опционально — по умолчанию backend подставляет текущее время. */
   publishedAt?: string;
   tagIds: string[];
+  /** Явная отметка "новость намеренно без фото" — не влияет на валидацию `imageUrls`. */
+  hasNoImage?: boolean;
 }
 
 export type UpdateNewsPayload = Partial<CreateNewsPayload>;

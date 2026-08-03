@@ -18,6 +18,7 @@ const ITEM: AdminNews = {
   viewedByCurrentUser: false,
   images: [{ id: 'img-1', url: '/uploads/first.jpg', order: 1 }],
   tags: [{ id: 'tournament', name: 'Турнир', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' }],
+  hasNoImage: false,
   createdAt: '',
   updatedAt: '',
 };

@@ -20,6 +20,7 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
     viewedByCurrentUser: false,
     images: [],
     tags: [],
+    hasNoImage: false,
     createdAt: '',
     updatedAt: '',
     ...overrides,

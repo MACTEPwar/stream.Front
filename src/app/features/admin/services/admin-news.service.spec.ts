@@ -17,6 +17,7 @@ const mockNews: AdminNews = {
   viewedByCurrentUser: null,
   images: [],
   tags: [],
+  hasNoImage: false,
   createdAt: '2026-07-31T12:00:00.000Z',
   updatedAt: '2026-07-31T12:00:00.000Z',
 };
