@@ -21,7 +21,11 @@
 
 // `.__picture`/`.__text` — `<button>` (не `<div>`), клик открывает `NewsDetailModal`:
 // нативная интерактивность (фокус/Enter/Space) без ручной ARIA-разметки —
-// сброс дефолтных браузерных стилей кнопки ниже.
+// сброс дефолтных браузерных стилей кнопки ниже. `color: inherit` обязателен:
+// в отличие от `<div>`, `<button>` не наследует `color` от родителя по
+// умолчанию (браузерный UA-стиль ставит его в `buttontext`), из-за чего
+// заголовок/описание стали белыми на светлом фоне карточки и визуально
+// пропали — баг, найденный визуальной проверкой после введения `<button>`.
 .news-archive-item__picture {
   position: relative;
   flex: 0 0 175px;
@@ -30,6 +34,7 @@
   border: none;
   padding: 0;
   font: inherit;
+  color: inherit;
   text-align: left;
   cursor: pointer;
 
@@ -71,6 +76,7 @@
   background: none;
   border: none;
   font: inherit;
+  color: inherit;
   text-align: left;
   cursor: pointer;
 }
