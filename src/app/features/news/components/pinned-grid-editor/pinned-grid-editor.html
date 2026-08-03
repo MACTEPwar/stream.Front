@@ -158,6 +158,14 @@
         Обложка
         @if (addFormNewsImages().length > 0) {
           <div class="pinned-grid-editor__cover-gallery">
+            <button
+              type="button"
+              class="pinned-grid-editor__cover-thumb pinned-grid-editor__cover-thumb--none"
+              [class.pinned-grid-editor__cover-thumb--selected]="addFormCoverUrl() === null"
+              (click)="addFormCoverUrl.set(null)"
+            >
+              Без обложки
+            </button>
             @for (url of addFormNewsImages(); track url) {
               <button
                 type="button"
@@ -201,6 +209,34 @@
             (valueChange)="onEditFormNewsChange(slot.newsId, $event)"
           />
         </label>
+
+        <div class="pinned-grid-editor__cover-field">
+          Обложка
+          @if (editingNewsImages().length > 0) {
+            <div class="pinned-grid-editor__cover-gallery">
+              <button
+                type="button"
+                class="pinned-grid-editor__cover-thumb pinned-grid-editor__cover-thumb--none"
+                [class.pinned-grid-editor__cover-thumb--selected]="draftCoverImageUrl() === null"
+                (click)="onDraftCoverImageChange(null)"
+              >
+                Без обложки
+              </button>
+              @for (url of editingNewsImages(); track url) {
+                <button
+                  type="button"
+                  class="pinned-grid-editor__cover-thumb"
+                  [class.pinned-grid-editor__cover-thumb--selected]="draftCoverImageUrl() === url"
+                  (click)="onDraftCoverImageChange(url)"
+                >
+                  <img [src]="url" alt="" />
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="pinned-grid-editor__cover-empty">У новости нет изображений — обложки не будет.</p>
+          }
+        </div>
 
         <app-button
           text="Переключить ориентацию"

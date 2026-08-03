@@ -297,6 +297,23 @@ $handle-size: 10px;
   border-color: vars.$color-19a2e6;
 }
 
+// Явная опция "сбросить обложку" (`coverImageUrl: null`) — та же коробка
+// 72×72, что у обычных миниатюр, но с текстом вместо картинки (по запросу
+// пользователя: раньше drawer редактирования уже добавленной карточки вообще
+// не позволял убрать/сменить обложку — только форма добавления).
+.pinned-grid-editor__cover-thumb--none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  line-height: vars.$line-height-18;
+  text-align: center;
+  color: vars.$color-1e1e1e;
+  cursor: pointer;
+}
+
 .pinned-grid-editor__cover-empty {
   margin: 0;
   color: vars.$color-b2b2b2;

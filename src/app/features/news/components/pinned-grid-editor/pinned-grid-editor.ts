@@ -140,7 +140,12 @@ function clamp(value: number, min: number, max: number): number {
  * **Редактирование карточки** — кнопка-карандаш открывает ОДИН drawer со
  * всеми контролами слота: выбор новости (`optionsForSlot`/`onEditFormNewsChange`
  * — смена новости меняет `newsId` слота и тут же переносит `editingNewsId` на
- * новый id, чтобы редактор не "потерял" слот), переключение ориентации
+ * новый id, чтобы редактор не "потерял" слот, и сбрасывает `draftCoverImageUrl`
+ * — старый выбор обложки мог не относиться к новой новости), обложка
+ * (`editingNewsImages`/`draftCoverImageUrl` — та же галерея-single-select, что
+ * и в форме добавления, плюс явная кнопка «Без обложки» → `null`, раньше
+ * убрать/сменить обложку уже добавленного слота было нельзя вообще — баг,
+ * с которым обратился пользователь), переключение ориентации
  * (`canToggleOrientation`/`onToggleOrientation`, применяется сразу, не через
  * «Сохранить»), и стиль (сторона картинки, доля площади под картинку, зум/
  * пан, цвет фона/текста) — НЕ оверлеем поверх самой карточки (по прямому
@@ -241,6 +246,7 @@ export class PinnedGridEditor {
 
   protected readonly editingNewsId = signal<string | null>(null);
   protected readonly draftStyle = signal<PinnedNewsCardStyle | null>(null);
+  protected readonly draftCoverImageUrl = signal<string | null>(null);
 
   protected readonly editingSlot = computed(() => {
     const newsId = this.editingNewsId();
@@ -277,6 +283,12 @@ export class PinnedGridEditor {
   protected readonly addFormNewsImages = computed(() => {
     const newsId = this.addFormNewsId();
     return this.news().find((item) => item.id === newsId)?.imageUrls ?? [];
+  });
+
+  /** То же самое, что `addFormNewsImages`, но для новости УЖЕ добавленного слота — источник галереи обложки в drawer'е редактирования. */
+  protected readonly editingNewsImages = computed(() => {
+    const slot = this.editingSlot();
+    return slot ? (this.news().find((item) => item.id === slot.newsId)?.imageUrls ?? []) : [];
   });
 
   protected readonly canSubmitAddForm = computed(() => this.addFormNewsId() !== null);
@@ -400,6 +412,9 @@ export class PinnedGridEditor {
     }
     this.onSlotNewsChange(oldNewsId, newNewsId);
     this.editingNewsId.set(newNewsId);
+    // Смена новости — сброс выбранной обложки (та же логика, что и `onAddFormNewsChange`):
+    // список картинок на выбор теперь другой, старый выбор мог не относиться к новой новости.
+    this.draftCoverImageUrl.set(null);
   }
 
   protected canToggleOrientation(slot: PinnedNewsSlot): boolean {
@@ -614,6 +629,11 @@ export class PinnedGridEditor {
   protected onEditStyleClick(slot: PinnedNewsSlot): void {
     this.editingNewsId.set(slot.newsId);
     this.draftStyle.set(slot.style);
+    this.draftCoverImageUrl.set(slot.coverImageUrl);
+  }
+
+  protected onDraftCoverImageChange(url: string | null): void {
+    this.draftCoverImageUrl.set(url);
   }
 
   protected onImagePositionChange(position: CardImagePosition | null): void {
@@ -641,14 +661,19 @@ export class PinnedGridEditor {
     if (!newsId || !style) {
       return;
     }
-    this.updateCurrentSlots((slots) => slots.map((slot) => (slot.newsId === newsId ? { ...slot, style } : slot)));
+    const coverImageUrl = this.draftCoverImageUrl();
+    this.updateCurrentSlots((slots) =>
+      slots.map((slot) => (slot.newsId === newsId ? { ...slot, style, coverImageUrl } : slot)),
+    );
     this.editingNewsId.set(null);
     this.draftStyle.set(null);
+    this.draftCoverImageUrl.set(null);
   }
 
   protected onCancelStyleClick(): void {
     this.editingNewsId.set(null);
     this.draftStyle.set(null);
+    this.draftCoverImageUrl.set(null);
   }
 
   /** Закрытие drawer'а редактирования не только кнопкой «Отмена» — Esc/клик по backdrop у `p-drawer` меняют `visible` сами, тот же путь отмены. */
