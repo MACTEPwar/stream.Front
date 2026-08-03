@@ -1,0 +1,36 @@
+@if (item(); as newsItem) {
+  <div class="news-detail-modal">
+    <div class="news-detail-modal__picture">
+      @if (imageUrl(); as url) {
+        <img [src]="url" alt="" />
+      }
+    </div>
+
+    <div class="news-detail-modal__content">
+      <h2 class="news-detail-modal__title">{{ newsItem.title }}</h2>
+
+      <div class="news-detail-modal__tags">
+        @for (tag of newsItem.tags; track tag.id) {
+          <app-badge [text]="tag.name" [color]="tag.color" [textColor]="tag.textColor" />
+        }
+      </div>
+
+      <p class="news-detail-modal__text">{{ newsItem.description }}</p>
+
+      <div class="news-detail-modal__data">
+        <div class="news-detail-modal__counters">
+          <span class="news-detail-modal__counter">
+            <i class="pi pi-eye" aria-hidden="true"></i>
+            {{ viewsLabel() }}
+          </span>
+          <span class="news-detail-modal__counter">
+            <i [class]="likeIconClass()" aria-hidden="true"></i>
+            {{ likesLabel() }}
+          </span>
+        </div>
+
+        <span class="news-detail-modal__date">{{ dateLabel() }}</span>
+      </div>
+    </div>
+  </div>
+}

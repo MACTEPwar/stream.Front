@@ -2,15 +2,16 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { NewsTag } from '../../models/news-tag.model';
-import { NewsTagService } from '../../services/news-tag.service';
+import { AdminNewsTag } from '@features/admin/models/news.model';
+import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
+
 import { NewsFilter, NewsFilterSidebar } from './news-filter-sidebar';
 
-const TAGS: NewsTag[] = [
-  { id: 'tournament', name: 'Турнир', severity: 'danger' },
-  { id: 'announcement', name: 'Анонс', color: '#d4b106' },
-  { id: 'stream', name: 'Стрим', severity: 'success' },
-];
+function tag(id: string, name: string, color = '#d4b106', textColor = '#ffffff'): AdminNewsTag {
+  return { id, name, color, textColor, createdAt: '', updatedAt: '' };
+}
+
+const TAGS: AdminNewsTag[] = [tag('tournament', 'Турнир'), tag('announcement', 'Анонс'), tag('stream', 'Стрим')];
 
 @Component({
   selector: 'app-news-filter-sidebar-host',
@@ -29,7 +30,7 @@ describe('NewsFilterSidebar', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [NewsFilterSidebarHost],
-      providers: [{ provide: NewsTagService, useValue: { getTags: () => of(TAGS) } }],
+      providers: [{ provide: AdminNewsTagService, useValue: { getAll: () => of(TAGS) } }],
     });
   });
 

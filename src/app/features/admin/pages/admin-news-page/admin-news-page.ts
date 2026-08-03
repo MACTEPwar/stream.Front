@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DrawerModule } from 'primeng/drawer';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { ModalService } from '@core/services/modal.service';
@@ -93,6 +94,7 @@ interface TagFilterOption {
     TableModule,
     DrawerModule,
     MultiSelectModule,
+    ToggleSwitchModule,
     Badge,
     Button,
     ButtonGroup,
@@ -133,6 +135,7 @@ export class AdminNewsPage {
   protected readonly publishedAt = signal<Date | null>(new Date());
   protected readonly selectedTagIds = signal<string[]>([]);
   protected readonly imageUrls = signal<string[]>([]);
+  protected readonly hasNoImage = signal(false);
   protected readonly isSaving = signal(false);
 
   private isFirstSearchRun = true;
@@ -190,6 +193,7 @@ export class AdminNewsPage {
     this.publishedAt.set(new Date());
     this.selectedTagIds.set([]);
     this.imageUrls.set([]);
+    this.hasNoImage.set(false);
     this.drawerVisible.set(true);
   }
 
@@ -205,6 +209,7 @@ export class AdminNewsPage {
         .sort((a, b) => a.order - b.order)
         .map((image) => image.url),
     );
+    this.hasNoImage.set(item.hasNoImage);
     this.drawerVisible.set(true);
   }
 
@@ -227,6 +232,7 @@ export class AdminNewsPage {
       imageUrls: this.imageUrls(),
       tagIds: this.selectedTagIds(),
       publishedAt: publishedAt instanceof Date ? publishedAt.toISOString() : undefined,
+      hasNoImage: this.hasNoImage(),
     };
 
     const id = this.editingNewsId();

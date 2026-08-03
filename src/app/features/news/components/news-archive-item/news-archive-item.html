@@ -1,5 +1,5 @@
 <article class="news-archive-item">
-  <div class="news-archive-item__picture">
+  <button type="button" class="news-archive-item__picture" (click)="onOpenDetail()">
     @if (imageUrl(); as url) {
       <img [src]="url" alt="" />
     }
@@ -9,28 +9,34 @@
         <app-badge [text]="tag.name" [color]="tag.color" [textColor]="tag.textColor" />
       }
     </div>
-  </div>
+  </button>
 
   <div class="news-archive-item__body">
-    <div class="news-archive-item__text">
+    <button type="button" class="news-archive-item__text" (click)="onOpenDetail()">
       <h3 class="news-archive-item__heading">{{ item().title }}</h3>
       <p class="news-archive-item__excerpt">{{ item().description }}</p>
-    </div>
+    </button>
 
     <div class="news-archive-item__data">
       <div class="news-archive-item__counters">
-        <span class="news-archive-item__counter">
+        <app-checkbox
+          class="news-archive-item__counter-checkbox news-archive-item__counter-checkbox--readonly"
+          [buttonMode]="true"
+          severity="contrast"
+          [checked]="isViewed()"
+        >
           <i class="pi pi-eye" aria-hidden="true"></i>
           {{ viewsLabel() }}
-        </span>
+        </app-checkbox>
 
         <app-checkbox
-          class="news-archive-item__like"
-          severity="primary"
+          class="news-archive-item__counter-checkbox"
+          [buttonMode]="true"
+          severity="contrast"
           [checked]="isLiked()"
           (checkedChange)="onLikeToggle($event)"
         >
-          <i class="pi pi-heart" aria-hidden="true"></i>
+          <i [class]="likeIconClass()" aria-hidden="true"></i>
           {{ likesLabel() }}
         </app-checkbox>
       </div>

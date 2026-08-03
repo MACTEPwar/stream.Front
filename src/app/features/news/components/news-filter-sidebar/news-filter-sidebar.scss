@@ -42,6 +42,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  // Прижимает триггер к правому краю тулбара (`NewsPage`, `:host` этого
+  // компонента — `display: contents`, так что этот div и есть тот самый
+  // flex-item внутри `.news-page__archive-toolbar`) независимо от того,
+  // сколько места слева занимает группа тогглов — по прямому запросу
+  // пользователя, а не полагаясь только на `justify-content: space-between`
+  // родителя.
+  margin-left: auto;
 }
 
 .news-filter-sidebar__period {

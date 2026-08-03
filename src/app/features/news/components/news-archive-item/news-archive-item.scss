@@ -1,15 +1,17 @@
 @use 'variables' as vars;
 
-// Числа — из docs/figma/news1.json (`news_archive`): строка 660×100, превью
-// 175×100, колонка справа 485, строка данных 38 с паддингом 8, заголовок
-// Montserrat 18, текст Nunito Sans 14.
+// Строка архива — по прямому запросу пользователя (замена фиксированной
+// 660×100 из docs/figma/news1.json): высота максимум 250px (не фиксированная
+// — реальное описание разной длины), превью 175px шириной на всю высоту
+// элемента, справа колонка минимум 250px, поделённая на текстовый блок и
+// инфопанель с паддингом 8px и разделителем 10%-й черноты между ними.
 :host {
   display: block;
 }
 
 .news-archive-item {
   display: flex;
-  height: 100px;
+  max-height: 250px;
   overflow: hidden;
   border-radius: 5px;
   background: vars.$color-f9f9f9;
@@ -17,11 +19,24 @@
   box-shadow: vars.$shadow-5-2;
 }
 
+// `.__picture`/`.__text` — `<button>` (не `<div>`), клик открывает `NewsDetailModal`:
+// нативная интерактивность (фокус/Enter/Space) без ручной ARIA-разметки —
+// сброс дефолтных браузерных стилей кнопки ниже. `color: inherit` обязателен:
+// в отличие от `<div>`, `<button>` не наследует `color` от родителя по
+// умолчанию (браузерный UA-стиль ставит его в `buttontext`), из-за чего
+// заголовок/описание стали белыми на светлом фоне карточки и визуально
+// пропали — баг, найденный визуальной проверкой после введения `<button>`.
 .news-archive-item__picture {
   position: relative;
   flex: 0 0 175px;
   overflow: hidden;
   background: vars.$color-d9d9d9;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 
   img {
     width: 100%;
@@ -30,9 +45,11 @@
   }
 }
 
+// Теги — левый НИЖНИЙ угол превью (по прямому запросу пользователя, раньше
+// был левый верхний).
 .news-archive-item__tags {
   position: absolute;
-  top: 8px;
+  bottom: 8px;
   left: 8px;
   display: flex;
   gap: 8px;
@@ -43,22 +60,27 @@
 
 .news-archive-item__body {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
-  min-width: 0;
+  min-width: 250px;
 }
 
 .news-archive-item__text {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 8px 0;
+  width: 100%;
+  padding: 8px;
   overflow: hidden;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-// `flex: 0 0 auto` — та же причина, что у `.news-card__heading`: в контейнере
-// фиксированной высоты заголовок иначе сжимается вместе с текстом.
 .news-archive-item__heading {
   flex: 0 0 auto;
   overflow: hidden;
@@ -70,14 +92,22 @@
   text-overflow: ellipsis;
 }
 
+// Многострочный клэмп (не одна строка, как у заголовка) — количество строк
+// (3) не задано макетом (высота элемента теперь динамическая, не 100px
+// фикс), подобрано на глаз под средний случай; поправить, если визуально не
+// подойдёт. 60%-я непрозрачность — тот же приём, что у `NewsCard.__excerpt`.
 .news-archive-item__excerpt {
+  display: -webkit-box;
+  flex: 1 1 auto;
   overflow: hidden;
   font-family: vars.$font-family-nunito-sans;
   font-size: vars.$font-size-14;
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-18;
-  white-space: nowrap;
+  opacity: 0.6;
   text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .news-archive-item__data {
@@ -85,47 +115,55 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  height: 38px;
   padding: 8px;
-  // `divider` макета (1px во всю ширину колонки) — бордером, чтобы суммарная
-  // высота строки осталась ровно 100px.
-  border-top: 1px solid vars.$color-1e1e1e;
+  // 10%-я непрозрачность чёрного (`#1e1e1e` = rgb(30, 30, 30)), не сплошной
+  // цвет — по прямому запросу пользователя.
+  border-top: 1px solid rgba(30, 30, 30, 0.1);
 }
 
+// 75% непрозрачности — тот же приём, что у `NewsCard.__counter`/`.__date`
+// (по прямому запросу пользователя: "цвет в информационной части сделай
+// так же как в гридах").
 .news-archive-item__counters {
   display: flex;
   align-items: center;
   gap: 16px;
+  opacity: 0.75;
 }
 
-.news-archive-item__counter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: vars.$font-family-nunito-sans;
-  font-size: vars.$font-size-14;
-  font-weight: vars.$font-weight-400;
-  line-height: vars.$line-height-18;
-}
-
-// Лайк — `Checkbox`, не голый счётчик текстом (по прямому запросу
-// пользователя, `stream.Front#118`) — сжат под ту же строку данных 38px
-// высотой: своя коробка чекбокса меньше дефолтной (16px), гэп между ней и
-// спроецированным сердцем/числом — тот же 8px, что у `__counter`-соседа.
-.news-archive-item__like {
-  ::ng-deep .checkbox {
+// Просмотры и лайки — оба `Checkbox` в `buttonMode` (по прямому запросу
+// пользователя: "чекбокс полностью с кастомным контентом, типа кнопка,
+// которая становится активной или наоборот" — та же механика, что у
+// тогглов тулбара `NewsPage`, БЕЗ `squareIcon` — контент шире одной иконки,
+// ширина остаётся по паддингу/контенту). Компактная высота под инфопанель
+// карточки (у тулбара — полноразмерная 40px) + Nunito Sans 14/18 вместо
+// дефолтного Montserrat 16 у `buttonMode` — перебивает через специфичность
+// (2 класса против 1 у `.checkbox--button-mode`). Иконка увеличена до 18px
+// (была дефолтного размера primeicons).
+.news-archive-item__counter-checkbox {
+  ::ng-deep .checkbox--button-mode {
+    height: 24px;
+    padding: 0 8px;
     gap: 8px;
     font-family: vars.$font-family-nunito-sans;
     font-size: vars.$font-size-14;
     font-weight: vars.$font-weight-400;
     line-height: vars.$line-height-18;
-    color: inherit;
   }
 
-  ::ng-deep .p-checkbox {
-    width: 16px;
-    height: 16px;
+  .pi {
+    font-size: 18px;
   }
+}
+
+// Просмотры — визуально чекбокс, отражающий реальное состояние
+// (`AdminNews.viewedByCurrentUser`), но НЕ переключаемый кликом: просмотр —
+// не toggle-действие пользователя, отметка ставится автоматически при
+// открытии новости (`NewsDetailModal`), поэтому клик по самому чекбоксу
+// намеренно ничего не делает (нет соответствующего API-действия "снять
+// просмотр" — только идемпотентная отметка).
+.news-archive-item__counter-checkbox--readonly {
+  pointer-events: none;
 }
 
 .news-archive-item__date {
@@ -134,4 +172,5 @@
   font-weight: vars.$font-weight-400;
   line-height: vars.$line-height-18;
   text-align: right;
+  opacity: 0.75;
 }

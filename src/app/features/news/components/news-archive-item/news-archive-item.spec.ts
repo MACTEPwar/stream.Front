@@ -13,11 +13,13 @@ const ITEM: AdminNews = {
   viewCount: 5300,
   likeCount: 44,
   likedByCurrentUser: false,
+  viewedByCurrentUser: false,
   images: [
     { id: 'img-2', url: '/uploads/second.jpg', order: 2 },
     { id: 'img-1', url: '/uploads/first.jpg', order: 1 },
   ],
   tags: [{ id: 'tournament', name: 'Турнир', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' }],
+  hasNoImage: false,
   createdAt: '',
   updatedAt: '',
 };
@@ -25,11 +27,16 @@ const ITEM: AdminNews = {
 @Component({
   selector: 'app-news-archive-item-host',
   imports: [NewsArchiveItem],
-  template: `<app-news-archive-item [item]="item()" (likeToggle)="lastLikeToggle.set($event)" />`,
+  template: `<app-news-archive-item
+    [item]="item()"
+    (likeToggle)="lastLikeToggle.set($event)"
+    (openDetail)="openDetailCount.set(openDetailCount() + 1)"
+  />`,
 })
 class NewsArchiveItemHost {
   readonly item = signal<AdminNews>(ITEM);
   readonly lastLikeToggle = signal<boolean | null>(null);
+  readonly openDetailCount = signal(0);
 }
 
 describe('NewsArchiveItem', () => {
@@ -50,9 +57,13 @@ describe('NewsArchiveItem', () => {
     expect(host.querySelector('.news-archive-item__excerpt')?.textContent).toContain(ITEM.description);
     expect(host.querySelector('.news-archive-item__date')?.textContent?.trim()).toBe('06.12.2023');
 
-    const views = host.querySelector('.news-archive-item__counter');
+    const views = host.querySelector('.news-archive-item__counter-checkbox--readonly');
     expect(views?.textContent?.trim()).toBe('5.3k');
-    expect(host.querySelector('.news-archive-item__like')?.textContent?.trim()).toBe('44');
+
+    const likes = host.querySelector(
+      '.news-archive-item__counter-checkbox:not(.news-archive-item__counter-checkbox--readonly)',
+    );
+    expect(likes?.textContent?.trim()).toBe('44');
   });
 
   it('рисует картинку первой по order, а не первой в массиве', () => {
@@ -73,12 +84,56 @@ describe('NewsArchiveItem', () => {
   it('эмитит likeToggle с противоположным текущему likedByCurrentUser состоянием при клике', async () => {
     const fixture = createItem();
     const host = fixture.nativeElement as HTMLElement;
-    const checkboxInput = host.querySelector<HTMLInputElement>('.news-archive-item__like .p-checkbox-input');
+    const checkboxInput = host.querySelector<HTMLInputElement>(
+      '.news-archive-item__counter-checkbox:not(.news-archive-item__counter-checkbox--readonly) .p-checkbox-input',
+    );
 
     checkboxInput?.click();
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(fixture.componentInstance.lastLikeToggle()).toBe(true);
+  });
+
+  it('чекбокс просмотров отражает viewedByCurrentUser', () => {
+    const fixture = createItem();
+    const checkedLabel = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('.news-archive-item__counter-checkbox--readonly .checkbox--checked');
+
+    expect(checkedLabel()).toBeNull();
+
+    fixture.componentInstance.item.set({ ...ITEM, viewedByCurrentUser: true });
+    fixture.detectChanges();
+
+    expect(checkedLabel()).not.toBeNull();
+  });
+
+  it('иконка лайка — pi-heart-fill при likedByCurrentUser: true, иначе pi-heart', () => {
+    const fixture = createItem();
+    const icon = () =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '.news-archive-item__counter-checkbox:not(.news-archive-item__counter-checkbox--readonly) i',
+      ) as HTMLElement;
+
+    expect(icon().className).toBe('pi pi-heart');
+
+    fixture.componentInstance.item.set({ ...ITEM, likedByCurrentUser: true });
+    fixture.detectChanges();
+
+    expect(icon().className).toBe('pi pi-heart-fill');
+  });
+
+  it('клик по картинке/тексту эмитит openDetail, клик по чекбоксам — нет', () => {
+    const fixture = createItem();
+    const host = fixture.nativeElement as HTMLElement;
+
+    host.querySelector<HTMLElement>('.news-archive-item__picture')?.click();
+    expect(fixture.componentInstance.openDetailCount()).toBe(1);
+
+    host.querySelector<HTMLElement>('.news-archive-item__text')?.click();
+    expect(fixture.componentInstance.openDetailCount()).toBe(2);
+
+    host.querySelector<HTMLElement>('.news-archive-item__data')?.click();
+    expect(fixture.componentInstance.openDetailCount()).toBe(2);
   });
 });

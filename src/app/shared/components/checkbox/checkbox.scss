@@ -204,6 +204,9 @@ $checkbox-severities: (
 
 .checkbox--button-mode {
   height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-width: 1px;
   border-style: solid;
   border-radius: var(--p-button-border-radius, 6px);
@@ -211,6 +214,31 @@ $checkbox-severities: (
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-16;
   transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+// Квадрат 40×40, только вместе с `buttonMode` (по прямому запросу
+// пользователя — раньше без явной width коробка растягивалась по
+// контенту/паддингу и выходила шире высоты) — ТОЛЬКО для содержимого из
+// одной иконки (тулбар архива `NewsPage`, `squareIcon()`); `buttonMode` с
+// иконкой+числом (счётчики `NewsArchiveItem`) на этот модификатор не
+// претендует — ширина остаётся по контенту.
+.checkbox--button-mode-square {
+  width: 40px;
+  padding: 0;
+}
+
+// Иконка внутри (pi pi-eye/pi-heart) — чуть крупнее дефолта primeicons (по
+// прямому запросу пользователя). `::ng-deep` обязателен: иконка приходит
+// через `<ng-content>` из шаблона ВЫЗЫВАЮЩЕГО компонента (`NewsPage`), а не
+// этого — обычный `.checkbox--button-mode-square .pi` компилируется с
+// Angular-атрибутом инкапсуляции ЭТОГО компонента, которого на спроецированном
+// `<i>` нет, и правило молча не применяется (баг, стоявший тут с самого
+// введения squareIcon — реальный размер тулбара архива NewsPage оставался
+// дефолтным 14px primeicons, а не 18px, было обнаружено визуальным сравнением
+// со счётчиками NewsArchiveItem, у которых аналогичное правило живёт в их
+// собственном scss и потому работает).
+.checkbox--button-mode-square ::ng-deep .pi {
+  font-size: 18px;
 }
 
 // Текст через checkbox__label наследует color от label, не фиксированный

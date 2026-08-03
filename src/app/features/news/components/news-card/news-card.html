@@ -24,19 +24,24 @@
 
       <div class="news-card__tags">
         @for (tag of tags(); track tag.id) {
-          <app-badge [text]="tag.name" [severity]="tag.severity ?? 'primary'" [color]="tag.color" />
+          <app-badge
+            [text]="tag.name"
+            [severity]="tag.severity ?? 'primary'"
+            [color]="tag.color"
+            [textColor]="tag.textColor"
+          />
         }
       </div>
     </div>
 
-    <div class="news-card__data" [style.border-top-color]="cardStyle().textColor">
+    <div class="news-card__data" [style.border-top-color]="dividerColor()">
       <div class="news-card__counters">
         <span class="news-card__counter">
           <i class="pi pi-eye" aria-hidden="true"></i>
           {{ viewsLabel() }}
         </span>
         <span class="news-card__counter">
-          <i class="pi pi-heart" aria-hidden="true"></i>
+          <i [class]="likeIconClass()" aria-hidden="true"></i>
           {{ likesLabel() }}
         </span>
       </div>

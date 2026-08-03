@@ -80,6 +80,8 @@ export class Checkbox {
   readonly iconColor = input<string>();
   readonly checked = model(false);
   readonly buttonMode = input(false);
+  /** Только вместе с `buttonMode()` — форсирует квадрат 40×40 (`stream.Front#121`) для содержимого из одной иконки (тулбар архива `NewsPage`); `buttonMode` с иконкой+числом (счётчики `NewsArchiveItem`) — БЕЗ этого модификатора, ширина по контенту/паддингу. */
+  readonly squareIcon = input(false);
 
   protected readonly rootClasses = computed(() => {
     const classes = ['checkbox', `checkbox--severity-${this.severity()}`];
@@ -91,6 +93,9 @@ export class Checkbox {
     }
     if (this.buttonMode()) {
       classes.push('checkbox--button-mode');
+    }
+    if (this.buttonMode() && this.squareIcon()) {
+      classes.push('checkbox--button-mode-square');
     }
     return classes.join(' ');
   });

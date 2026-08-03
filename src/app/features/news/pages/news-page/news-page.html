@@ -1,3 +1,5 @@
+<div class="news-page__background" aria-hidden="true"></div>
+
 <div class="news-page">
   <app-pinned-news-grid
     class="news-page__grid"
@@ -14,6 +16,7 @@
 
         <app-checkbox
           [buttonMode]="true"
+          [squareIcon]="true"
           severity="contrast"
           [checked]="showOnlyViewed()"
           (checkedChange)="showOnlyViewed.set($event)"
@@ -23,6 +26,7 @@
 
         <app-checkbox
           [buttonMode]="true"
+          [squareIcon]="true"
           severity="contrast"
           [checked]="showOnlyLiked()"
           (checkedChange)="showOnlyLiked.set($event)"
@@ -34,18 +38,18 @@
       <app-news-filter-sidebar (filterChange)="filter.set($event)" />
     </div>
 
-    <div class="news-page__archive-border"></div>
-
     <div class="news-page__archive-list" (scroll)="onArchiveScroll($event)">
       @for (item of archiveEntries(); track item.id) {
-        <app-news-archive-item [item]="item" (likeToggle)="onLikeToggle(item, $event)" />
+        <app-news-archive-item
+          [item]="item"
+          (likeToggle)="onLikeToggle(item, $event)"
+          (openDetail)="onOpenDetail(item)"
+        />
       } @empty {
         @if (!isLoadingArchive()) {
           <p class="news-page__empty">По выбранному фильтру новостей нет</p>
         }
       }
     </div>
-
-    <div class="news-page__archive-border"></div>
   </aside>
 </div>

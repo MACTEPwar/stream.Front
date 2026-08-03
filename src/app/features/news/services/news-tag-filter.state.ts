@@ -1,8 +1,10 @@
 import { Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 
+import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
+
 import { NewsFilter } from '../models/news-filter.model';
 import { NewsTag } from '../models/news-tag.model';
-import { NewsTagService } from './news-tag.service';
+import { NewsItemAdapterService } from './news-item-adapter.service';
 
 function asSingleDate(value: Date | Date[] | null): Date | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
@@ -45,7 +47,8 @@ export interface NewsTagFilterState {
  * синглтон на всё приложение).
  */
 export function createNewsTagFilterState(): NewsTagFilterState {
-  const newsTagService = inject(NewsTagService);
+  const adminNewsTagService = inject(AdminNewsTagService);
+  const newsItemAdapter = inject(NewsItemAdapterService);
 
   const tags = signal<NewsTag[]>([]);
   const selectedTagIds = signal<ReadonlySet<string>>(new Set());
@@ -82,7 +85,7 @@ export function createNewsTagFilterState(): NewsTagFilterState {
   );
 
   function loadTags(): void {
-    newsTagService.getTags().subscribe((value) => tags.set(value));
+    adminNewsTagService.getAll().subscribe((value) => tags.set(value.map((tag) => newsItemAdapter.toNewsTag(tag))));
   }
 
   function isTagSelected(tagId: string): boolean {

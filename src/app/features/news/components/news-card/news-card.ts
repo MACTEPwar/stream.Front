@@ -7,6 +7,10 @@ import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { CardImagePosition, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
 import { formatCompactCount } from '../../utils/format-compact-count';
+import { hexToRgba } from '../../utils/hex-to-rgba';
+
+/** Прозрачность разделителя над блоком просмотров/лайков — 10% от `textColor` карточки, не сплошной цвет (`docs/figma`, `stream.Front#121`). */
+const DIVIDER_OPACITY = 0.1;
 
 /** Направление `flex-direction` карточки по выбранной админом стороне картинки (`stream.Front#118`). */
 const FLEX_DIRECTION_BY_IMAGE_POSITION: Record<CardImagePosition, string> = {
@@ -33,6 +37,11 @@ const FLEX_DIRECTION_BY_IMAGE_POSITION: Record<CardImagePosition, string> = {
  * области (`transform: scale()`/`object-position`, комбинируется с
  * `object-fit: cover` на `<img>`). Фон/цвет текста карточки — `backgroundColor`/
  * `textColor` инлайн-стилями поверх дефолтных значений SCSS.
+ *
+ * Иконка лайка (`likeIconClass`) переключается между `pi-heart`/`pi-heart-fill`
+ * по `item().likedByCurrentUser` (тот же приём, что `NewsArchiveItem`) —
+ * счётчик здесь статичный текст, не интерактивный `Checkbox` (карточка сетки
+ * кликом не лайкается, в отличие от строки архива).
  */
 @Component({
   selector: 'app-news-card',
@@ -47,6 +56,9 @@ export class NewsCard {
 
   protected readonly viewsLabel = computed(() => formatCompactCount(this.item().views));
   protected readonly likesLabel = computed(() => formatCompactCount(this.item().likes));
+  protected readonly likeIconClass = computed(() =>
+    this.item().likedByCurrentUser ? 'pi pi-heart-fill' : 'pi pi-heart',
+  );
   protected readonly dateLabel = computed(() => formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'));
 
   protected readonly flexDirection = computed(() => FLEX_DIRECTION_BY_IMAGE_POSITION[this.cardStyle().imagePosition]);
@@ -55,4 +67,5 @@ export class NewsCard {
   protected readonly imageObjectPosition = computed(
     () => `${this.cardStyle().imageOffsetX}% ${this.cardStyle().imageOffsetY}%`,
   );
+  protected readonly dividerColor = computed(() => hexToRgba(this.cardStyle().textColor, DIVIDER_OPACITY));
 }

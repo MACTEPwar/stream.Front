@@ -1,50 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { AdminNews } from '@features/admin/models/news.model';
+import { ModalService } from '@core/services/modal.service';
+import { AdminNews, AdminNewsTag } from '@features/admin/models/news.model';
+import { AdminNewsService } from '@features/admin/services/admin-news.service';
+import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
 import { PaginatedResponse } from '@features/admin/services/admin-users.service';
 import { NewsFilter } from '../../models/news-filter.model';
-import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import { NewsDetailModal, NewsDetailModalData } from '../../components/news-detail-modal/news-detail-modal';
 import { LikeResponse, NewsArchiveService } from '../../services/news-archive.service';
-import { NewsService } from '../../services/news.service';
-import { NewsTagService } from '../../services/news-tag.service';
 import { PinnedGridService } from '../../services/pinned-grid.service';
 import { NewsPage } from './news-page';
 
-const TAGS: NewsTag[] = [
-  { id: 'tournament', name: 'Турнир', severity: 'danger' },
-  { id: 'stream', name: 'Стрим', severity: 'success' },
-];
-
-function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
-  return {
-    id,
-    title: 'Заголовок',
-    excerpt: 'Lorem ipsum dolor sit amet consectetur.',
-    imageUrl: null,
-    imageUrls: [],
-    tagIds: ['tournament'],
-    views: 100,
-    likes: 100,
-    publishedAt: new Date(2023, 11, 6),
-    viewedByCurrentUser: false,
-    likedByCurrentUser: false,
-    ...overrides,
-  };
+function adminTag(id: string, name: string): AdminNewsTag {
+  return { id, name, color: '#d4b106', textColor: '#ffffff', createdAt: '', updatedAt: '' };
 }
 
-const NEWS: NewsItem[] = Array.from({ length: 7 }, (_, index) => newsItem(`news-${index + 1}`));
-
-const PINNED_SLOTS: PinnedNewsSlot[] = NEWS.map((item, index) => ({
-  newsId: item.id,
-  colStart: (index % 3) + 1,
-  rowStart: index + 1,
-  colSpan: index === 3 ? 2 : 1,
-  rowSpan: 1,
-  style: DEFAULT_CARD_STYLE, coverImageUrl: null,
-}));
+const ADMIN_TAGS: AdminNewsTag[] = [adminTag('tournament', 'Турнир'), adminTag('stream', 'Стрим')];
+const TAGS: NewsTag[] = ADMIN_TAGS.map(({ id, name, color, textColor }) => ({ id, name, color, textColor }));
 
 function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
   return {
@@ -55,13 +30,31 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
     viewCount: 100,
     likeCount: 10,
     likedByCurrentUser: false,
+    viewedByCurrentUser: false,
     images: [],
     tags: [],
+    hasNoImage: false,
     createdAt: '',
     updatedAt: '',
     ...overrides,
   };
 }
+
+/** Реальный `AdminNews` для карточки закреплённой сетки — тегом всегда `tournament` (`ADMIN_TAGS[0]`). */
+function gridNews(id: string): AdminNews {
+  return adminNews(id, { viewCount: 100, likeCount: 100, tags: [ADMIN_TAGS[0]] });
+}
+
+const GRID_NEWS: AdminNews[] = Array.from({ length: 7 }, (_, index) => gridNews(`news-${index + 1}`));
+
+const PINNED_SLOTS: PinnedNewsSlot[] = GRID_NEWS.map((item, index) => ({
+  newsId: item.id,
+  colStart: (index % 3) + 1,
+  rowStart: index + 1,
+  colSpan: index === 3 ? 2 : 1,
+  rowSpan: 1,
+  style: DEFAULT_CARD_STYLE, coverImageUrl: null,
+}));
 
 function archivePage(items: AdminNews[], page: number, totalPages: number): PaginatedResponse<AdminNews> {
   return { items, meta: { page, limit: 10, total: items.length, totalPages } };
@@ -71,7 +64,10 @@ describe('NewsPage', () => {
   let archiveGetPage: ReturnType<typeof vi.fn<NewsArchiveService['getPage']>>;
   let archiveLike: ReturnType<typeof vi.fn<NewsArchiveService['like']>>;
   let archiveUnlike: ReturnType<typeof vi.fn<NewsArchiveService['unlike']>>;
-  const ARCHIVE_PAGE_1 = [adminNews('archive-1', { likedByCurrentUser: false }), adminNews('archive-2', { likedByCurrentUser: true })];
+  const ARCHIVE_PAGE_1 = [
+    adminNews('archive-1', { likedByCurrentUser: false, viewedByCurrentUser: false }),
+    adminNews('archive-2', { likedByCurrentUser: true, viewedByCurrentUser: true }),
+  ];
 
   beforeEach(() => {
     archiveGetPage = vi.fn<NewsArchiveService['getPage']>().mockReturnValue(of(archivePage(ARCHIVE_PAGE_1, 1, 1)));
@@ -81,8 +77,8 @@ describe('NewsPage', () => {
     TestBed.configureTestingModule({
       imports: [NewsPage],
       providers: [
-        { provide: NewsTagService, useValue: { getTags: () => of(TAGS) } },
-        { provide: NewsService, useValue: { getNews: () => of(NEWS) } },
+        { provide: AdminNewsTagService, useValue: { getAll: () => of(ADMIN_TAGS) } },
+        { provide: AdminNewsService, useValue: { getAll: () => of({ items: GRID_NEWS, meta: { page: 1, limit: 100, total: GRID_NEWS.length, totalPages: 1 } }) } },
         {
           provide: PinnedGridService,
           useValue: { getLayout: () => of({ config: { columns: 3, rows: 12 }, slots: PINNED_SLOTS }) },
@@ -109,7 +105,7 @@ describe('NewsPage', () => {
     const fixture = createPage();
     const host = fixture.nativeElement as HTMLElement;
 
-    expect(host.querySelectorAll('app-news-card').length).toBe(NEWS.length);
+    expect(host.querySelectorAll('app-news-card').length).toBe(GRID_NEWS.length);
     expect(host.querySelectorAll('app-news-archive-item').length).toBe(ARCHIVE_PAGE_1.length);
   });
 
@@ -142,12 +138,12 @@ describe('NewsPage', () => {
     expect(archiveIds(page)).toEqual(['archive-2']);
   });
 
-  it('тоггл «глаз» ничего не фильтрует (реальный API не отдаёт флаг просмотра)', () => {
+  it('тоггл «глаз» показывает только просмотренные текущим пользователем строки архива', () => {
     const page = createPage().componentInstance;
 
     page['showOnlyViewed'].set(true);
 
-    expect(archiveIds(page)).toEqual(['archive-1', 'archive-2']);
+    expect(archiveIds(page)).toEqual(['archive-2']);
   });
 
   it('сброс тоггла «сердце» возвращает полный список архива', () => {
@@ -159,13 +155,30 @@ describe('NewsPage', () => {
     expect(archiveIds(page)).toEqual(['archive-1', 'archive-2']);
   });
 
-  it('фильтр по тегам сайдбара применяется только к сетке, не к архиву', () => {
+  it('фильтр по тегам сайдбара применяется только к архиву, не к сетке', () => {
     const page = createPage().componentInstance;
 
     page['filter'].set({ dateFrom: null, dateTo: null, tags: ['stream'] } satisfies NewsFilter);
 
-    expect(page['gridEntries']().length).toBe(0);
-    expect(archiveIds(page)).toEqual(['archive-1', 'archive-2']);
+    expect(page['gridEntries']().length).toBe(GRID_NEWS.length);
+    expect(archiveIds(page)).toEqual([]);
+  });
+
+  it('фильтр по тегам сайдбара оставляет в архиве только строки с совпадающим тегом', () => {
+    archiveGetPage.mockReturnValue(
+      of(
+        archivePage(
+          [adminNews('archive-1', { tags: [ADMIN_TAGS[1]] }), adminNews('archive-2', { tags: [] })],
+          1,
+          1,
+        ),
+      ),
+    );
+    const page = createPage().componentInstance;
+
+    page['filter'].set({ dateFrom: null, dateTo: null, tags: ['stream'] } satisfies NewsFilter);
+
+    expect(archiveIds(page)).toEqual(['archive-1']);
   });
 
   it('прокрутка архива почти до конца грузит следующую страницу и добавляет её к списку', () => {
@@ -228,5 +241,23 @@ describe('NewsPage', () => {
     page['onLikeToggle'](item, false);
 
     expect(archiveUnlike).toHaveBeenCalledWith('archive-2');
+  });
+
+  it('открытие детали новости открывает NewsDetailModal с onViewed, патчащим archiveEntries', () => {
+    const page = createPage().componentInstance;
+    const modalService = TestBed.inject(ModalService);
+    const item = page['archiveEntries']()[0];
+
+    page['onOpenDetail'](item);
+
+    expect(modalService.activeComponent()).toBe(NewsDetailModal);
+    const data = modalService.activeData() as NewsDetailModalData;
+    expect(data.item).toBe(item);
+
+    data.onViewed?.({ viewCount: 999, viewedByCurrentUser: true });
+
+    const updated = page['archiveEntries']().find((entry) => entry.id === item.id)!;
+    expect(updated.viewCount).toBe(999);
+    expect(updated.viewedByCurrentUser).toBe(true);
   });
 });

@@ -343,6 +343,44 @@ describe('PinnedGridEditor', () => {
       expect(fixture.componentInstance['editingSlot']()?.newsId).toBe('news-1');
     });
 
+    it('открывает drawer с копией текущей обложки слота (draftCoverImageUrl)', () => {
+      const fixture = createEditor(
+        [newsItem('news-1', { imageUrls: ['/a.png', '/b.png'] })],
+        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
+      );
+
+      fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+
+      expect(fixture.componentInstance['draftCoverImageUrl']()).toBe('/a.png');
+      expect(fixture.componentInstance['editingNewsImages']()).toEqual(['/a.png', '/b.png']);
+    });
+
+    it('«Без обложки» сбрасывает draftCoverImageUrl в null, «Сохранить» переносит это в слот', () => {
+      const fixture = createEditor(
+        [newsItem('news-1', { imageUrls: ['/a.png'] })],
+        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
+      );
+
+      fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+      fixture.componentInstance['onDraftCoverImageChange'](null);
+      fixture.componentInstance['onSaveStyleClick']();
+
+      expect(fixture.componentInstance['localSlots']()[0].coverImageUrl).toBeNull();
+    });
+
+    it('выбор другой картинки из галереи и «Сохранить» переносит её в coverImageUrl слота', () => {
+      const fixture = createEditor(
+        [newsItem('news-1', { imageUrls: ['/a.png', '/b.png'] })],
+        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
+      );
+
+      fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+      fixture.componentInstance['onDraftCoverImageChange']('/b.png');
+      fixture.componentInstance['onSaveStyleClick']();
+
+      expect(fixture.componentInstance['localSlots']()[0].coverImageUrl).toBe('/b.png');
+    });
+
     it('«Сохранить» переносит draftStyle в localSlots и закрывает drawer', () => {
       const fixture = createEditor([newsItem('news-1')], [slot({ newsId: 'news-1' })]);
 
@@ -380,6 +418,7 @@ describe('PinnedGridEditor', () => {
 
       expect(fixture.componentInstance['editingNewsId']()).toBeNull();
       expect(fixture.componentInstance['draftStyle']()).toBeNull();
+      expect(fixture.componentInstance['draftCoverImageUrl']()).toBeNull();
     });
   });
 

@@ -2,15 +2,16 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { NewsTag } from '../models/news-tag.model';
-import { NewsTagService } from './news-tag.service';
+import { AdminNewsTag } from '@features/admin/models/news.model';
+import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
+
 import { NewsTagFilterState, createNewsTagFilterState } from './news-tag-filter.state';
 
-const TAGS: NewsTag[] = [
-  { id: 'tournament', name: 'Турнир', severity: 'danger' },
-  { id: 'announcement', name: 'Анонс', color: '#d4b106' },
-  { id: 'stream', name: 'Стрим', severity: 'success' },
-];
+function tag(id: string, name: string, color = '#d4b106', textColor = '#ffffff'): AdminNewsTag {
+  return { id, name, color, textColor, createdAt: '', updatedAt: '' };
+}
+
+const TAGS: AdminNewsTag[] = [tag('tournament', 'Турнир'), tag('announcement', 'Анонс'), tag('stream', 'Стрим')];
 
 @Component({ selector: 'app-news-tag-filter-state-host', template: '' })
 class NewsTagFilterStateHost {
@@ -23,7 +24,7 @@ describe('createNewsTagFilterState', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [NewsTagFilterStateHost],
-      providers: [{ provide: NewsTagService, useValue: { getTags: () => of(TAGS) } }],
+      providers: [{ provide: AdminNewsTagService, useValue: { getAll: () => of(TAGS) } }],
     });
 
     const fixture = TestBed.createComponent(NewsTagFilterStateHost);
@@ -32,8 +33,8 @@ describe('createNewsTagFilterState', () => {
     fixture.detectChanges();
   });
 
-  it('загружает теги из NewsTagService', () => {
-    expect(state.tags()).toEqual(TAGS);
+  it('загружает теги из AdminNewsTagService', () => {
+    expect(state.tags()).toEqual(TAGS.map(({ id, name, color, textColor }) => ({ id, name, color, textColor })));
   });
 
   it('фильтрует теги по поисковому запросу case-insensitive', () => {
