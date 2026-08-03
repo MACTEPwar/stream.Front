@@ -50,9 +50,13 @@ describe('NewsArchiveItem', () => {
     expect(host.querySelector('.news-archive-item__excerpt')?.textContent).toContain(ITEM.description);
     expect(host.querySelector('.news-archive-item__date')?.textContent?.trim()).toBe('06.12.2023');
 
-    const views = host.querySelector('.news-archive-item__counter');
+    const views = host.querySelector('.news-archive-item__counter-checkbox--readonly');
     expect(views?.textContent?.trim()).toBe('5.3k');
-    expect(host.querySelector('.news-archive-item__like')?.textContent?.trim()).toBe('44');
+
+    const likes = host.querySelector(
+      '.news-archive-item__counter-checkbox:not(.news-archive-item__counter-checkbox--readonly)',
+    );
+    expect(likes?.textContent?.trim()).toBe('44');
   });
 
   it('рисует картинку первой по order, а не первой в массиве', () => {
@@ -73,7 +77,9 @@ describe('NewsArchiveItem', () => {
   it('эмитит likeToggle с противоположным текущему likedByCurrentUser состоянием при клике', async () => {
     const fixture = createItem();
     const host = fixture.nativeElement as HTMLElement;
-    const checkboxInput = host.querySelector<HTMLInputElement>('.news-archive-item__like .p-checkbox-input');
+    const checkboxInput = host.querySelector<HTMLInputElement>(
+      '.news-archive-item__counter-checkbox:not(.news-archive-item__counter-checkbox--readonly) .p-checkbox-input',
+    );
 
     checkboxInput?.click();
     fixture.detectChanges();

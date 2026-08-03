@@ -203,13 +203,6 @@ $checkbox-severities: (
 }
 
 .checkbox--button-mode {
-  // Квадрат 40×40 (по прямому запросу пользователя — раньше без явной
-  // width коробка растягивалась по контенту/паддингу и выходила шире
-  // высоты). Единственное текущее использование — icon-only (`NewsPage`,
-  // ng-content с одной иконкой, без `label()`) — если позже понадобится
-  // buttonMode с текстовой подписью, этот width нужно будет вынести в
-  // отдельный icon-only модификатор, а не убирать здесь молча.
-  width: 40px;
   height: 40px;
   display: inline-flex;
   align-items: center;
@@ -221,6 +214,17 @@ $checkbox-severities: (
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-16;
   transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+// Квадрат 40×40, только вместе с `buttonMode` (по прямому запросу
+// пользователя — раньше без явной width коробка растягивалась по
+// контенту/паддингу и выходила шире высоты) — ТОЛЬКО для содержимого из
+// одной иконки (тулбар архива `NewsPage`, `squareIcon()`); `buttonMode` с
+// иконкой+числом (счётчики `NewsArchiveItem`) на этот модификатор не
+// претендует — ширина остаётся по контенту.
+.checkbox--button-mode-square {
+  width: 40px;
+  padding: 0;
 
   // Иконка внутри (pi pi-eye/pi-heart) — чуть крупнее дефолта primeicons
   // (по прямому запросу пользователя).

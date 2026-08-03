@@ -19,14 +19,20 @@
 
     <div class="news-archive-item__data">
       <div class="news-archive-item__counters">
-        <span class="news-archive-item__counter">
+        <app-checkbox
+          class="news-archive-item__counter-checkbox news-archive-item__counter-checkbox--readonly"
+          [buttonMode]="true"
+          severity="contrast"
+          [checked]="false"
+        >
           <i class="pi pi-eye" aria-hidden="true"></i>
           {{ viewsLabel() }}
-        </span>
+        </app-checkbox>
 
         <app-checkbox
-          class="news-archive-item__like"
-          severity="primary"
+          class="news-archive-item__counter-checkbox"
+          [buttonMode]="true"
+          severity="contrast"
           [checked]="isLiked()"
           (checkedChange)="onLikeToggle($event)"
         >

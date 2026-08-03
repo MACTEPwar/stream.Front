@@ -14,6 +14,7 @@
 
         <app-checkbox
           [buttonMode]="true"
+          [squareIcon]="true"
           severity="contrast"
           [checked]="showOnlyViewed()"
           (checkedChange)="showOnlyViewed.set($event)"
@@ -23,6 +24,7 @@
 
         <app-checkbox
           [buttonMode]="true"
+          [squareIcon]="true"
           severity="contrast"
           [checked]="showOnlyLiked()"
           (checkedChange)="showOnlyLiked.set($event)"
