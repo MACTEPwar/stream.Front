@@ -23,6 +23,7 @@ const mockNews: AdminNews = {
   viewCount: 12,
   likeCount: 4,
   likedByCurrentUser: null,
+  viewedByCurrentUser: null,
   images: [
     { id: 'i2', url: '/uploads/2.jpg', order: 2 },
     { id: 'i1', url: '/uploads/1.jpg', order: 1 },

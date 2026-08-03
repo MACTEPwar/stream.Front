@@ -41,7 +41,7 @@
           {{ viewsLabel() }}
         </span>
         <span class="news-card__counter">
-          <i class="pi pi-heart" aria-hidden="true"></i>
+          <i [class]="likeIconClass()" aria-hidden="true"></i>
           {{ likesLabel() }}
         </span>
       </div>

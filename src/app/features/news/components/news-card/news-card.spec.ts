@@ -82,6 +82,18 @@ describe('NewsCard', () => {
     expect(article.className.split(' ')).toEqual(['news-card']);
   });
 
+  it('иконка лайка — pi-heart-fill при likedByCurrentUser: true, иначе pi-heart', () => {
+    const fixture = createCard();
+    const icon = () => fixture.nativeElement.querySelectorAll('.news-card__counter i')[1] as HTMLElement;
+
+    expect(icon().className).toBe('pi pi-heart');
+
+    fixture.componentInstance.item.set({ ...ITEM, likedByCurrentUser: true });
+    fixture.detectChanges();
+
+    expect(icon().className).toBe('pi pi-heart-fill');
+  });
+
   it('без imageUrl картинка не рендерится — остаётся плейсхолдер-прямоугольник', () => {
     const fixture = createCard();
     fixture.componentInstance.item.set({ ...ITEM, imageUrl: null });

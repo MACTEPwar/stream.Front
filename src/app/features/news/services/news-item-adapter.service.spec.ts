@@ -14,6 +14,7 @@ function adminNews(overrides: Partial<AdminNews> = {}): AdminNews {
     viewCount: 100,
     likeCount: 10,
     likedByCurrentUser: null,
+    viewedByCurrentUser: null,
     images: [],
     tags: [],
     createdAt: '',
@@ -73,6 +74,11 @@ describe('NewsItemAdapterService', () => {
     it('likedByCurrentUser: null трактуется как false', () => {
       const item = service.toNewsItem(adminNews({ likedByCurrentUser: null }));
       expect(item.likedByCurrentUser).toBe(false);
+    });
+
+    it('viewedByCurrentUser маппится из AdminNews, null трактуется как false', () => {
+      expect(service.toNewsItem(adminNews({ viewedByCurrentUser: true })).viewedByCurrentUser).toBe(true);
+      expect(service.toNewsItem(adminNews({ viewedByCurrentUser: null })).viewedByCurrentUser).toBe(false);
     });
 
     it('без картинок imageUrl — null, imageUrls — пустой массив', () => {

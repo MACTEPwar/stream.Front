@@ -29,12 +29,19 @@ import { formatCompactCount } from '../../utils/format-compact-count';
  * иконка+число спроецированы внутрь через `<ng-content>`. **Лайк** —
  * интерактивен, клик эмитит `likeToggle`, реальный API-запрос и
  * оптимистичное обновление/откат делает `NewsPage` (родитель), сам компонент
- * не знает про HTTP. **Просмотры — НЕ интерактивны** (класс-модификатор
- * `--readonly`, `pointer-events: none`): реальный `AdminNews` не несёт флага
- * "просмотрено этим пользователем" (view-tracking не реализован на backend),
- * состояние всегда `false` — визуально чекбокс есть, но клик намеренно
- * ничего не делает, честнее, чем изображать рабочий тоггл без действия за
- * ним.
+ * не знает про HTTP; иконка переключается между `pi-heart`/`pi-heart-fill` по
+ * `isLiked()`. **Просмотры — теперь отражают реальное `AdminNews.viewedByCurrentUser`**
+ * (`isViewed()`), но по-прежнему НЕ переключаемы кликом (класс-модификатор
+ * `--readonly`, `pointer-events: none`) — не потому что бэк не поддерживает
+ * флаг (теперь поддерживает), а потому что просмотр — не toggle-действие:
+ * отмечается автоматически при открытии новости (`NewsDetailModal`), а не
+ * прямым кликом по этому чекбоксу.
+ *
+ * Клик по строке открывает `NewsDetailModal` (`openDetail`, `output<void>()`)
+ * — навешан на картинку/текстовый блок, НЕ на всю `<article>` целиком, чтобы
+ * клики по чекбоксам просмотров/лайков (внутри `.news-archive-item__data`)
+ * не всплывали и не triggerили открытие модалки заодно с своим собственным
+ * действием.
  *
  * Теги — левый НИЖНИЙ угол превью (по прямому запросу пользователя, было
  * верхний): `tag`-фрейм макета (74×24) в экспорте лежит плоским соседом
@@ -52,6 +59,7 @@ export class NewsArchiveItem {
 
   readonly item = input.required<AdminNews>();
   readonly likeToggle = output<boolean>();
+  readonly openDetail = output<void>();
 
   protected readonly imageUrl = computed(() => {
     const images = this.item().images;
@@ -63,11 +71,17 @@ export class NewsArchiveItem {
   });
 
   protected readonly isLiked = computed(() => !!this.item().likedByCurrentUser);
+  protected readonly isViewed = computed(() => !!this.item().viewedByCurrentUser);
+  protected readonly likeIconClass = computed(() => (this.isLiked() ? 'pi pi-heart-fill' : 'pi pi-heart'));
   protected readonly viewsLabel = computed(() => formatCompactCount(this.item().viewCount));
   protected readonly likesLabel = computed(() => formatCompactCount(this.item().likeCount));
   protected readonly dateLabel = computed(() => formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'));
 
   protected onLikeToggle(checked: boolean): void {
     this.likeToggle.emit(checked);
+  }
+
+  protected onOpenDetail(): void {
+    this.openDetail.emit();
   }
 }

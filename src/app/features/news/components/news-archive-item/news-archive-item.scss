@@ -19,11 +19,19 @@
   box-shadow: vars.$shadow-5-2;
 }
 
+// `.__picture`/`.__text` — `<button>` (не `<div>`), клик открывает `NewsDetailModal`:
+// нативная интерактивность (фокус/Enter/Space) без ручной ARIA-разметки —
+// сброс дефолтных браузерных стилей кнопки ниже.
 .news-archive-item__picture {
   position: relative;
   flex: 0 0 175px;
   overflow: hidden;
   background: vars.$color-d9d9d9;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 
   img {
     width: 100%;
@@ -57,8 +65,14 @@
   flex: 1 1 auto;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
   padding: 8px;
   overflow: hidden;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .news-archive-item__heading {
@@ -136,11 +150,12 @@
   }
 }
 
-// Просмотры — визуально чекбокс, но НЕ интерактивный: реальный контракт
-// (`AdminNews`) не несёт флага "просмотрено этим пользователем" (view-
-// tracking не реализован на backend, см. `NewsPage`/`PROJECT_MAP.md`),
-// поэтому состояние всегда `false` и клик намеренно ничего не делает —
-// честнее, чем изображать рабочий тоггл без реального действия за ним.
+// Просмотры — визуально чекбокс, отражающий реальное состояние
+// (`AdminNews.viewedByCurrentUser`), но НЕ переключаемый кликом: просмотр —
+// не toggle-действие пользователя, отметка ставится автоматически при
+// открытии новости (`NewsDetailModal`), поэтому клик по самому чекбоксу
+// намеренно ничего не делает (нет соответствующего API-действия "снять
+// просмотр" — только идемпотентная отметка).
 .news-archive-item__counter-checkbox--readonly {
   pointer-events: none;
 }

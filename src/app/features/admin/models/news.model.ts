@@ -30,6 +30,7 @@ export interface AdminNews {
   viewCount: number;
   likeCount: number;
   likedByCurrentUser: boolean | null;
+  viewedByCurrentUser: boolean | null;
   images: AdminNewsImage[];
   tags: AdminNewsTag[];
   createdAt: string;

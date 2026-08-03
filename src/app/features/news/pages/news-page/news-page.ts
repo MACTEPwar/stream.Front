@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
+import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AdminNews } from '@features/admin/models/news.model';
 import { AdminNewsService } from '@features/admin/services/admin-news.service';
@@ -10,6 +11,7 @@ import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
 
 import { NewsArchiveItem } from '../../components/news-archive-item/news-archive-item';
+import { NewsDetailModal } from '../../components/news-detail-modal/news-detail-modal';
 import { NewsFilterSidebar } from '../../components/news-filter-sidebar/news-filter-sidebar';
 import { PinnedNewsGrid, PinnedNewsGridEntry } from '../../components/pinned-news-grid/pinned-news-grid';
 import { NewsFilter } from '../../models/news-filter.model';
@@ -64,12 +66,11 @@ function endOfDay(date: Date): Date {
  * Картинка строки — первая по `order` из `images[]` (см. `NewsArchiveItem`).
  *
  * Иконки тулбара архива (`minus`/`eyes`/`like` в макете — группа 120×40 с
- * подсвеченной "активной" ячейкой): «сердце» фильтрует уже загруженные строки
- * по `likedByCurrentUser` (реальный флаг с бэка). **«Глаз» — намеренно
- * ничего не фильтрует** (по прямому запросу пользователя): реальный API пока
- * не отдаёт флаг "просмотрено мной" (view-tracking — отдельная будущая
- * задача), кнопка оставлена в интерфейсе, но её сигнал `showOnlyViewed`
- * никуда не подставляется. `minus` сбрасывает оба тоггла.
+ * подсвеченной "активной" ячейкой): «сердце» и «глаз» одинаково фильтруют уже
+ * загруженные строки по `likedByCurrentUser`/`viewedByCurrentUser`
+ * (оба — реальные флаги с бэка, `viewedByCurrentUser` проставляется
+ * автоматически при открытии `NewsDetailModal`, см. ниже). `minus` сбрасывает
+ * оба тоггла.
  *
  * **Лайк** — `NewsArchiveItem.likeToggle` эмитит желаемое состояние,
  * `onLikeToggle()` здесь: оптимистично патчит локальный сигнал (мгновенный
@@ -77,6 +78,15 @@ function endOfDay(date: Date): Date {
  * подтверждает актуальными `likeCount`/`likedByCurrentUser` из ответа, на
  * ошибке — откатывает патч и показывает toast (401 без сессии — "войдите,
  * чтобы поставить лайк", остальное — общая ошибка).
+ *
+ * **Просмотр** — `NewsArchiveItem.openDetail` (клик по строке) открывает
+ * `NewsDetailModal` (`onOpenDetail()`), передавая `onViewed` колбэк —
+ * модалка сама решает, звать ли `NewsArchiveService.markViewed()` (если
+ * ещё не просмотрено), и на успехе зовёт колбэк с патчем
+ * (`viewCount`/`viewedByCurrentUser`), который применяется к `archiveItems`
+ * через `patchArchiveItem()` — тот же метод, что и у лайка, просто без
+ * оптимистичного шага и отката (просмотр необратим и идемпотентен, откатывать
+ * нечего).
  *
  * Фильтр по датам/тегам (`NewsFilterSidebar.filterChange`) применяется
  * ТОЛЬКО к архиву справа (клиентская фильтрация уже загруженных строк, тот же
@@ -92,6 +102,8 @@ function endOfDay(date: Date): Date {
 @Component({
   selector: 'app-news-page',
   imports: [Button, ButtonGroup, Checkbox, NewsArchiveItem, NewsFilterSidebar, PinnedNewsGrid],
+  // NewsDetailModal не импортируется сюда напрямую — открывается через
+  // ModalService.open(), рендерится ModalHost'ом через ngComponentOutlet.
   templateUrl: './news-page.html',
   styleUrl: './news-page.scss',
 })
@@ -102,6 +114,7 @@ export class NewsPage implements OnInit {
   private readonly newsArchiveService = inject(NewsArchiveService);
   private readonly pinnedGridService = inject(PinnedGridService);
   private readonly notificationService = inject(NotificationService);
+  private readonly modalService = inject(ModalService);
 
   private readonly news = signal<NewsItem[]>([]);
   private readonly tags = signal<NewsTag[]>([]);
@@ -132,10 +145,12 @@ export class NewsPage implements OnInit {
 
   protected readonly archiveEntries = computed<AdminNews[]>(() => {
     const onlyLiked = this.showOnlyLiked();
+    const onlyViewed = this.showOnlyViewed();
     const { dateFrom, dateTo, tags } = this.filter();
 
     return this.archiveItems().filter((item) => {
       if (onlyLiked && !item.likedByCurrentUser) return false;
+      if (onlyViewed && !item.viewedByCurrentUser) return false;
 
       const publishedAt = new Date(item.publishedAt);
       if (dateFrom && publishedAt < startOfDay(dateFrom)) return false;
@@ -198,6 +213,13 @@ export class NewsPage implements OnInit {
           'error',
         );
       },
+    });
+  }
+
+  protected onOpenDetail(item: AdminNews): void {
+    this.modalService.open(NewsDetailModal, {
+      item,
+      onViewed: (patch: Partial<AdminNews>) => this.patchArchiveItem(item.id, patch),
     });
   }
 

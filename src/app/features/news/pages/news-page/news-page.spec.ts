@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
+import { ModalService } from '@core/services/modal.service';
 import { AdminNews, AdminNewsTag } from '@features/admin/models/news.model';
 import { AdminNewsService } from '@features/admin/services/admin-news.service';
 import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
@@ -8,6 +9,7 @@ import { PaginatedResponse } from '@features/admin/services/admin-users.service'
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import { NewsDetailModal, NewsDetailModalData } from '../../components/news-detail-modal/news-detail-modal';
 import { LikeResponse, NewsArchiveService } from '../../services/news-archive.service';
 import { PinnedGridService } from '../../services/pinned-grid.service';
 import { NewsPage } from './news-page';
@@ -28,6 +30,7 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
     viewCount: 100,
     likeCount: 10,
     likedByCurrentUser: false,
+    viewedByCurrentUser: false,
     images: [],
     tags: [],
     createdAt: '',
@@ -60,7 +63,10 @@ describe('NewsPage', () => {
   let archiveGetPage: ReturnType<typeof vi.fn<NewsArchiveService['getPage']>>;
   let archiveLike: ReturnType<typeof vi.fn<NewsArchiveService['like']>>;
   let archiveUnlike: ReturnType<typeof vi.fn<NewsArchiveService['unlike']>>;
-  const ARCHIVE_PAGE_1 = [adminNews('archive-1', { likedByCurrentUser: false }), adminNews('archive-2', { likedByCurrentUser: true })];
+  const ARCHIVE_PAGE_1 = [
+    adminNews('archive-1', { likedByCurrentUser: false, viewedByCurrentUser: false }),
+    adminNews('archive-2', { likedByCurrentUser: true, viewedByCurrentUser: true }),
+  ];
 
   beforeEach(() => {
     archiveGetPage = vi.fn<NewsArchiveService['getPage']>().mockReturnValue(of(archivePage(ARCHIVE_PAGE_1, 1, 1)));
@@ -131,12 +137,12 @@ describe('NewsPage', () => {
     expect(archiveIds(page)).toEqual(['archive-2']);
   });
 
-  it('тоггл «глаз» ничего не фильтрует (реальный API не отдаёт флаг просмотра)', () => {
+  it('тоггл «глаз» показывает только просмотренные текущим пользователем строки архива', () => {
     const page = createPage().componentInstance;
 
     page['showOnlyViewed'].set(true);
 
-    expect(archiveIds(page)).toEqual(['archive-1', 'archive-2']);
+    expect(archiveIds(page)).toEqual(['archive-2']);
   });
 
   it('сброс тоггла «сердце» возвращает полный список архива', () => {
@@ -234,5 +240,23 @@ describe('NewsPage', () => {
     page['onLikeToggle'](item, false);
 
     expect(archiveUnlike).toHaveBeenCalledWith('archive-2');
+  });
+
+  it('открытие детали новости открывает NewsDetailModal с onViewed, патчащим archiveEntries', () => {
+    const page = createPage().componentInstance;
+    const modalService = TestBed.inject(ModalService);
+    const item = page['archiveEntries']()[0];
+
+    page['onOpenDetail'](item);
+
+    expect(modalService.activeComponent()).toBe(NewsDetailModal);
+    const data = modalService.activeData() as NewsDetailModalData;
+    expect(data.item).toBe(item);
+
+    data.onViewed?.({ viewCount: 999, viewedByCurrentUser: true });
+
+    const updated = page['archiveEntries']().find((entry) => entry.id === item.id)!;
+    expect(updated.viewCount).toBe(999);
+    expect(updated.viewedByCurrentUser).toBe(true);
   });
 });

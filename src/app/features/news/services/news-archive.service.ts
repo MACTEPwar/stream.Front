@@ -10,6 +10,11 @@ export interface LikeResponse {
   likedByCurrentUser: boolean;
 }
 
+export interface ViewResponse {
+  viewCount: number;
+  viewedByCurrentUser: true;
+}
+
 /**
  * Реальный источник панели архива публичной страницы «Новости»
  * (`stream.Front#118`, поверх `streamer.API#65`/`#67`) — `GET /news`
@@ -37,5 +42,10 @@ export class NewsArchiveService {
 
   unlike(id: string): Observable<LikeResponse> {
     return this.api.delete<LikeResponse>(`/news/${id}/like`);
+  }
+
+  /** Идемпотентная, НЕ переключаемая отметка просмотра — первый вызов инкрементит `viewCount` и создаёт запись, повторные просто возвращают текущее состояние без повторного инкремента; unview не существует. */
+  markViewed(id: string): Observable<ViewResponse> {
+    return this.api.post<ViewResponse>(`/news/${id}/view`);
   }
 }

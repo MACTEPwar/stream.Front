@@ -37,7 +37,7 @@ export class NewsItemAdapterService {
       views: admin.viewCount,
       likes: admin.likeCount,
       publishedAt: new Date(admin.publishedAt),
-      viewedByCurrentUser: false,
+      viewedByCurrentUser: admin.viewedByCurrentUser ?? false,
       likedByCurrentUser: admin.likedByCurrentUser ?? false,
     };
   }

@@ -37,6 +37,11 @@ const FLEX_DIRECTION_BY_IMAGE_POSITION: Record<CardImagePosition, string> = {
  * области (`transform: scale()`/`object-position`, комбинируется с
  * `object-fit: cover` на `<img>`). Фон/цвет текста карточки — `backgroundColor`/
  * `textColor` инлайн-стилями поверх дефолтных значений SCSS.
+ *
+ * Иконка лайка (`likeIconClass`) переключается между `pi-heart`/`pi-heart-fill`
+ * по `item().likedByCurrentUser` (тот же приём, что `NewsArchiveItem`) —
+ * счётчик здесь статичный текст, не интерактивный `Checkbox` (карточка сетки
+ * кликом не лайкается, в отличие от строки архива).
  */
 @Component({
   selector: 'app-news-card',
@@ -51,6 +56,9 @@ export class NewsCard {
 
   protected readonly viewsLabel = computed(() => formatCompactCount(this.item().views));
   protected readonly likesLabel = computed(() => formatCompactCount(this.item().likes));
+  protected readonly likeIconClass = computed(() =>
+    this.item().likedByCurrentUser ? 'pi pi-heart-fill' : 'pi pi-heart',
+  );
   protected readonly dateLabel = computed(() => formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'));
 
   protected readonly flexDirection = computed(() => FLEX_DIRECTION_BY_IMAGE_POSITION[this.cardStyle().imagePosition]);

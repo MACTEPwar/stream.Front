@@ -38,7 +38,11 @@
 
     <div class="news-page__archive-list" (scroll)="onArchiveScroll($event)">
       @for (item of archiveEntries(); track item.id) {
-        <app-news-archive-item [item]="item" (likeToggle)="onLikeToggle(item, $event)" />
+        <app-news-archive-item
+          [item]="item"
+          (likeToggle)="onLikeToggle(item, $event)"
+          (openDetail)="onOpenDetail(item)"
+        />
       } @empty {
         @if (!isLoadingArchive()) {
           <p class="news-page__empty">По выбранному фильтру новостей нет</p>

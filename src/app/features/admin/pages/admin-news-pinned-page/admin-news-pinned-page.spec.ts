@@ -17,6 +17,7 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
     viewCount: 100,
     likeCount: 10,
     likedByCurrentUser: false,
+    viewedByCurrentUser: false,
     images: [],
     tags: [],
     createdAt: '',
