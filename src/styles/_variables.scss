@@ -110,11 +110,17 @@ $color-602424: #602424;
 $font-family-montserrat: 'Montserrat', sans-serif;
 $font-family-nunito-sans: 'Nunito Sans', sans-serif;
 
-$font-size-14: 14px;
-$font-size-16: 16px;
-$font-size-18: 18px;
-$font-size-22: 22px;
-$font-size-28: 28px;
+// В rem, не px — уважает зум/масштаб шрифта браузера/ОС (пересчёт от
+// пользовательского размера, а не фиксированного пикселя); безопасно
+// конвертировать напрямую (÷16), т.к. ни `html`, ни `body` (см.
+// `_reset.scss`) не переопределяют базовый браузерный размер 16px. Имена
+// токенов оставлены по исходному px-значению (не переименованы в rem-эквивалент) —
+// переименование сломало бы все существующие использования без пользы.
+$font-size-14: 0.875rem;
+$font-size-16: 1rem;
+$font-size-18: 1.125rem;
+$font-size-22: 1.375rem;
+$font-size-28: 1.75rem;
 
 $font-weight-400: 400;
 $font-weight-500: 500;

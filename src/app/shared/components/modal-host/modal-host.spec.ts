@@ -1,7 +1,10 @@
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { TestBed } from '@angular/core/testing';
 import { Component, input } from '@angular/core';
+import { Subject } from 'rxjs';
 
 import { ModalService } from '@core/services/modal.service';
+import { SMALL_QUERY } from '@shared/utils/breakpoints';
 import { ModalHost } from './modal-host';
 
 @Component({
@@ -14,10 +17,20 @@ class TestModalContent {
 
 describe('ModalHost', () => {
   let modalService: ModalService;
+  let breakpointState$: Subject<BreakpointState>;
 
   beforeEach(async () => {
+    breakpointState$ = new Subject<BreakpointState>();
+
     await TestBed.configureTestingModule({
       imports: [ModalHost],
+      providers: [
+        // jsdom не реализует `matchMedia`, от которого зависит реальный
+        // `BreakpointObserver` (тот же гочтч, что у `p-select`'s `Overlay`,
+        // см. `select.spec.ts`) — начальное синхронное `false` (не `small`),
+        // конкретные тесты `--sheet` переключают через `breakpointState$`.
+        { provide: BreakpointObserver, useValue: { observe: () => breakpointState$.asObservable() } },
+      ],
     }).compileComponents();
 
     modalService = TestBed.inject(ModalService);
@@ -93,5 +106,44 @@ describe('ModalHost', () => {
     fixture.detectChanges();
 
     expect(modalService.activeComponent()).toBeNull();
+  });
+
+  it('модалка с presentation="sheet-on-mobile" на small-вьюпорте получает класс --sheet', () => {
+    modalService.open(TestModalContent, 'Привет', 'sheet-on-mobile');
+
+    const fixture = TestBed.createComponent(ModalHost);
+    fixture.detectChanges();
+    breakpointState$.next({ matches: true, breakpoints: { [SMALL_QUERY]: true } });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.modal-host__backdrop--sheet')).not.toBeNull();
+    expect(el.querySelector('.modal-host__panel--sheet')).not.toBeNull();
+  });
+
+  it('модалка с presentation="sheet-on-mobile" вне small-вьюпорта остаётся обычной модалкой', () => {
+    modalService.open(TestModalContent, 'Привет', 'sheet-on-mobile');
+
+    const fixture = TestBed.createComponent(ModalHost);
+    fixture.detectChanges();
+    breakpointState$.next({ matches: false, breakpoints: { [SMALL_QUERY]: false } });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.modal-host__backdrop--sheet')).toBeNull();
+    expect(el.querySelector('.modal-host__panel--sheet')).toBeNull();
+  });
+
+  it('модалка с presentation="default" на small-вьюпорте НЕ получает класс --sheet', () => {
+    modalService.open(TestModalContent, 'Привет');
+
+    const fixture = TestBed.createComponent(ModalHost);
+    fixture.detectChanges();
+    breakpointState$.next({ matches: true, breakpoints: { [SMALL_QUERY]: true } });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.modal-host__backdrop--sheet')).toBeNull();
+    expect(el.querySelector('.modal-host__panel--sheet')).toBeNull();
   });
 });

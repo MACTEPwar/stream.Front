@@ -1,0 +1,55 @@
+// Общие breakpoint-токены для адаптивной вёрстки (`stream.Front#122`, первая
+// адаптивная страница — «Новости», без Figma-референса под мобильную/
+// планшетную версию, границы и миксины здесь заведены как переиспользуемый
+// ресурс для будущих задач адаптива остальных страниц, а не решение только
+// для одной страницы).
+//
+// Пороги намеренно совпадают с именами `PinnedGridViewport`
+// (`pinned-news-slot.model.ts`, `stream.Front#118`) — `small`/`middle`/`large`:
+//   - small  — `< $breakpoint-middle` (мобильный)
+//   - middle — `$breakpoint-middle..$breakpoint-large - 1` (планшет)
+//   - large  — `>= $breakpoint-large` (десктоп)
+$breakpoint-middle: 768px;
+$breakpoint-large: 1280px;
+
+// Ширина, после которой контент центрируется, а не растягивается на всю
+// ширину окна (`.news-page`/`Shell`-шапка синхронно используют одно и то же
+// значение, чтобы левый край сетки новостей не разъезжался с лого — см.
+// `news-page.scss`/`shell.scss`).
+$content-max-width: 1920px;
+
+@mixin small {
+  @media (max-width: #{$breakpoint-middle - 1px}) {
+    @content;
+  }
+}
+
+@mixin middle {
+  @media (min-width: $breakpoint-middle) and (max-width: #{$breakpoint-large - 1px}) {
+    @content;
+  }
+}
+
+@mixin large {
+  @media (min-width: $breakpoint-large) {
+    @content;
+  }
+}
+
+// `small` + `middle` одним селектором — большинство мобильных правок в этой
+// задаче одинаковы для обоих пресетов (двухколоночная раскладка → одна
+// колонка), отдельного смысла дублировать `small`/`middle` по отдельности нет.
+@mixin middle-down {
+  @media (max-width: #{$breakpoint-large - 1px}) {
+    @content;
+  }
+}
+
+// Порог центрирования (`$content-max-width`) — отдельный миксин, не завязан
+// на `large`/`middle-down` выше: центрирование актуально только на очень
+// широких десктоп-экранах (см. `$content-max-width`), не на планшете.
+@mixin wide {
+  @media (min-width: $content-max-width) {
+    @content;
+  }
+}

@@ -17,6 +17,7 @@ describe('ModalService', () => {
   it('изначально нет активного компонента', () => {
     expect(service.activeComponent()).toBeNull();
     expect(service.activeData()).toBeUndefined();
+    expect(service.activePresentation()).toBe('default');
   });
 
   it('open() устанавливает активный компонент и данные', () => {
@@ -33,12 +34,25 @@ describe('ModalService', () => {
     expect(service.activeData()).toBeUndefined();
   });
 
-  it('close() сбрасывает активный компонент и данные', () => {
-    service.open(TestModalContent, { foo: 'bar' });
+  it('open() без presentation оставляет её "default"', () => {
+    service.open(TestModalContent);
+
+    expect(service.activePresentation()).toBe('default');
+  });
+
+  it('open() с presentation="sheet-on-mobile" сохраняет её', () => {
+    service.open(TestModalContent, undefined, 'sheet-on-mobile');
+
+    expect(service.activePresentation()).toBe('sheet-on-mobile');
+  });
+
+  it('close() сбрасывает активный компонент, данные и presentation', () => {
+    service.open(TestModalContent, { foo: 'bar' }, 'sheet-on-mobile');
 
     service.close();
 
     expect(service.activeComponent()).toBeNull();
     expect(service.activeData()).toBeUndefined();
+    expect(service.activePresentation()).toBe('default');
   });
 });

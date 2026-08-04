@@ -1,5 +1,6 @@
 @use 'variables' as vars;
 @use 'mixins';
+@use 'breakpoints' as bp;
 
 // Минимальная базовая стилизация — точный вид main-nav подгонят,
 // когда Figma-контент компонента станет доступен (см. shell.ts).
@@ -27,6 +28,11 @@
   height: 100vh;
 }
 
+// `max-width`/`margin: 0 auto` от `bp.$content-max-width` (1920px,
+// `stream.Front#122`) — синхронно с `.news-page` (`news-page.scss`),
+// НА ТОМ ЖЕ значении `$content-max-width`, чтобы левый край лого продолжал
+// совпадать с левым краем сетки новостей на очень широких экранах; ниже
+// 1920px — поведение не меняется (полная ширина, паддинг 48px как раньше).
 .shell__header {
   display: flex;
   align-items: center;
@@ -40,6 +46,11 @@
   color: vars.$color-ffffff;
   position: relative;
   z-index: 1;
+
+  @include bp.wide {
+    max-width: bp.$content-max-width;
+    margin: 0 auto;
+  }
 }
 
 .shell__logo {

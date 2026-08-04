@@ -238,7 +238,7 @@ $checkbox-severities: (
 // со счётчиками NewsArchiveItem, у которых аналогичное правило живёт в их
 // собственном scss и потому работает).
 .checkbox--button-mode-square ::ng-deep .pi {
-  font-size: 18px;
+  font-size: vars.$font-size-18;
 }
 
 // Текст через checkbox__label наследует color от label, не фиксированный

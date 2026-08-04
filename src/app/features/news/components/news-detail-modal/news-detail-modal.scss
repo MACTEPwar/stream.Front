@@ -1,20 +1,38 @@
 @use 'variables' as vars;
 @use 'mixins';
+@use 'breakpoints' as bp;
 
 // Пропорции взяты из `docs/figma/news4_detail_modal.json` (`frame-38` 1800×760,
 // картинка 1357×760 / текст 688×480 — примерно 64/36) — уменьшено под реальный
 // вьюпорт модалки (`.modal-host__panel` — `max-width: 90vw; max-height: 90vh`),
 // не 1:1 px из макета.
+//
+// На `small` (`stream.Front#122`) — открывается нижней шторкой
+// (`.modal-host__panel--sheet`, `modal-host.scss`, `ModalHost.isSheetVariant()`)
+// на всю ширину: картинка+текст сбоку не умещаются на мобильном экране,
+// раскладка переключается на колонку (картинка сверху, фикс. высота — текст
+// снизу, растягивается на оставшееся место панели); Figma-макета под
+// мобильную версию нет (только desktop-фрейм), пропорции подобраны вручную.
 .news-detail-modal {
   display: flex;
   width: min(1200px, 86vw);
   max-height: 86vh;
+
+  @include bp.small {
+    flex-direction: column;
+    width: 100%;
+    max-height: none;
+  }
 }
 
 .news-detail-modal__picture {
   flex: 0 0 60%;
   overflow: hidden;
   background: vars.$color-d9d9d9;
+
+  @include bp.small {
+    flex: 0 0 200px;
+  }
 
   img {
     width: 100%;
@@ -39,6 +57,13 @@
   font-weight: vars.$font-weight-700;
   line-height: vars.$line-height-36;
   color: vars.$color-1e1e1e;
+
+  // На bottom-sheet заголовок доминирует над узкой панелью — уменьшен под
+  // 22px-пресет (`$font-size-22`), тот же размер, что и у заголовка карточки
+  // новости на `middle-down` ниже.
+  @include bp.small {
+    font-size: vars.$font-size-22;
+  }
 }
 
 .news-detail-modal__tags {
