@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { environment } from '@env/environment';
 import { AdminNewsService } from './admin-news.service';
-import { AdminNews, CreateNewsPayload } from '../models/news.model';
+import { AdminNews, AdminNewsImage, CreateNewsPayload } from '../models/news.model';
 
 const mockNews: AdminNews = {
   id: 'n1',
@@ -99,5 +99,18 @@ describe('AdminNewsService', () => {
     req.flush(mockNews);
 
     expect(result).toEqual(mockNews);
+  });
+
+  it('updateImageFocalPoint() бьёт в PATCH /admin/news/images/:id/focal-point с телом координат', () => {
+    const mockImage: AdminNewsImage = { id: 'img-1', url: '/uploads/1.jpg', order: 0, focalX: 30, focalY: 40 };
+    let result: AdminNewsImage | undefined;
+    service.updateImageFocalPoint('img-1', { focalX: 30, focalY: 40 }).subscribe((image) => (result = image));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/admin/news/images/img-1/focal-point`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ focalX: 30, focalY: 40 });
+    req.flush(mockImage);
+
+    expect(result).toEqual(mockImage);
   });
 });

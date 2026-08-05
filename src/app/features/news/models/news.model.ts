@@ -3,6 +3,14 @@
  * Источник — мок (`NewsService`), реального backend-эндпоинта под новости ещё
  * нет; поля — ровно те, что рисует вёрстка карточки/строки архива.
  */
+/** Одна картинка новости — источник галереи обложки в `PinnedGridEditor` (`coverImageUrl`) и `FocalPointPicker` (`pinned-grid-rework`, нужен `id` для `AdminNewsService.updateImageFocalPoint()`). */
+export interface NewsItemImage {
+  id: string;
+  url: string;
+  focalX: number | null;
+  focalY: number | null;
+}
+
 export interface NewsItem {
   id: string;
   title: string;
@@ -11,6 +19,8 @@ export interface NewsItem {
   imageUrl: string | null;
   /** Все картинки новости, в порядке (`stream.Front#118`) — источник выбора обложки для конкретного пина в `PinnedGridEditor` (`coverImageUrl`); отдельно от `imageUrl`, т.к. у новости может быть несколько картинок, а `imageUrl` — только "своя" (первая по порядку). */
   imageUrls: string[];
+  /** То же самое, что `imageUrls`, но с `id`/focal point каждой картинки (`pinned-grid-rework`) — источник `FocalPointPicker` в `PinnedGridEditor`. */
+  images: NewsItemImage[];
   tagIds: string[];
   views: number;
   likes: number;

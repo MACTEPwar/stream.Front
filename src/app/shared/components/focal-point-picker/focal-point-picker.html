@@ -1,0 +1,30 @@
+<div class="focal-point-picker">
+  <div
+    class="focal-point-picker__canvas"
+    (pointerdown)="onCanvasPointerDown($event)"
+    (pointermove)="onCanvasPointerMove($event)"
+    (pointerup)="onCanvasPointerUp()"
+    (pointerleave)="onCanvasPointerUp()"
+  >
+    <img [src]="imageUrl()" alt="" />
+    <span
+      class="focal-point-picker__marker"
+      [style.left.%]="displayPoint().x"
+      [style.top.%]="displayPoint().y"
+    ></span>
+  </div>
+
+  <div class="focal-point-picker__previews">
+    <div class="focal-point-picker__preview focal-point-picker__preview--square">
+      <img [src]="imageUrl()" alt="" [style.object-position]="objectPosition()" />
+    </div>
+    <div class="focal-point-picker__preview focal-point-picker__preview--wide">
+      <img [src]="imageUrl()" alt="" [style.object-position]="objectPosition()" />
+    </div>
+    <div class="focal-point-picker__preview focal-point-picker__preview--tall">
+      <img [src]="imageUrl()" alt="" [style.object-position]="objectPosition()" />
+    </div>
+  </div>
+
+  <app-button text="Сбросить в центр" size="small" severity="info" (click)="onReset()" />
+</div>

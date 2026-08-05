@@ -92,10 +92,10 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 
-  // Карточка сужается на мобильном/планшетном грид-режиме (`middle-down`) —
+  // Карточка сужается на мобильном/планшетном грид-режиме (`bp.small`) —
   // 22px заголовок начинает доминировать над уменьшенной ячейкой, снижен до
   // 18px (`$font-size-18`).
-  @include bp.middle-down {
+  @include bp.small {
     font-size: vars.$font-size-18;
   }
 }

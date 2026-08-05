@@ -16,7 +16,7 @@ const ITEM: AdminNews = {
   likeCount: 44,
   likedByCurrentUser: false,
   viewedByCurrentUser: false,
-  images: [{ id: 'img-1', url: '/uploads/first.jpg', order: 1 }],
+  images: [{ id: 'img-1', url: '/uploads/first.jpg', order: 1, focalX: null, focalY: null }],
   tags: [{ id: 'tournament', name: 'Турнир', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' }],
   hasNoImage: false,
   createdAt: '',

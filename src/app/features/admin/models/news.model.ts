@@ -11,6 +11,14 @@ export interface AdminNewsImage {
   id: string;
   url: string;
   order: number;
+  /** Focal point картинки, 0..100 (%), `null` — центр 50/50 (`pinned-grid-rework`, поверх `streamer.API#73`). Правится через `AdminNewsService.updateImageFocalPoint()` (`PATCH /admin/news/images/:id/focal-point`), не через `update()` самой новости. */
+  focalX: number | null;
+  focalY: number | null;
+}
+
+export interface UpdateImageFocalPointPayload {
+  focalX: number | null;
+  focalY: number | null;
 }
 
 export interface AdminNewsTag {

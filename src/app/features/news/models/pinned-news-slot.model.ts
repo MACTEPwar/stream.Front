@@ -15,19 +15,19 @@ export interface PinnedGridConfig {
 }
 
 /**
- * Три независимые раскладки — по одной на пресет вьюпорта симулятора
- * `PinnedGridEditor` (`stream.Front#118`, доработка, по прямому запросу
- * пользователя: "колонки и строки у каждого вьюпорта свои, так же как и
- * карточки новостей" — не одна сетка, визуально сжимающаяся под разные
- * экраны, а полноценный responsive-дизайн с отдельным размером сетки и
- * отдельной расстановкой карточек на каждый пресет). Выбор нужного пресета
- * для реального устройства посетителя на публичном сайте — вне рамок этой
- * задачи (`NewsPage` пока показывает только раскладку `'large'`, см.
- * `NewsService.getPinnedSlots()`/`getGridConfig()`).
+ * Две независимые раскладки — по одной на пресет вьюпорта (`pinned-grid-rework`,
+ * `MIDDLE` убран — правило "какая раскладка на каком экране" учитывает
+ * ОРИЕНТАЦИЮ, а не только ширину: `large` — планшет альбомом/ноутбук/десктоп,
+ * `small` — телефон и планшет книжкой, см. `resolvePinnedGridViewport()`
+ * (`@shared/utils/pinned-grid-geometry`)). Набор закреплённых новостей ОБЩИЙ
+ * между раскладками — закрепил один раз, новость появляется в обеих
+ * (`PinnedGridEditor`), своя у каждой раскладки только позиция
+ * (`colStart`/`rowStart`/`colSpan`/`rowSpan`); стиль и обложка (`style`/
+ * `coverImageUrl`) общие, принадлежат новости, не раскладке.
  */
-export type PinnedGridViewport = 'small' | 'middle' | 'large';
+export type PinnedGridViewport = 'small' | 'large';
 
-export const PINNED_GRID_VIEWPORTS: readonly PinnedGridViewport[] = ['small', 'middle', 'large'];
+export const PINNED_GRID_VIEWPORTS: readonly PinnedGridViewport[] = ['small', 'large'];
 
 /** Размер сетки + расстановка карточек для ОДНОГО пресета вьюпорта (`PinnedGridViewport`) — `NewsService.getLayout()`/`updateLayout()`. */
 export interface PinnedGridLayout {
@@ -39,21 +39,19 @@ export interface PinnedGridLayout {
 export type CardImagePosition = 'top' | 'right' | 'bottom' | 'left';
 
 /**
- * Настройки отображения одной закреплённой карточки (`stream.Front#118`) —
- * админ управляет ими в inline-редакторе стиля карточки (`PinnedGridEditor`),
+ * Настройки отображения одной закреплённой карточки (`stream.Front#118`,
+ * `imageScale`/`imageOffsetX`/`imageOffsetY` убраны в `pinned-grid-rework` —
+ * заменены focal point у картинки, `PinnedNewsSlot.focalPoint` ниже) — админ
+ * управляет ими в inline-редакторе стиля карточки (`PinnedGridEditor`),
  * значения по умолчанию (`DEFAULT_CARD_STYLE`) воспроизводят исходное
  * поведение `NewsCard` (`stream.Front#112`) до появления этого редактора.
+ * Общие на обе раскладки (`PinnedGridViewport`) — принадлежат новости, не
+ * конкретной раскладке.
  */
 export interface PinnedNewsCardStyle {
   readonly imagePosition: CardImagePosition;
   /** Доля площади карточки под картинку, 10..90 (%). */
   readonly imageSizePercent: number;
-  /** Масштаб картинки внутри своей области, 1..3. */
-  readonly imageScale: number;
-  /** Смещение картинки по X, 0..100 (%, `object-position`). */
-  readonly imageOffsetX: number;
-  /** Смещение картинки по Y, 0..100 (%, `object-position`). */
-  readonly imageOffsetY: number;
   readonly backgroundColor: string;
   readonly textColor: string;
 }
@@ -61,12 +59,15 @@ export interface PinnedNewsCardStyle {
 export const DEFAULT_CARD_STYLE: PinnedNewsCardStyle = {
   imagePosition: 'top',
   imageSizePercent: 50,
-  imageScale: 1,
-  imageOffsetX: 50,
-  imageOffsetY: 50,
   backgroundColor: '#f9f9f9',
   textColor: '#1e1e1e',
 };
+
+/** Точка фокуса картинки, 0..100 (%) — `null` эквивалентен центру (50/50). Принадлежит КАРТИНКЕ (`AdminNewsImage.focalX`/`focalY`), не слоту — здесь только денормализованное отражение с backend для рендера сетки (`GET /news/pinned-layout/:viewport`). */
+export interface FocalPoint {
+  readonly x: number;
+  readonly y: number;
+}
 
 /**
  * Позиция/размер одной закреплённой новости в сетке `PinnedGridConfig` на
@@ -88,6 +89,8 @@ export interface PinnedNewsSlot {
   readonly style: PinnedNewsCardStyle;
   /** Обложка ЭТОГО пина (`stream.Front#118`, выбирается при добавлении карточки в `PinnedGridEditor`) — переопределяет `NewsItem.imageUrl` только для отображения в сетке; `null` — используется собственная картинка новости. */
   readonly coverImageUrl: string | null;
+  /** Focal point картинки, применяемой в этом слоте (`pinned-grid-rework`) — `null` эквивалентен центру 50/50. Денормализовано с backend для рендера, реально принадлежит картинке (`AdminNewsImage`), правится через `AdminNewsService.updateImageFocalPoint()`, не через сохранение раскладки. */
+  readonly focalPoint: FocalPoint | null;
 }
 
 /**

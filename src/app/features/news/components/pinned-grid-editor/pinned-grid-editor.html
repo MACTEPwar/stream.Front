@@ -84,6 +84,23 @@
   </div>
 }
 
+@if (viewportPreset() === 'large' && unplacedForLarge().length > 0 && pendingNews() === null) {
+  <div class="pinned-grid-editor__unplaced-banner">
+    <div class="pinned-grid-editor__unplaced-text">
+      На раскладке «large» не хватило места для {{ unplacedForLarge().length }} закреплённых новостей — они видны
+      только на «small». Разместите вручную, когда освободится место:
+    </div>
+    <div class="pinned-grid-editor__unplaced-list">
+      @for (item of unplacedForLarge(); track item.id) {
+        <div class="pinned-grid-editor__unplaced-item">
+          <span>{{ item.title }}</span>
+          <app-button text="Разместить" size="small" (click)="onPlaceUnplacedClick(item.id)" />
+        </div>
+      }
+    </div>
+  </div>
+}
+
 @if (previewMode()) {
   <div class="pinned-grid-editor__preview-banner">
     Показана ПОСЛЕДНЯЯ СОХРАНЁННАЯ раскладка (страница «Новости» грузит её с сервера) — текущие несохранённые правки здесь не видны. Нажмите «Сохранить», затем «Обновить предпросмотр».
@@ -122,7 +139,13 @@
           [style.grid-row]="gridRow(displaySlot(entry.slot))"
           (pointerdown)="onPointerDown($event, entry.slot, 'move')"
         >
-          <app-news-card class="pinned-grid-editor__preview" [item]="entry.item" [tags]="emptyTags" [cardStyle]="previewStyle(entry.slot)" />
+          <app-news-card
+            class="pinned-grid-editor__preview"
+            [item]="entry.item"
+            [tags]="emptyTags"
+            [cardStyle]="previewStyle(entry.slot)"
+            [focalPoint]="entry.slot.focalPoint"
+          />
 
           <div class="pinned-grid-editor__card-controls" (pointerdown)="$event.stopPropagation()">
             <app-button icon="pi pi-pencil" size="small" (click)="onEditStyleClick(entry.slot)" />
@@ -309,41 +332,16 @@
           />
         </label>
 
-        <label>
-          Масштаб картинки, ×{{ draft.imageScale }}
-          <input
-            type="range"
-            min="1"
-            max="3"
-            step="0.1"
-            [value]="draft.imageScale"
-            (input)="onDraftStyleNumberInput('imageScale', $any($event.target).value)"
-          />
-        </label>
-
-        <label>
-          Смещение X, {{ draft.imageOffsetX }}%
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            [value]="draft.imageOffsetX"
-            (input)="onDraftStyleNumberInput('imageOffsetX', $any($event.target).value)"
-          />
-        </label>
-
-        <label>
-          Смещение Y, {{ draft.imageOffsetY }}%
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            [value]="draft.imageOffsetY"
-            (input)="onDraftStyleNumberInput('imageOffsetY', $any($event.target).value)"
-          />
-        </label>
+        @if (editingFocalImage(); as focalImage) {
+          <div class="pinned-grid-editor__focal-field">
+            Точка фокуса картинки
+            <app-focal-point-picker
+              [imageUrl]="focalImage.url"
+              [point]="editingFocalPoint()"
+              (pointChange)="onFocalPointChange($event)"
+            />
+          </div>
+        }
 
         <label>
           Фон карточки

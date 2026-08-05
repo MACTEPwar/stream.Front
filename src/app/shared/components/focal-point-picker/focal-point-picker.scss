@@ -1,0 +1,66 @@
+.focal-point-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.focal-point-picker__canvas {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  cursor: crosshair;
+  touch-action: none;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+  }
+}
+
+.focal-point-picker__marker {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: rgba(255, 0, 0, 0.6);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.focal-point-picker__previews {
+  display: flex;
+  gap: 8px;
+}
+
+.focal-point-picker__preview {
+  overflow: hidden;
+  border-radius: 4px;
+  background: #d9d9d9;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.focal-point-picker__preview--square {
+  width: 64px;
+  height: 64px;
+}
+
+.focal-point-picker__preview--wide {
+  width: 96px;
+  height: 54px;
+}
+
+.focal-point-picker__preview--tall {
+  width: 48px;
+  height: 64px;
+}

@@ -25,8 +25,8 @@ const mockNews: AdminNews = {
   likedByCurrentUser: null,
   viewedByCurrentUser: null,
   images: [
-    { id: 'i2', url: '/uploads/2.jpg', order: 2 },
-    { id: 'i1', url: '/uploads/1.jpg', order: 1 },
+    { id: 'i2', url: '/uploads/2.jpg', order: 2, focalX: null, focalY: null },
+    { id: 'i1', url: '/uploads/1.jpg', order: 1, focalX: null, focalY: null },
   ],
   tags: [mockTags[0]],
   hasNoImage: false,

@@ -25,9 +25,10 @@ const DEFAULT_LAYOUT: PinnedGridLayout = { config: { columns: DEFAULT_GRID_COLUM
 
 /**
  * Страница админки «Закреплённые новости» (`stream.Front#118`, раскладка —
- * реальный API со `stream.Front#119`) — хостит `PinnedGridEditor`. Раскладки
- * грузит из `PinnedGridService.getLayout()` на каждый из трёх пресетов
- * вьюпорта (`PINNED_GRID_VIEWPORTS`, `GET /news/pinned-layout/:viewport`), а
+ * реальный API со `stream.Front#119`, два вьюпорта вместо трёх —
+ * `pinned-grid-rework`) — хостит `PinnedGridEditor`. Раскладки грузит из
+ * `PinnedGridService.getLayout()` на каждый из двух пресетов вьюпорта
+ * (`PINNED_GRID_VIEWPORTS`, `GET /news/pinned-layout/:viewport`), а
  * САМ СПИСОК новостей для выбора (`news` input редактора) — из уже
  * реализованного справочника «Новости» (`AdminNewsService.getAll()`,
  * `GET /news`, тот же источник, что `AdminNewsPage`), не из мок-семёрки
@@ -46,9 +47,9 @@ const DEFAULT_LAYOUT: PinnedGridLayout = { config: { columns: DEFAULT_GRID_COLUM
  * старые моковые слоты (`'news-1'` и т.п.) больше ни на что не указывают,
  * `PinnedGridEditor` отбрасывает их сам при загрузке.
  *
- * `(save)` вызывает `PinnedGridService.updateLayout()` на каждый из трёх
+ * `(save)` вызывает `PinnedGridService.updateLayout()` на каждый из двух
  * пресетов (редактор эмитит их все разом, `Record<PinnedGridViewport,
- * PinnedGridLayout>`) и показывает toast; на ошибке любого из трёх запросов
+ * PinnedGridLayout>`) и показывает toast; на ошибке любого из двух запросов
  * — error-тост (`extractApiErrorMessage`), редактор НЕ откатывает и не
  * закрывает визуальное состояние (полная замена по кнопке, не toggle) —
  * пользователь может поправить раскладку и нажать «Сохранить» ещё раз. Сама
@@ -73,7 +74,6 @@ export class AdminNewsPinnedPage {
   protected readonly news = signal<NewsItem[]>([]);
   protected readonly layouts = signal<Record<PinnedGridViewport, PinnedGridLayout>>({
     small: DEFAULT_LAYOUT,
-    middle: DEFAULT_LAYOUT,
     large: DEFAULT_LAYOUT,
   });
 
@@ -102,11 +102,10 @@ export class AdminNewsPinnedPage {
         this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item)));
         forkJoin([
           this.pinnedGridService.getLayout('small'),
-          this.pinnedGridService.getLayout('middle'),
           this.pinnedGridService.getLayout('large'),
         ]).subscribe({
-          next: ([small, middle, large]) => {
-            this.layouts.set({ small, middle, large });
+          next: ([small, large]) => {
+            this.layouts.set({ small, large });
             this.isLoading.set(false);
           },
           error: () => {

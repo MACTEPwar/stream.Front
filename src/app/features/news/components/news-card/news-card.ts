@@ -5,7 +5,7 @@ import { Badge } from '@shared/components/badge/badge';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { CardImagePosition, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
+import { CardImagePosition, FocalPoint, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
 import { formatCompactCount } from '../../utils/format-compact-count';
 import { hexToRgba } from '../../utils/hex-to-rgba';
 
@@ -33,10 +33,15 @@ const FLEX_DIRECTION_BY_IMAGE_POSITION: Record<CardImagePosition, string> = {
  * не только top/left), контейнер-запрос убран целиком. `imageSizePercent` —
  * доля площади карточки под картинку (`flex: 0 0 X%` на `.news-card__picture`,
  * без grow/shrink — тело карточки добирает остаток через `flex: 1 1 auto`).
- * `imageScale`/`imageOffsetX`/`imageOffsetY` — зум/пан картинки внутри своей
- * области (`transform: scale()`/`object-position`, комбинируется с
- * `object-fit: cover` на `<img>`). Фон/цвет текста карточки — `backgroundColor`/
- * `textColor` инлайн-стилями поверх дефолтных значений SCSS.
+ * Фон/цвет текста карточки — `backgroundColor`/`textColor` инлайн-стилями
+ * поверх дефолтных значений SCSS.
+ *
+ * **Focal point вместо зума/пана** (`pinned-grid-rework`) — `imageScale`/
+ * `imageOffsetX`/`imageOffsetY` убраны: картинка держит главный объект в
+ * кадре через `object-fit: cover` + `object-position: {focalPoint().x}%
+ * {focalPoint().y}%` (`focalPoint` — отдельный вход, `null` эквивалентен
+ * центру 50/50), точка выбирается один раз в `FocalPointPicker`
+ * (`PinnedGridEditor`) и применяется одинаково при любой форме ячейки.
  *
  * Иконка лайка (`likeIconClass`) переключается между `pi-heart`/`pi-heart-fill`
  * по `item().likedByCurrentUser` (тот же приём, что `NewsArchiveItem`) —
@@ -53,6 +58,7 @@ export class NewsCard {
   readonly item = input.required<NewsItem>();
   readonly tags = input<NewsTag[]>([]);
   readonly cardStyle = input.required<PinnedNewsCardStyle>();
+  readonly focalPoint = input<FocalPoint | null>(null);
 
   protected readonly viewsLabel = computed(() => formatCompactCount(this.item().views));
   protected readonly likesLabel = computed(() => formatCompactCount(this.item().likes));
@@ -63,9 +69,9 @@ export class NewsCard {
 
   protected readonly flexDirection = computed(() => FLEX_DIRECTION_BY_IMAGE_POSITION[this.cardStyle().imagePosition]);
   protected readonly pictureFlexBasis = computed(() => `0 0 ${this.cardStyle().imageSizePercent}%`);
-  protected readonly imageTransform = computed(() => `scale(${this.cardStyle().imageScale})`);
-  protected readonly imageObjectPosition = computed(
-    () => `${this.cardStyle().imageOffsetX}% ${this.cardStyle().imageOffsetY}%`,
-  );
+  protected readonly imageObjectPosition = computed(() => {
+    const focalPoint = this.focalPoint();
+    return focalPoint ? `${focalPoint.x}% ${focalPoint.y}%` : '50% 50%';
+  });
   protected readonly dividerColor = computed(() => hexToRgba(this.cardStyle().textColor, DIVIDER_OPACITY));
 }

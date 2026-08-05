@@ -9,7 +9,17 @@ import {
 } from './pinned-news-slot.model';
 
 function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
-  return { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 1, style: DEFAULT_CARD_STYLE, coverImageUrl: null, ...overrides };
+  return {
+    newsId: 'news-1',
+    colStart: 1,
+    rowStart: 1,
+    colSpan: 1,
+    rowSpan: 1,
+    style: DEFAULT_CARD_STYLE,
+    coverImageUrl: null,
+    focalPoint: null,
+    ...overrides,
+  };
 }
 
 describe('validatePinnedNewsSlots', () => {

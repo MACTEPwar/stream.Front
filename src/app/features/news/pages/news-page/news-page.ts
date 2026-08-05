@@ -12,7 +12,7 @@ import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.ser
 import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
-import { LARGE_QUERY, MIDDLE_QUERY, SMALL_QUERY } from '@shared/utils/breakpoints';
+import { LARGE_QUERY } from '@shared/utils/breakpoints';
 
 import { NewsArchiveItem } from '../../components/news-archive-item/news-archive-item';
 import { NewsDetailModal } from '../../components/news-detail-modal/news-detail-modal';
@@ -67,14 +67,14 @@ function endOfDay(date: Date): Date {
  * `app.html`, stream.Front#48/#49), включая лого, меню с `NavActiveIndicator`
  * и кнопку «Поддержать».
  *
- * **Адаптивный пресет закреплённой сетки (`stream.Front#122`)** — `viewport`
- * (`computed` над `toSignal(BreakpointObserver.observe([SMALL_QUERY,
- * MIDDLE_QUERY, LARGE_QUERY]))`, `@shared/utils/breakpoints`) резолвит
- * текущую ширину окна в `PinnedGridViewport` (`small`/`middle`/`large`,
- * зеркало SCSS-порогов `src/styles/_breakpoints.scss`). Каждый пресет —
- * ОТДЕЛЬНАЯ раскладка с бэка (свои `slots`/`columns`/`rows`, не одна сетка,
- * визуально сжимающаяся CSS-ом — см. `PinnedGridEditor`), поэтому смена
- * пресета на лету заново зовёт `PinnedGridService.getLayout(viewport)`:
+ * **Адаптивный пресет закреплённой сетки (`stream.Front#122`, доработка
+ * `pinned-grid-rework` — правило учитывает ОРИЕНТАЦИЮ, не только ширину)** —
+ * `viewport` (`toSignal(BreakpointObserver.observe([LARGE_QUERY]))`,
+ * `@shared/utils/breakpoints`) резолвит текущее окно в `PinnedGridViewport`
+ * (`small`/`large`, зеркало SCSS-порогов `src/styles/_breakpoints.scss`).
+ * Каждый пресет — ОТДЕЛЬНАЯ раскладка с бэка (свои `slots`/`columns`/`rows`,
+ * не одна сетка, визуально сжимающаяся CSS-ом — см. `PinnedGridEditor`),
+ * поэтому смена пресета на лету заново зовёт `PinnedGridService.getLayout(viewport)`:
  * реализовано `effect()`-ом, который читает `viewport()` — срабатывает один
  * раз при инициализации (реальным резолвнутым значением, `BreakpointObserver`
  * эмитит текущее состояние синхронно при подписке, `toSignal` успевает
@@ -144,13 +144,9 @@ export class NewsPage implements OnInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   private readonly viewport = toSignal(
-    this.breakpointObserver.observe([SMALL_QUERY, MIDDLE_QUERY, LARGE_QUERY]).pipe(
-      map((state): PinnedGridViewport => {
-        if (state.breakpoints[SMALL_QUERY]) return 'small';
-        if (state.breakpoints[MIDDLE_QUERY]) return 'middle';
-        return 'large';
-      }),
-    ),
+    this.breakpointObserver
+      .observe([LARGE_QUERY])
+      .pipe(map((state): PinnedGridViewport => (state.matches ? 'large' : 'small'))),
     { initialValue: 'large' as PinnedGridViewport },
   );
 

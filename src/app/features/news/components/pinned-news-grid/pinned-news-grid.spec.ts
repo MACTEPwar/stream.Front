@@ -11,6 +11,7 @@ function newsItem(id: string): NewsItem {
     excerpt: 'Lorem ipsum dolor sit amet consectetur.',
     imageUrl: null,
     imageUrls: [],
+    images: [],
     tagIds: [],
     views: 10,
     likes: 5,
@@ -21,7 +22,17 @@ function newsItem(id: string): NewsItem {
 }
 
 function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
-  return { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 1, style: DEFAULT_CARD_STYLE, coverImageUrl: null, ...overrides };
+  return {
+    newsId: 'news-1',
+    colStart: 1,
+    rowStart: 1,
+    colSpan: 1,
+    rowSpan: 1,
+    style: DEFAULT_CARD_STYLE,
+    coverImageUrl: null,
+    focalPoint: null,
+    ...overrides,
+  };
 }
 
 describe('PinnedNewsGrid', () => {

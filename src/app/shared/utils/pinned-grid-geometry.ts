@@ -1,6 +1,6 @@
 import { PinnedGridViewport } from '@features/news/models/pinned-news-slot.model';
 
-import { BREAKPOINT_LARGE_PX, BREAKPOINT_MIDDLE_PX } from './breakpoints';
+import { BREAKPOINT_LARGE_MIN_WIDTH_PX, BREAKPOINT_TABLET_MIN_HEIGHT_PX, BREAKPOINT_TABLET_MIN_WIDTH_PX } from './breakpoints';
 
 /**
  * Геометрия области под сетку закреплённых новостей на реальной странице
@@ -16,14 +16,13 @@ import { BREAKPOINT_LARGE_PX, BREAKPOINT_MIDDLE_PX } from './breakpoints';
  * разойдётся с реальной страницей.
  */
 
-/** `:host { padding }` в `news-page.scss` — своё значение на каждый пресет вьюпорта. */
+/** `:host { padding }` в `news-page.scss` — своё значение на каждый пресет вьюпорта (`pinned-grid-rework` — `MIDDLE` убран, промежуточное значение 32 с ним). */
 export const NEWS_PAGE_PADDING_PX: Record<PinnedGridViewport, number> = {
   small: 20,
-  middle: 32,
   large: 60,
 };
 
-/** `$archive-gap`/`$archive-width` (`news-page.scss`) — архив сбоку сетки ТОЛЬКО на `large`; на `middle`/`small` уходит под сетку и не отнимает ширину у грида. */
+/** `$archive-gap`/`$archive-width` (`news-page.scss`) — архив сбоку сетки ТОЛЬКО на `large`; на `small` уходит под сетку и не отнимает ширину у грида. */
 export const NEWS_PAGE_ARCHIVE_GAP_PX = 110;
 export const NEWS_PAGE_ARCHIVE_WIDTH_PX = 660;
 
@@ -32,19 +31,31 @@ export const SHELL_HEADER_HEIGHT_PX = 64;
 
 export interface GridAreaSize {
   readonly width: number;
-  /** `null` — высота НЕ фиксирована (`middle`/`small`, `news-page.scss`/`pinned-news-grid.scss` переходят на `height: auto`) — сетка растёт по контенту, как на реальной странице, вместо холста фиксированного размера. */
+  /** `null` — высота НЕ фиксирована (`small`, `news-page.scss`/`pinned-news-grid.scss` переходят на `height: auto`) — сетка растёт по контенту, как на реальной странице, вместо холста фиксированного размера. */
   readonly height: number | null;
 }
 
-/** Те же пороги, что `_breakpoints.scss`/`shared/utils/breakpoints.ts` — `small` (`< 768`), `middle` (`768..1279`), `large` (`>= 1280`). */
-export function resolvePinnedGridViewport(screenWidthPx: number): PinnedGridViewport {
-  if (screenWidthPx < BREAKPOINT_MIDDLE_PX) {
-    return 'small';
+/**
+ * Те же пороги, что `_breakpoints.scss`/`shared/utils/breakpoints.ts` —
+ * учитывает ОРИЕНТАЦИЮ, а не только ширину (`pinned-grid-rework`, прямое
+ * решение пользователя): по одной ширине планшет книжкой от планшета
+ * альбомом не отличить (iPad Pro 12.9 книжкой — 1024px, шире обычного
+ * планшета альбомом).
+ *
+ * `large` — альбомная ориентация от `BREAKPOINT_TABLET_MIN_WIDTH_PX`×
+ * `BREAKPOINT_TABLET_MIN_HEIGHT_PX` (планшет альбомом, ноутбук, десктоп) ИЛИ
+ * ширина от `BREAKPOINT_LARGE_MIN_WIDTH_PX` независимо от ориентации;
+ * `small` — всё остальное (телефон, планшет книжкой).
+ */
+export function resolvePinnedGridViewport(screenWidthPx: number, screenHeightPx: number): PinnedGridViewport {
+  const isLandscape = screenWidthPx >= screenHeightPx;
+  const isLandscapeLarge =
+    isLandscape && screenWidthPx >= BREAKPOINT_TABLET_MIN_WIDTH_PX && screenHeightPx >= BREAKPOINT_TABLET_MIN_HEIGHT_PX;
+
+  if (isLandscapeLarge || screenWidthPx >= BREAKPOINT_LARGE_MIN_WIDTH_PX) {
+    return 'large';
   }
-  if (screenWidthPx < BREAKPOINT_LARGE_PX) {
-    return 'middle';
-  }
-  return 'large';
+  return 'small';
 }
 
 /**
@@ -55,14 +66,13 @@ export function resolvePinnedGridViewport(screenWidthPx: number): PinnedGridView
  *   добавляется высота шапки `Shell`:
  *   `W = screenW − 2×padding − archiveWidth − archiveGap`,
  *   `H = screenH − shellHeaderHeight − 2×padding`.
- * - **`middle`/`small`**: архив уходит ПОД сетку (`flex-direction: column`),
- *   ширина — экран минус паддинги по бокам, высота — НЕ фиксирована
- *   (`height: auto` и на `.news-page`/`:host`, и на самой сетке,
- *   `pinned-news-grid.scss`) — страница скроллится целиком, возвращается
- *   `null` вместо числа.
+ * - **`small`**: архив уходит ПОД сетку (`flex-direction: column`), ширина —
+ *   экран минус паддинги по бокам, высота — НЕ фиксирована (`height: auto` и
+ *   на `.news-page`/`:host`, и на самой сетке, `pinned-news-grid.scss`) —
+ *   страница скроллится целиком, возвращается `null` вместо числа.
  */
 export function computePinnedGridAreaSize(screenWidthPx: number, screenHeightPx: number): GridAreaSize {
-  const viewport = resolvePinnedGridViewport(screenWidthPx);
+  const viewport = resolvePinnedGridViewport(screenWidthPx, screenHeightPx);
   const padding = NEWS_PAGE_PADDING_PX[viewport];
 
   if (viewport === 'large') {
@@ -88,9 +98,9 @@ export interface ScreenSizePreset {
 /**
  * Реальные размеры окна браузера для предпросмотра в `PinnedGridEditor` —
  * НЕ пресеты сетки/раскладки самой по себе (это `PinnedGridViewport`,
- * выводится из `width` через {@link resolvePinnedGridViewport}), а размеры
- * экрана посетителя, из которых уже вычисляется и то, какая раскладка
- * сейчас редактируется, и площадь под сетку.
+ * выводится из `width`+`height` через {@link resolvePinnedGridViewport}), а
+ * размеры экрана посетителя, из которых уже вычисляется и то, какая
+ * раскладка сейчас редактируется, и площадь под сетку.
  */
 export const SCREEN_SIZE_PRESETS: readonly ScreenSizePreset[] = [
   { key: 'phone', label: 'Телефон (375×812)', width: 375, height: 812 },

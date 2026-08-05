@@ -7,7 +7,7 @@ import { AdminNews, AdminNewsTag } from '@features/admin/models/news.model';
 import { AdminNewsService } from '@features/admin/services/admin-news.service';
 import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
 import { PaginatedResponse } from '@features/admin/services/admin-users.service';
-import { LARGE_QUERY, SMALL_QUERY } from '@shared/utils/breakpoints';
+import { LARGE_QUERY } from '@shared/utils/breakpoints';
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
@@ -55,15 +55,17 @@ const PINNED_SLOTS: PinnedNewsSlot[] = GRID_NEWS.map((item, index) => ({
   rowStart: index + 1,
   colSpan: index === 3 ? 2 : 1,
   rowSpan: 1,
-  style: DEFAULT_CARD_STYLE, coverImageUrl: null,
+  style: DEFAULT_CARD_STYLE,
+  coverImageUrl: null,
+  focalPoint: null,
 }));
 
 function archivePage(items: AdminNews[], page: number, totalPages: number): PaginatedResponse<AdminNews> {
   return { items, meta: { page, limit: 10, total: items.length, totalPages } };
 }
 
-function breakpointState(query: string): BreakpointState {
-  return { matches: true, breakpoints: { [query]: true } };
+function breakpointState(matches: boolean): BreakpointState {
+  return { matches, breakpoints: { [LARGE_QUERY]: matches } };
 }
 
 describe('NewsPage', () => {
@@ -104,7 +106,7 @@ describe('NewsPage', () => {
         // вьюпорта — через `breakpointState$` в отдельных тестах ниже.
         {
           provide: BreakpointObserver,
-          useValue: { observe: () => breakpointState$.pipe(startWith(breakpointState(LARGE_QUERY))) },
+          useValue: { observe: () => breakpointState$.pipe(startWith(breakpointState(true))) },
         },
       ],
     });
@@ -291,7 +293,7 @@ describe('NewsPage', () => {
     const fixture = createPage();
     pinnedGridGetLayout.mockClear();
 
-    breakpointState$.next(breakpointState(SMALL_QUERY));
+    breakpointState$.next(breakpointState(false));
     fixture.detectChanges();
 
     expect(pinnedGridGetLayout).toHaveBeenCalledTimes(1);
@@ -302,7 +304,7 @@ describe('NewsPage', () => {
     const fixture = createPage();
     pinnedGridGetLayout.mockClear();
 
-    breakpointState$.next(breakpointState(LARGE_QUERY));
+    breakpointState$.next(breakpointState(true));
     fixture.detectChanges();
 
     expect(pinnedGridGetLayout).not.toHaveBeenCalled();
