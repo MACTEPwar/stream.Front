@@ -1,4 +1,5 @@
 import { Component, DestroyRef, ElementRef, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DrawerModule } from 'primeng/drawer';
 
 import { ModalService } from '@core/services/modal.service';
@@ -6,6 +7,14 @@ import { NotificationService } from '@core/services/notification.service';
 import { Button } from '@shared/components/button/button';
 import { ConfirmModal, ConfirmModalData } from '@shared/components/confirm-modal/confirm-modal';
 import { Select } from '@shared/components/select/select';
+import {
+  CUSTOM_SCREEN_SIZE_KEY,
+  GridAreaSize,
+  SCREEN_SIZE_PRESETS,
+  ScreenSizePreset,
+  computePinnedGridAreaSize,
+  resolvePinnedGridViewport,
+} from '@shared/utils/pinned-grid-geometry';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
@@ -64,41 +73,12 @@ const IMAGE_POSITION_OPTIONS: { label: string; value: CardImagePosition }[] = [
   { label: 'Слева', value: 'left' },
 ];
 
-interface ViewportPresetSize {
-  readonly width: number;
-  readonly height: number;
-}
+/** Дефолтный пресет экрана — попадает в `PinnedGridViewport.middle` (1180 < `BREAKPOINT_LARGE_PX`), тот же дефолт, что был у старого `viewportPreset` сигнала до `pinned-grid-rework`. */
+const DEFAULT_SCREEN_PRESET_KEY = 'tablet-landscape';
 
-/** Высота альбомной (landscape) картинки 16:9 по заданной ширине, округлённая до целого px. */
-function landscapeHeight169(width: number): number {
-  return Math.round((width * 9) / 16);
-}
-
-/**
- * Размеры симулятора вьюпорта (`stream.Front#118`, доработка) — все три
- * пресета в альбомной ориентации (ширина больше высоты), базовая высота
- * считается из ширины как 16:9: «Маленький» — мобильный (375×211, высоту
- * можно переопределить вручную, см. `smallViewportHeightPx`), «Средний» —
- * планшет (768×432, дефолт), «Большой» — десктоп (1366×768). Для среднего/
- * большого — и ширина, и высота строго фиксированы пресетом (не редактируются
- * — по прямому запросу пользователя «там грид зависит только от экрана»).
- */
-const VIEWPORT_PRESET_SIZES: Record<PinnedGridViewport, ViewportPresetSize> = {
-  small: { width: 375, height: landscapeHeight169(375) },
-  middle: { width: 768, height: landscapeHeight169(768) },
-  large: { width: 1366, height: landscapeHeight169(1366) },
-};
-
-const VIEWPORT_PRESET_OPTIONS: { label: string; value: PinnedGridViewport }[] = [
-  { label: `Маленький (мобильный, ${VIEWPORT_PRESET_SIZES.small.width}×…)`, value: 'small' },
-  {
-    label: `Средний (планшет, ${VIEWPORT_PRESET_SIZES.middle.width}×${VIEWPORT_PRESET_SIZES.middle.height})`,
-    value: 'middle',
-  },
-  {
-    label: `Большой (десктоп, ${VIEWPORT_PRESET_SIZES.large.width}×${VIEWPORT_PRESET_SIZES.large.height})`,
-    value: 'large',
-  },
+const SCREEN_PRESET_SELECT_OPTIONS: { label: string; value: string }[] = [
+  ...SCREEN_SIZE_PRESETS.map((preset) => ({ label: preset.label, value: preset.key })),
+  { label: 'Свой размер', value: CUSTOM_SCREEN_SIZE_KEY },
 ];
 
 function clamp(value: number, min: number, max: number): number {
@@ -168,15 +148,39 @@ function clamp(value: number, min: number, max: number): number {
  * — `ConfirmModal` с сводкой до применения (админ явно попросил не терять
  * карточки молча), если нет — применяется сразу.
  *
- * **Подсветка сетки/симулятор вьюпорта** — чисто визуальные инструменты
- * редактора (`gridHighlightEnabled`, `viewportPreset`), не персистятся сами
- * по себе (в отличие от того, ЧТО выбрано текущим пресетом — размер
- * сетки/карточки — это персистится). Симулятор — три пресета
- * (`VIEWPORT_PRESET_SIZES`, все альбомные — 16:9): для «Маленького» высоту
- * можно вписать вручную (`smallViewportHeightPx`, по прямому запросу
- * пользователя — реальные мобильные экраны сильно различаются по высоте),
- * ширина остаётся фиксированной 375; «Средний»/«Большой» — строго фиксированы
- * пресетом целиком (админ не редактирует).
+ * **Подсветка сетки** — чисто визуальный инструмент редактора
+ * (`gridHighlightEnabled`), не персистится.
+ *
+ * **Холст = реальная геометрия страницы, не условный 16:9-пресет**
+ * (`pinned-grid-rework`, по жалобе «то что я вижу в админке и то что увидит
+ * человек — отличается») — админ выбирает РЕАЛЬНЫЙ размер экрана посетителя
+ * (`screenPresetKey`/`SCREEN_SIZE_PRESETS`, либо «Свой размер» через
+ * `customScreenWidth`/`customScreenHeight`), из него `resolvePinnedGridViewport()`
+ * выводит, какая из трёх раскладок (`PinnedGridViewport`) сейчас редактируется
+ * (`viewportPreset`, `computed`, БОЛЬШЕ не отдельный переключаемый контрол —
+ * иначе админ мог бы случайно редактировать не ту раскладку), а
+ * `computePinnedGridAreaSize()` (`@shared/utils/pinned-grid-geometry`,
+ * зеркало формул `news-page.scss`/`shell.scss`) — реальную площадь под сетку
+ * (`gridAreaSize`): на `large` — фиксированные `W×H` (экран минус паддинги
+ * страницы, минус архив с гаттером сбоку, минус шапка `Shell` по высоте), на
+ * `middle`/`small` — фиксированная `W`, высота НЕ навязана (`height: null` →
+ * холст растёт по контенту, как на реальной странице, `.pinned-grid-editor__viewport--auto-height`
+ * в SCSS). Интерактивность (drag/resize/добавление) остаётся ОСНОВНЫМ
+ * режимом — работает поверх вычисленного холста без изменений в логике.
+ *
+ * **Предпросмотр «как увидит посетитель»** (`pinned-grid-rework`) —
+ * `previewMode`, показывает НАСТОЯЩУЮ страницу `/news` в `<iframe>` того же
+ * `screenSize()`, что и холст (полный размер окна, не только площадь под
+ * сетку — важно для `BreakpointObserver`/media-запросов внутри iframe,
+ * которые резолвятся от размера самого iframe, а не окна браузера снаружи).
+ * Показывает ПОСЛЕДНЮЮ СОХРАНЁННУЮ раскладку, не текущий черновик (страница
+ * грузится с бэка через API) — вместо авто-сохранения перед открытием (что
+ * потребовало бы дожидаться завершения `save` output у родителя,
+ * `AdminNewsPinnedPage`, не имея от него подтверждения об успехе) выбран
+ * более простой и честный вариант: явный предупреждающий баннер + кнопка
+ * «Обновить предпросмотр» (`previewRefreshToken`, меняет query-параметр
+ * `src`, чтобы форсировать перезагрузку iframe) — админ жмёт «Сохранить»
+ * (уже существующая кнопка тулбара), затем «Обновить предпросмотр».
  *
  * Драг/ресайз/добавление — голые Pointer Events (Angular CDK не подключён в
  * проекте), тот же приём, что и в исходной версии редактора (`#118`,
@@ -193,6 +197,7 @@ export class PinnedGridEditor {
   private readonly destroyRef = inject(DestroyRef);
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly news = input.required<NewsItem[]>();
   readonly layouts = input.required<Record<PinnedGridViewport, PinnedGridLayout>>();
@@ -205,17 +210,39 @@ export class PinnedGridEditor {
   protected readonly dragState = signal<DragState | null>(null);
 
   protected readonly gridHighlightEnabled = signal(false);
-  protected readonly viewportPreset = signal<PinnedGridViewport>('middle');
-  protected readonly viewportPresetOptions = VIEWPORT_PRESET_OPTIONS;
-  protected readonly smallViewportHeightPx = signal(VIEWPORT_PRESET_SIZES.small.height);
 
-  protected readonly viewportSize = computed<ViewportPresetSize>(() => {
-    const preset = this.viewportPreset();
-    if (preset === 'small') {
-      return { width: VIEWPORT_PRESET_SIZES.small.width, height: this.smallViewportHeightPx() };
+  protected readonly screenPresetKey = signal(DEFAULT_SCREEN_PRESET_KEY);
+  protected readonly screenPresetOptions = SCREEN_PRESET_SELECT_OPTIONS;
+  protected readonly customScreenSizeKey = CUSTOM_SCREEN_SIZE_KEY;
+  protected readonly customScreenWidth = signal(1366);
+  protected readonly customScreenHeight = signal(768);
+
+  /** Реальный размер окна браузера для холста/предпросмотра — либо готовый пресет, либо ручной ввод («Свой размер»). */
+  protected readonly screenSize = computed<{ width: number; height: number }>(() => {
+    const key = this.screenPresetKey();
+    if (key === CUSTOM_SCREEN_SIZE_KEY) {
+      return { width: this.customScreenWidth(), height: this.customScreenHeight() };
     }
-    return VIEWPORT_PRESET_SIZES[preset];
+    const preset: ScreenSizePreset | undefined = SCREEN_SIZE_PRESETS.find((item) => item.key === key);
+    return preset ?? SCREEN_SIZE_PRESETS[0];
   });
+
+  /** Какая из трёх раскладок (`PinnedGridViewport`) сейчас редактируется — выведена из `screenSize()` теми же порогами, что `_breakpoints.scss`, а не отдельный контрол (иначе админ мог бы случайно редактировать не ту раскладку). */
+  protected readonly viewportPreset = computed<PinnedGridViewport>(() =>
+    resolvePinnedGridViewport(this.screenSize().width),
+  );
+
+  /** Реальная площадь под сетку на странице `/news` для `screenSize()` — см. `computePinnedGridAreaSize()`. */
+  protected readonly gridAreaSize = computed<GridAreaSize>(() =>
+    computePinnedGridAreaSize(this.screenSize().width, this.screenSize().height),
+  );
+
+  protected readonly previewMode = signal(false);
+  protected readonly previewRefreshToken = signal(0);
+
+  protected readonly previewSrc = computed<SafeResourceUrl>(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(`/news?pinnedGridPreview=${this.previewRefreshToken()}`),
+  );
 
   protected readonly currentLayout = computed(() => this.localLayouts()[this.viewportPreset()]);
   protected readonly localGridConfig = computed(() => this.currentLayout().config);
@@ -376,19 +403,39 @@ export class PinnedGridEditor {
     return rect ? `${rect.rowStart} / span ${rect.rowSpan}` : '1 / span 1';
   }
 
-  protected onViewportPresetChange(preset: PinnedGridViewport | null): void {
-    if (!preset) {
+  protected onScreenPresetChange(key: string | null): void {
+    if (!key) {
       return;
     }
-    this.viewportPreset.set(preset);
+    this.screenPresetKey.set(key);
   }
 
-  protected onSmallViewportHeightInput(value: string): void {
+  protected onCustomScreenWidthInput(value: string): void {
     const numeric = Number(value);
     if (Number.isNaN(numeric) || numeric < 1) {
       return;
     }
-    this.smallViewportHeightPx.set(numeric);
+    this.customScreenWidth.set(numeric);
+  }
+
+  protected onCustomScreenHeightInput(value: string): void {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric) || numeric < 1) {
+      return;
+    }
+    this.customScreenHeight.set(numeric);
+  }
+
+  protected onOpenPreviewClick(): void {
+    this.previewMode.set(true);
+  }
+
+  protected onClosePreviewClick(): void {
+    this.previewMode.set(false);
+  }
+
+  protected onRefreshPreviewClick(): void {
+    this.previewRefreshToken.update((token) => token + 1);
   }
 
   protected optionsForSlot(currentNewsId: string): NewsItem[] {

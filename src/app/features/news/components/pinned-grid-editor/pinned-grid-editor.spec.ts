@@ -69,9 +69,9 @@ describe('PinnedGridEditor', () => {
     TestBed.configureTestingModule({ imports: [PinnedGridEditor] });
   });
 
-  // Дефолтный активный пресет редактора — 'middle', поэтому все "обычные"
-  // тесты (не про раздельные раскладки) заводят данные именно под него,
-  // small/large остаются пустыми дефолтами.
+  // Дефолтный экран редактора — «Планшет альбомом» (1180px, резолвится в
+  // 'middle'), поэтому все "обычные" тесты (не про раздельные раскладки)
+  // заводят данные именно под него, small/large остаются пустыми дефолтами.
   function createEditor(news: NewsItem[], slots: PinnedNewsSlot[], gridConfig: PinnedGridConfig = GRID_CONFIG) {
     const fixture = TestBed.createComponent(PinnedGridEditor);
     fixture.componentRef.setInput('news', news);
@@ -478,7 +478,7 @@ describe('PinnedGridEditor', () => {
       expect(fixture.componentInstance['localGridConfig']()).toEqual(GRID_CONFIG);
       expect(fixture.componentInstance['localSlots']().map((s: PinnedNewsSlot) => s.newsId)).toEqual(['news-2']);
 
-      fixture.componentInstance['onViewportPresetChange']('small');
+      fixture.componentInstance['onScreenPresetChange']('phone');
 
       expect(fixture.componentInstance['localGridConfig']()).toEqual({ columns: 2, rows: 6 });
       expect(fixture.componentInstance['localSlots']().map((s: PinnedNewsSlot) => s.newsId)).toEqual(['news-1']);
@@ -497,7 +497,7 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onRemoveSlot']('news-1');
       expect(fixture.componentInstance['localSlots']()).toEqual([]);
 
-      fixture.componentInstance['onViewportPresetChange']('large');
+      fixture.componentInstance['onScreenPresetChange']('laptop');
       expect(fixture.componentInstance['localSlots']().map((s: PinnedNewsSlot) => s.newsId)).toEqual(['news-2']);
     });
 
@@ -535,23 +535,89 @@ describe('PinnedGridEditor', () => {
     });
   });
 
-  describe('симулятор вьюпорта', () => {
-    it('«Маленький» — высота редактируемая вручную, ширина фиксирована 375', () => {
+  describe('геометрия холста (реальный экран, не 16:9-пресет)', () => {
+    it('«Телефон» (375×812) резолвится в раскладку small, ширина холста = экран минус паддинг страницы на small (20px), высота не фиксирована', () => {
       const fixture = createEditor([], []);
 
-      fixture.componentInstance['onViewportPresetChange']('small');
-      fixture.componentInstance['onSmallViewportHeightInput']('500');
+      fixture.componentInstance['onScreenPresetChange']('phone');
 
-      expect(fixture.componentInstance['viewportSize']()).toEqual({ width: 375, height: 500 });
+      expect(fixture.componentInstance['viewportPreset']()).toBe('small');
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({ width: 375 - 2 * 20, height: null });
     });
 
-    it('«Средний»/«Большой» — строго фиксированы пресетом, не зависят от smallViewportHeightPx', () => {
+    it('«Планшет книжкой» (810×1080) резолвится в раскладку middle, ширина холста = экран минус паддинг страницы на middle (32px), высота не фиксирована', () => {
       const fixture = createEditor([], []);
 
-      fixture.componentInstance['onSmallViewportHeightInput']('999');
-      fixture.componentInstance['onViewportPresetChange']('middle');
+      fixture.componentInstance['onScreenPresetChange']('tablet-portrait');
 
-      expect(fixture.componentInstance['viewportSize']()).toEqual({ width: 768, height: 432 });
+      expect(fixture.componentInstance['viewportPreset']()).toBe('middle');
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({ width: 810 - 2 * 32, height: null });
+    });
+
+    it('«Ноутбук» (1366×768) резолвится в раскладку large, холст = экран минус паддинги/архив/шапку (зеркало news-page.scss/shell.scss)', () => {
+      const fixture = createEditor([], []);
+
+      fixture.componentInstance['onScreenPresetChange']('laptop');
+
+      expect(fixture.componentInstance['viewportPreset']()).toBe('large');
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({
+        width: 1366 - 2 * 60 - 660 - 110,
+        height: 768 - 64 - 2 * 60,
+      });
+    });
+
+    it('«Десктоп» (1920×1080) резолвится в раскладку large с той же формулой', () => {
+      const fixture = createEditor([], []);
+
+      fixture.componentInstance['onScreenPresetChange']('desktop');
+
+      expect(fixture.componentInstance['viewportPreset']()).toBe('large');
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({
+        width: 1920 - 2 * 60 - 660 - 110,
+        height: 1080 - 64 - 2 * 60,
+      });
+    });
+
+    it('«Свой размер» — произвольные ширина/высота, тот же пересчёт раскладки/геометрии', () => {
+      const fixture = createEditor([], []);
+
+      fixture.componentInstance['onScreenPresetChange']('custom');
+      fixture.componentInstance['onCustomScreenWidthInput']('500');
+      fixture.componentInstance['onCustomScreenHeightInput']('900');
+
+      expect(fixture.componentInstance['viewportPreset']()).toBe('small');
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({ width: 500 - 2 * 20, height: null });
+    });
+  });
+
+  describe('предпросмотр «как увидит посетитель» (iframe)', () => {
+    it('«Предпросмотр» включает previewMode, iframe получает размер выбранного экрана', () => {
+      const fixture = createEditor([], []);
+      fixture.componentInstance['onScreenPresetChange']('laptop');
+
+      fixture.componentInstance['onOpenPreviewClick']();
+
+      expect(fixture.componentInstance['previewMode']()).toBe(true);
+      expect(fixture.componentInstance['screenSize']()).toMatchObject({ width: 1366, height: 768 });
+    });
+
+    it('«Обновить предпросмотр» меняет src (форсирует перезагрузку iframe)', () => {
+      const fixture = createEditor([], []);
+      const before = fixture.componentInstance['previewSrc']();
+
+      fixture.componentInstance['onRefreshPreviewClick']();
+      const after = fixture.componentInstance['previewSrc']();
+
+      expect(after).not.toBe(before);
+    });
+
+    it('«Закрыть предпросмотр» выключает previewMode', () => {
+      const fixture = createEditor([], []);
+      fixture.componentInstance['onOpenPreviewClick']();
+
+      fixture.componentInstance['onClosePreviewClick']();
+
+      expect(fixture.componentInstance['previewMode']()).toBe(false);
     });
   });
 });
