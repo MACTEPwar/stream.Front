@@ -118,6 +118,14 @@
   </div>
 } @else {
 
+@if (gridAreaSize().height === null) {
+  <p class="pinned-grid-editor__canvas-hint">
+    Ширина холста ниже точная, а высота — ориентировочная (для наглядности редактирования): на реальной странице сетка растёт по объёму текста в карточках.
+  </p>
+} @else {
+  <p class="pinned-grid-editor__canvas-hint">Ширина и высота холста ниже соответствуют реальной странице.</p>
+}
+
 <div class="pinned-grid-editor__viewport-wrapper">
   <div
     class="pinned-grid-editor__viewport"
@@ -338,7 +346,7 @@
             <app-focal-point-picker
               [imageUrl]="focalImage.url"
               [point]="editingFocalPoint()"
-              (pointChange)="onFocalPointChange($event)"
+              (pointCommit)="onFocalPointChange($event)"
             />
           </div>
         }

@@ -38,6 +38,16 @@ import { NewsCard } from '../news-card/news-card';
 /** Тот же зазор между ячейками, что у `PinnedNewsGrid` (`pinned-news-grid.scss`) — нужен и в TS для пересчёта пикселей курсора в ячейки. */
 const GRID_GAP_PX = 20;
 
+/**
+ * Минимальная высота строки сетки РЕДАКТОРА на `small` (баг «лишний скролл,
+ * странный вид» — пустые `1fr`-строки при `height: auto` контейнера
+ * схлопывались в 0, редактировать было нечем). На реальной странице
+ * (`pinned-news-grid.scss`) высота строк там НЕ фиксирована — растёт по
+ * контенту карточек, поэтому это число значимо только внутри редактора,
+ * ничего не зеркалит из `news-page.scss`.
+ */
+const EDITOR_SMALL_MIN_ROW_HEIGHT_PX = 160;
+
 type DragKind = 'move' | 'col' | 'row';
 
 interface DragState {
@@ -335,7 +345,22 @@ export class PinnedGridEditor {
   protected readonly gridTemplateColumns = computed(
     () => `repeat(${this.localGridConfig().columns}, minmax(0, 1fr))`,
   );
-  protected readonly gridTemplateRows = computed(() => `repeat(${this.localGridConfig().rows}, 1fr)`);
+
+  /**
+   * На `large` (`gridAreaSize().height` — число) строки обязаны честно
+   * делить фиксированную высоту холста — голый `1fr`. На `small`
+   * (`height === null`, холст `height: auto`) голый `1fr` схлопывает пустые
+   * строки в 0 — `minmax(EDITOR_SMALL_MIN_ROW_HEIGHT_PX, 1fr)` даёт им
+   * видимый пол, оставляя рост по контенту (как на реальной странице) —
+   * итоговая высота холста складывается браузером из суммы этих полов, а не
+   * задаётся здесь пиксельно.
+   */
+  protected readonly gridTemplateRows = computed(() => {
+    const { rows } = this.localGridConfig();
+    return this.gridAreaSize().height === null
+      ? `repeat(${rows}, minmax(${EDITOR_SMALL_MIN_ROW_HEIGHT_PX}px, 1fr))`
+      : `repeat(${rows}, 1fr)`;
+  });
 
   protected readonly cells = computed<GridCell[]>(() => {
     const { columns, rows } = this.localGridConfig();
@@ -799,18 +824,27 @@ export class PinnedGridEditor {
     this.draftStyle.update((style) => (style ? { ...style, [field]: value } : style));
   }
 
-  /** `FocalPointPicker.pointChange` — правит focal point КАРТИНКИ (не слота/раскладки) отдельным запросом, сразу, не по «Сохранить». */
+  /** `FocalPointPicker.pointCommit` — правит focal point КАРТИНКИ (не слота/раскладки) отдельным запросом, один раз на завершённое перетаскивание (не на каждый `pointChange`), не по «Сохранить». */
   protected onFocalPointChange(point: FocalPointValue | null): void {
     const image = this.editingFocalImage();
     if (!image) {
       return;
     }
+    // Откат при ошибке — к ПОСЛЕДНЕМУ известному сохранённому значению (уже
+    // применённый override либо исходная точка из `news()`), а не к
+    // отсутствию override — иначе `editingFocalPoint()` падает на `null` и
+    // маркер визуально «прыгает» в центр, даже если у картинки была
+    // сохранена другая точка.
+    const previous =
+      this.focalOverrides()[image.id] !== undefined
+        ? this.focalOverrides()[image.id]
+        : image.focalX !== null && image.focalY !== null
+          ? { x: image.focalX, y: image.focalY }
+          : null;
     this.focalOverrides.update((overrides) => ({ ...overrides, [image.id]: point }));
     this.adminNewsService.updateImageFocalPoint(image.id, { focalX: point?.x ?? null, focalY: point?.y ?? null }).subscribe({
       error: () => {
-        this.focalOverrides.update((overrides) =>
-          Object.fromEntries(Object.entries(overrides).filter(([id]) => id !== image.id)),
-        );
+        this.focalOverrides.update((overrides) => ({ ...overrides, [image.id]: previous }));
         this.notificationService.show('Не удалось сохранить точку фокуса', 'error');
       },
     });

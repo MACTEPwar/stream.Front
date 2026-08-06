@@ -539,6 +539,30 @@ describe('PinnedGridEditor', () => {
       expect(adminNewsService.updateImageFocalPoint).toHaveBeenCalledWith('img-1', { focalX: 20, focalY: 80 });
       expect(fixture.componentInstance['editingFocalPoint']()).toEqual({ x: 20, y: 80 });
     });
+
+    it('ошибка сохранения откатывает точку к ПОСЛЕДНЕЙ известной сохранённой (не к центру), если у картинки уже была точка', () => {
+      TestBed.overrideProvider(AdminNewsService, {
+        useValue: { updateImageFocalPoint: vi.fn().mockReturnValue(throwError(() => new Error('boom'))) },
+      });
+      const fixture = createEditor(
+        [
+          newsItem('news-1', {
+            imageUrls: ['/a.png'],
+            images: [{ id: 'img-1', url: '/a.png', focalX: 30, focalY: 40 }],
+          }),
+        ],
+        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
+      );
+
+      fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance['editingFocalPoint']()).toEqual({ x: 30, y: 40 });
+
+      fixture.componentInstance['onFocalPointChange']({ x: 90, y: 90 });
+
+      expect(fixture.componentInstance['editingFocalPoint']()).toEqual({ x: 30, y: 40 });
+    });
   });
 
   describe('размер сетки', () => {
@@ -698,6 +722,26 @@ describe('PinnedGridEditor', () => {
 
       expect(fixture.componentInstance['viewportPreset']()).toBe('small');
       expect(fixture.componentInstance['gridAreaSize']()).toEqual({ width: 500 - 2 * 20, height: null });
+    });
+  });
+
+  describe('строки холста редактора на small (баг «лишний скролл, странный вид» — пустые 1fr-строки схлопывались в 0)', () => {
+    it('на small (высота холста не фиксирована) строки получают минимальный видимый пол через minmax', () => {
+      const fixture = createEditor([], []);
+
+      fixture.componentInstance['onScreenPresetChange']('phone');
+
+      expect(fixture.componentInstance['gridAreaSize']().height).toBeNull();
+      expect(fixture.componentInstance['gridTemplateRows']()).toBe(`repeat(${fixture.componentInstance['localGridConfig']().rows}, minmax(160px, 1fr))`);
+    });
+
+    it('на large (высота холста фиксирована) строки честно делят её — голый 1fr, без пола', () => {
+      const fixture = createEditor([], []);
+
+      fixture.componentInstance['onScreenPresetChange']('laptop');
+
+      expect(fixture.componentInstance['gridAreaSize']().height).not.toBeNull();
+      expect(fixture.componentInstance['gridTemplateRows']()).toBe(`repeat(${fixture.componentInstance['localGridConfig']().rows}, 1fr)`);
     });
   });
 

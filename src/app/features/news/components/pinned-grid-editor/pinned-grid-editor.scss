@@ -115,6 +115,14 @@ $handle-size: 10px;
 // найденный пользователем: "то что я вижу в админке и то что увидит человек
 // — отличается"); wrapper центрирует и скроллит, если холст крупнее видимой
 // области редактора.
+.pinned-grid-editor__canvas-hint {
+  margin: 0;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  color: vars.$color-ffffff;
+  opacity: 0.6;
+}
+
 .pinned-grid-editor__viewport-wrapper {
   display: flex;
   flex: 1;
