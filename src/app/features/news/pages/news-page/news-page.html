@@ -3,6 +3,7 @@
 <div class="news-page">
   <app-pinned-news-grid
     class="news-page__grid"
+    [class.pinned-news-grid--auto-height]="!isArchiveBeside()"
     aria-label="Новости"
     [entries]="gridEntries()"
     [columns]="gridConfig().columns"

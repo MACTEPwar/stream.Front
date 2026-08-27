@@ -13,11 +13,15 @@ import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
 import { LARGE_QUERY } from '@shared/utils/breakpoints';
+import { isNewsArchiveBeside, newsPageContentWidth } from '@shared/utils/news-layout';
 
 import { NewsArchiveItem } from '../../components/news-archive-item/news-archive-item';
 import { NewsDetailModal } from '../../components/news-detail-modal/news-detail-modal';
 import { NewsFilterSidebar } from '../../components/news-filter-sidebar/news-filter-sidebar';
-import { PinnedNewsGrid, PinnedNewsGridEntry } from '../../components/pinned-news-grid/pinned-news-grid';
+import {
+  PinnedNewsGrid,
+  PinnedNewsGridEntry,
+} from '../../components/pinned-news-grid/pinned-news-grid';
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
@@ -132,6 +136,11 @@ function endOfDay(date: Date): Date {
   // ModalService.open(), рендерится ModalHost'ом через ngComponentOutlet.
   templateUrl: './news-page.html',
   styleUrl: './news-page.scss',
+  host: {
+    '[class.news-page--archive-below]': '!isArchiveBeside()',
+    '(window:resize)': 'syncViewportWidth()',
+    '(window:orientationchange)': 'syncViewportWidth()',
+  },
 })
 export class NewsPage implements OnInit {
   private readonly adminNewsService = inject(AdminNewsService);
@@ -150,10 +159,38 @@ export class NewsPage implements OnInit {
     { initialValue: 'large' as PinnedGridViewport },
   );
 
+  /**
+   * Ширина окна числом, а не медиа-запросом: порог, с которого лента встаёт
+   * сбоку, — не самостоятельная величина, а сумма минимумов ленты, зазора и
+   * витрины (`РАЗ-Ф-03`), и зависит ещё от паддинга страницы, разного на
+   * пресетах. Выразить это медиа-запросами можно только двумя копиями
+   * порога, которые разойдутся с минимумами при первой их правке; здесь
+   * правило одно и живёт в `news-layout.ts` — оттуда же его берёт холст
+   * `PinnedGridEditor`.
+   */
+  private readonly viewportWidth = signal(window.innerWidth);
+
+  /**
+   * Хватает ли витрине места, чтобы лента стояла сбоку (`АДП-О-12`,
+   * `РАЗ-О-02`). Пресет для паддинга берётся у `viewport()` — того же
+   * источника, что раскладку сетки, чтобы не заводить третью копию правила
+   * `large`/`small`.
+   *
+   * От этого зависит не только положение ленты: страница с лентой снизу
+   * переходит на document-level скролл, а сетка и список архива — на
+   * content-based высоту (см. `news-page.scss`).
+   */
+  protected readonly isArchiveBeside = computed(() =>
+    isNewsArchiveBeside(newsPageContentWidth(this.viewportWidth(), this.viewport())),
+  );
+
   private readonly news = signal<NewsItem[]>([]);
   private readonly tags = signal<NewsTag[]>([]);
   private readonly pinnedSlots = signal<PinnedNewsSlot[]>([]);
-  protected readonly gridConfig = signal<PinnedGridConfig>({ columns: DEFAULT_GRID_COLUMNS, rows: DEFAULT_GRID_ROWS });
+  protected readonly gridConfig = signal<PinnedGridConfig>({
+    columns: DEFAULT_GRID_COLUMNS,
+    rows: DEFAULT_GRID_ROWS,
+  });
 
   private readonly archiveItems = signal<AdminNews[]>([]);
   private readonly archivePage = signal(0);
@@ -210,8 +247,20 @@ export class NewsPage implements OnInit {
       .subscribe((tags) => this.tags.set(tags.map((tag) => this.newsItemAdapter.toNewsTag(tag))));
     this.adminNewsService
       .getAll(1, NEWS_PAGE_SIZE)
-      .subscribe((response) => this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item))));
+      .subscribe((response) =>
+        this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item))),
+      );
     this.loadArchivePage(1);
+  }
+
+  /**
+   * Ресайз окна и поворот устройства — оба без перезагрузки страницы
+   * (`АДП-Ф-06`). Сигнал меняется на каждый пиксель, но `isArchiveBeside()`
+   * — булев `computed`, и вёрстка пересчитывается только когда ответ
+   * действительно меняется.
+   */
+  protected syncViewportWidth(): void {
+    this.viewportWidth.set(window.innerWidth);
   }
 
   protected resetArchiveFilters(): void {
@@ -239,7 +288,9 @@ export class NewsPage implements OnInit {
       likeCount: previousLikeCount + (checked ? 1 : -1),
     });
 
-    const request = checked ? this.newsArchiveService.like(item.id) : this.newsArchiveService.unlike(item.id);
+    const request = checked
+      ? this.newsArchiveService.like(item.id)
+      : this.newsArchiveService.unlike(item.id);
     request.subscribe({
       next: (response) =>
         this.patchArchiveItem(item.id, {
@@ -247,7 +298,10 @@ export class NewsPage implements OnInit {
           likedByCurrentUser: response.likedByCurrentUser,
         }),
       error: (error: HttpErrorResponse) => {
-        this.patchArchiveItem(item.id, { likeCount: previousLikeCount, likedByCurrentUser: previousLiked });
+        this.patchArchiveItem(item.id, {
+          likeCount: previousLikeCount,
+          likedByCurrentUser: previousLiked,
+        });
         this.notificationService.show(
           error.status === 401 ? 'Войдите, чтобы поставить лайк' : 'Не удалось поставить лайк',
           'error',
@@ -274,7 +328,9 @@ export class NewsPage implements OnInit {
     this.isLoadingArchive.set(true);
     this.newsArchiveService.getPage(page, ARCHIVE_PAGE_SIZE).subscribe({
       next: (response) => {
-        this.archiveItems.update((items) => (page === 1 ? response.items : [...items, ...response.items]));
+        this.archiveItems.update((items) =>
+          page === 1 ? response.items : [...items, ...response.items],
+        );
         this.archivePage.set(response.meta.page);
         this.archiveTotalPages.set(response.meta.totalPages);
         this.isLoadingArchive.set(false);
@@ -284,7 +340,9 @@ export class NewsPage implements OnInit {
   }
 
   private patchArchiveItem(id: string, patch: Partial<AdminNews>): void {
-    this.archiveItems.update((items) => items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+    this.archiveItems.update((items) =>
+      items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
   }
 
   private resolveTags(item: NewsItem): NewsTag[] {
