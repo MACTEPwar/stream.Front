@@ -9,6 +9,18 @@ import { SocialLink } from '@core/models/social-link.model';
 export type AdminUserRole = 'USER' | 'ADMIN';
 export type AdminUserAnyRole = 'USER' | 'ADMIN' | 'MODERATOR';
 
+/**
+ * Роли, которые действительно дают права и потому предлагаются к выбору —
+ * и при смене роли, и в отборе списка (`stream.Front#131`, `УПР-О-03`).
+ * Зарезервированные роли сюда не входят: отбор по ним не может дать
+ * результата ни при каких данных, а назначение отклоняет бэкенд.
+ *
+ * Один список на оба селекта намеренно: раньше они перечислялись
+ * независимо в `AdminUsersPage` — и разошлись, `MODERATOR` остался в
+ * фильтре, хотя из выбора роли его уже убрали.
+ */
+export const ASSIGNABLE_USER_ROLES: readonly AdminUserRole[] = ['USER', 'ADMIN'];
+
 export interface AdminUser {
   id: string;
   name: string | null;
