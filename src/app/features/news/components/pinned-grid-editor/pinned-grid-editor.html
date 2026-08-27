@@ -32,30 +32,47 @@
     </label>
 
     <label class="pinned-grid-editor__grid-size-field">
-      Вьюпорт
+      Экран
       <app-select
         class="pinned-grid-editor__viewport-select"
-        [options]="viewportPresetOptions"
+        [options]="screenPresetOptions"
         optionLabel="label"
         optionValue="value"
-        [value]="viewportPreset()"
-        (valueChange)="onViewportPresetChange($event)"
+        [value]="screenPresetKey()"
+        (valueChange)="onScreenPresetChange($event)"
       />
     </label>
 
-    @if (viewportPreset() === 'small') {
+    @if (screenPresetKey() === customScreenSizeKey) {
+      <label class="pinned-grid-editor__grid-size-field">
+        Ширина, px
+        <input
+          type="number"
+          min="1"
+          class="pinned-grid-editor__number-input"
+          [value]="customScreenWidth()"
+          (input)="onCustomScreenWidthInput($any($event.target).value)"
+        />
+      </label>
       <label class="pinned-grid-editor__grid-size-field">
         Высота, px
         <input
           type="number"
           min="1"
           class="pinned-grid-editor__number-input"
-          [value]="smallViewportHeightPx()"
-          (input)="onSmallViewportHeightInput($any($event.target).value)"
+          [value]="customScreenHeight()"
+          (input)="onCustomScreenHeightInput($any($event.target).value)"
         />
       </label>
     }
 
+    <span class="pinned-grid-editor__resolved-viewport">Редактируется раскладка: {{ viewportPreset() }}</span>
+
+    <app-button
+      [text]="previewMode() ? 'Закрыть предпросмотр' : 'Предпросмотр как посетитель'"
+      severity="info"
+      (click)="previewMode() ? onClosePreviewClick() : onOpenPreviewClick()"
+    />
     <app-button text="Сохранить" (click)="onSaveClick()" />
   </div>
 </div>
@@ -67,8 +84,55 @@
   </div>
 }
 
+@if (viewportPreset() === 'large' && unplacedForLarge().length > 0 && pendingNews() === null) {
+  <div class="pinned-grid-editor__unplaced-banner">
+    <div class="pinned-grid-editor__unplaced-text">
+      На раскладке «large» не хватило места для {{ unplacedForLarge().length }} закреплённых новостей — они видны
+      только на «small». Разместите вручную, когда освободится место:
+    </div>
+    <div class="pinned-grid-editor__unplaced-list">
+      @for (item of unplacedForLarge(); track item.id) {
+        <div class="pinned-grid-editor__unplaced-item">
+          <span>{{ item.title }}</span>
+          <app-button text="Разместить" size="small" (click)="onPlaceUnplacedClick(item.id)" />
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if (previewMode()) {
+  <div class="pinned-grid-editor__preview-banner">
+    Показана ПОСЛЕДНЯЯ СОХРАНЁННАЯ раскладка (страница «Новости» грузит её с сервера) — текущие несохранённые правки здесь не видны. Нажмите «Сохранить», затем «Обновить предпросмотр».
+    <app-button text="Обновить предпросмотр" size="small" (click)="onRefreshPreviewClick()" />
+  </div>
+
+  <div class="pinned-grid-editor__viewport-wrapper">
+    <iframe
+      class="pinned-grid-editor__preview-iframe"
+      [style.width.px]="screenSize().width"
+      [style.height.px]="screenSize().height"
+      [src]="previewSrc()"
+      title="Предпросмотр страницы «Новости» как увидит посетитель"
+    ></iframe>
+  </div>
+} @else {
+
+@if (gridAreaSize().height === null) {
+  <p class="pinned-grid-editor__canvas-hint">
+    Ширина холста ниже точная, а высота — ориентировочная (для наглядности редактирования): на реальной странице сетка растёт по объёму текста в карточках.
+  </p>
+} @else {
+  <p class="pinned-grid-editor__canvas-hint">Ширина и высота холста ниже соответствуют реальной странице.</p>
+}
+
 <div class="pinned-grid-editor__viewport-wrapper">
-  <div class="pinned-grid-editor__viewport" [style.width.px]="viewportSize().width" [style.height.px]="viewportSize().height">
+  <div
+    class="pinned-grid-editor__viewport"
+    [class.pinned-grid-editor__viewport--auto-height]="gridAreaSize().height === null"
+    [style.width.px]="gridAreaSize().width"
+    [style.height.px]="gridAreaSize().height"
+  >
     <div
       class="pinned-grid-editor__grid"
       [style.grid-template-columns]="gridTemplateColumns()"
@@ -83,7 +147,13 @@
           [style.grid-row]="gridRow(displaySlot(entry.slot))"
           (pointerdown)="onPointerDown($event, entry.slot, 'move')"
         >
-          <app-news-card class="pinned-grid-editor__preview" [item]="entry.item" [tags]="emptyTags" [cardStyle]="previewStyle(entry.slot)" />
+          <app-news-card
+            class="pinned-grid-editor__preview"
+            [item]="entry.item"
+            [tags]="emptyTags"
+            [cardStyle]="previewStyle(entry.slot)"
+            [focalPoint]="entry.slot.focalPoint"
+          />
 
           <div class="pinned-grid-editor__card-controls" (pointerdown)="$event.stopPropagation()">
             <app-button icon="pi pi-pencil" size="small" (click)="onEditStyleClick(entry.slot)" />
@@ -137,6 +207,7 @@
     </div>
   </div>
 </div>
+}
 
 <p-drawer [(visible)]="addDrawerVisible" position="right" header="Добавить новость" styleClass="pinned-grid-editor__drawer" [style]="{ width: '480px', 'max-width': '90vw' }">
   <div class="pinned-grid-editor__add-form">
@@ -269,41 +340,16 @@
           />
         </label>
 
-        <label>
-          Масштаб картинки, ×{{ draft.imageScale }}
-          <input
-            type="range"
-            min="1"
-            max="3"
-            step="0.1"
-            [value]="draft.imageScale"
-            (input)="onDraftStyleNumberInput('imageScale', $any($event.target).value)"
-          />
-        </label>
-
-        <label>
-          Смещение X, {{ draft.imageOffsetX }}%
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            [value]="draft.imageOffsetX"
-            (input)="onDraftStyleNumberInput('imageOffsetX', $any($event.target).value)"
-          />
-        </label>
-
-        <label>
-          Смещение Y, {{ draft.imageOffsetY }}%
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            [value]="draft.imageOffsetY"
-            (input)="onDraftStyleNumberInput('imageOffsetY', $any($event.target).value)"
-          />
-        </label>
+        @if (editingFocalImage(); as focalImage) {
+          <div class="pinned-grid-editor__focal-field">
+            Точка фокуса картинки
+            <app-focal-point-picker
+              [imageUrl]="focalImage.url"
+              [point]="editingFocalPoint()"
+              (pointCommit)="onFocalPointChange($event)"
+            />
+          </div>
+        }
 
         <label>
           Фон карточки

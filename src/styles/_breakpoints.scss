@@ -1,0 +1,57 @@
+// Общие breakpoint-токены для адаптивной вёрстки (`stream.Front#122`, первая
+// адаптивная страница — «Новости», без Figma-референса под мобильную/
+// планшетную версию, границы и миксины здесь заведены как переиспользуемый
+// ресурс для будущих задач адаптива остальных страниц, а не решение только
+// для одной страницы).
+//
+// Пороги учитывают ОРИЕНТАЦИЮ, а не только ширину (`pinned-grid-rework`,
+// прямое решение пользователя) — по ширине планшет книжкой от планшета
+// альбомом не отличить (iPad Pro 12.9 книжкой — 1024px, шире обычного
+// планшета альбомом). Раньше был третий, промежуточный `middle`-пресет —
+// убран: правило теперь двоичное:
+//   - large — (orientation: landscape) and (min-width: $breakpoint-tablet-min-width) and (min-height: $breakpoint-tablet-min-height)
+//             or (min-width: $breakpoint-large-min-width)
+//   - small — всё остальное
+// `min-height` в условии `large` — не придирка: телефон в альбомной
+// ориентации (~844×390) по ширине "альбомный и ≥768", но по факту на сетку
+// остаётся ~250px высоты, десктопное бенто там нечитаемо — без этого условия
+// телефон боком получил бы большую раскладку. Имена порогов совпадают с
+// `PinnedGridViewport` (`pinned-news-slot.model.ts`) — `small`/`large`.
+$breakpoint-tablet-min-width: 768px;
+$breakpoint-tablet-min-height: 600px;
+$breakpoint-large-min-width: 1280px;
+
+// Ширина, после которой контент центрируется, а не растягивается на всю
+// ширину окна (`.news-page`/`Shell`-шапка синхронно используют одно и то же
+// значение, чтобы левый край сетки новостей не разъезжался с лого — см.
+// `news-page.scss`/`shell.scss`).
+$content-max-width: 1920px;
+
+// Комма — OR на верхнем уровне списка медиа-запросов, каждый элемент списка —
+// AND набора фич; выражают правило `large`/`small` выше без отрицаний.
+@mixin large {
+  @media (orientation: landscape) and (min-width: $breakpoint-tablet-min-width) and (min-height: $breakpoint-tablet-min-height),
+    (min-width: $breakpoint-large-min-width) {
+    @content;
+  }
+}
+
+// Дополнение к `large` — раньше называлось `middle-down` (объединение
+// `small`+`middle`), с уходом промежуточного пресета совпадает с обычным
+// `small`.
+@mixin small {
+  @media (max-width: #{$breakpoint-large-min-width - 1px}) and (orientation: portrait),
+    (max-width: #{$breakpoint-tablet-min-width - 1px}),
+    (max-width: #{$breakpoint-large-min-width - 1px}) and (max-height: #{$breakpoint-tablet-min-height - 1px}) {
+    @content;
+  }
+}
+
+// Порог центрирования (`$content-max-width`) — отдельный миксин, не завязан
+// на `large`/`small` выше: центрирование актуально только на очень широких
+// десктоп-экранах (см. `$content-max-width`), не на планшете.
+@mixin wide {
+  @media (min-width: $content-max-width) {
+    @content;
+  }
+}

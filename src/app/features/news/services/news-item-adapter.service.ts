@@ -23,16 +23,21 @@ export class NewsItemAdapterService {
   private readonly imageUrlService = inject(ImageUrlService);
 
   toNewsItem(admin: AdminNews): NewsItem {
-    const imageUrls = admin.images
-      .slice()
-      .sort((a, b) => a.order - b.order)
-      .map((image) => this.imageUrlService.resolve(image.url));
+    const sortedImages = admin.images.slice().sort((a, b) => a.order - b.order);
+    const images = sortedImages.map((image) => ({
+      id: image.id,
+      url: this.imageUrlService.resolve(image.url),
+      focalX: image.focalX,
+      focalY: image.focalY,
+    }));
+    const imageUrls = images.map((image) => image.url);
     return {
       id: admin.id,
       title: admin.title,
       excerpt: admin.description,
       imageUrl: imageUrls[0] ?? null,
       imageUrls,
+      images,
       tagIds: admin.tags.map((tag) => tag.id),
       views: admin.viewCount,
       likes: admin.likeCount,

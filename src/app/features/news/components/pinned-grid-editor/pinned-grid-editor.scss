@@ -59,7 +59,8 @@ $handle-size: 10px;
   font-size: vars.$font-size-14;
 }
 
-.pinned-grid-editor__placement-banner {
+.pinned-grid-editor__placement-banner,
+.pinned-grid-editor__preview-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -72,11 +73,56 @@ $handle-size: 10px;
   font-size: vars.$font-size-14;
 }
 
-// Симулятор вьюпорта (`viewportPreset`) — `.pinned-grid-editor__viewport`
-// зажат в фиксированные width/height пресета (инлайн-стилем из
-// `viewportSize()`, ts) — имитирует экран мобильного/планшета без реального
-// ресайза окна браузера; wrapper центрирует и скроллит, если пресет меньше
-// содержимого.
+// «Не размещено на large» (`pinned-grid-rework`, по прямому решению
+// пользователя) — предупреждение, а не молчаливая пропажа карточки.
+.pinned-grid-editor__unplaced-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 5px;
+  background: rgba(vars.$color-af4141, 0.15);
+  color: vars.$color-ffffff;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+}
+
+.pinned-grid-editor__unplaced-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pinned-grid-editor__unplaced-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pinned-grid-editor__focal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  color: vars.$color-1e1e1e;
+}
+
+// `.pinned-grid-editor__viewport` показывает РЕАЛЬНУЮ площадь под сетку
+// (`gridAreaSize()`, ts) — зеркало формул `news-page.scss`/`shell.scss`
+// (`@shared/utils/pinned-grid-geometry`), не условный 16:9-пресет (баг,
+// найденный пользователем: "то что я вижу в админке и то что увидит человек
+// — отличается"); wrapper центрирует и скроллит, если холст крупнее видимой
+// области редактора.
+.pinned-grid-editor__canvas-hint {
+  margin: 0;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  color: vars.$color-ffffff;
+  opacity: 0.6;
+}
+
 .pinned-grid-editor__viewport-wrapper {
   display: flex;
   flex: 1;
@@ -91,15 +137,33 @@ $handle-size: 10px;
   border: 1px dashed rgba(vars.$color-ffffff, 0.3);
 }
 
+// `middle`/`small` — `gridAreaSize().height` равен `null` (высота НЕ
+// фиксирована на реальной странице, `news-page.scss`/`pinned-news-grid.scss`
+// переходят на `height: auto`) — растёт по контенту сетки, а не диктует
+// холсту заранее вычисленную высоту.
+.pinned-grid-editor__viewport--auto-height {
+  height: auto;
+}
+
 .pinned-grid-editor__viewport-select {
   min-width: 220px;
 }
 
-// `flex: 1; min-height: 0` (не фикс. px) — по прямому запросу пользователя
-// весь грид обязан помещаться во вьюпорт целиком, без скролла: строки/
-// колонки (`1fr` в `gridTemplateRows()`/`gridTemplateColumns()`, ts) сами
-// сжимаются под фактическую высоту/ширину `.pinned-grid-editor__viewport`
-// (её задаёт пресет симулятора), а не диктуют собственный минимум.
+.pinned-grid-editor__resolved-viewport {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  color: vars.$color-ffffff;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+// `flex: 1; min-height: 0` — на `large` (`gridAreaSize().height` — число) весь
+// грид обязан помещаться во вьюпорт целиком без скролла: строки/колонки
+// (`1fr` в `gridTemplateRows()`/`gridTemplateColumns()`, ts) сами сжимаются
+// под фактическую высоту/ширину `.pinned-grid-editor__viewport`. На
+// `middle`/`small` (`--auto-height`) это поведение переопределено ниже —
+// строки должны расти по контенту, как на реальной странице, а не сжиматься
+// в 0.
 .pinned-grid-editor__grid {
   position: relative;
   display: grid;
@@ -107,6 +171,21 @@ $handle-size: 10px;
   flex: 1;
   min-height: 0;
   padding: $grid-gap;
+}
+
+// Тот же приём, что `pinned-news-grid.scss` (`$empty-min-height`) — только
+// чтобы `.pinned-grid-editor__empty` не схлопывался в полоску без слотов,
+// сама сетка со слотами определяет высоту по контенту карточек.
+.pinned-grid-editor__viewport--auto-height .pinned-grid-editor__grid {
+  flex: none;
+  min-height: 240px;
+  height: auto;
+}
+
+.pinned-grid-editor__preview-iframe {
+  flex-shrink: 0;
+  border: 1px dashed rgba(vars.$color-ffffff, 0.3);
+  background: vars.$color-ffffff;
 }
 
 .pinned-grid-editor__card {

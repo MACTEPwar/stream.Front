@@ -6,7 +6,7 @@ import { Badge } from '@shared/components/badge/badge';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { DEFAULT_CARD_STYLE, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
+import { DEFAULT_CARD_STYLE, FocalPoint, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
 import { NewsCard } from './news-card';
 
 const ITEM: NewsItem = {
@@ -15,6 +15,7 @@ const ITEM: NewsItem = {
   excerpt: 'Lorem ipsum dolor sit amet consectetur. Enim ultricies varius iaculis.',
   imageUrl: '/images/main-carousel/slide-0-test.png',
   imageUrls: ['/images/main-carousel/slide-0-test.png'],
+  images: [],
   tagIds: ['tournament', 'mlbb'],
   views: 980,
   likes: 1400,
@@ -31,12 +32,13 @@ const TAGS: NewsTag[] = [
 @Component({
   selector: 'app-news-card-host',
   imports: [NewsCard],
-  template: `<app-news-card [item]="item()" [tags]="tags()" [cardStyle]="cardStyle()" />`,
+  template: `<app-news-card [item]="item()" [tags]="tags()" [cardStyle]="cardStyle()" [focalPoint]="focalPoint()" />`,
 })
 class NewsCardHost {
   readonly item = signal<NewsItem>(ITEM);
   readonly tags = signal<NewsTag[]>(TAGS);
   readonly cardStyle = signal<PinnedNewsCardStyle>(DEFAULT_CARD_STYLE);
+  readonly focalPoint = signal<FocalPoint | null>(null);
 }
 
 describe('NewsCard', () => {
@@ -108,9 +110,6 @@ describe('NewsCard', () => {
     fixture.componentInstance.cardStyle.set({
       imagePosition: 'left',
       imageSizePercent: 30,
-      imageScale: 1.5,
-      imageOffsetX: 20,
-      imageOffsetY: 80,
       backgroundColor: '#123456',
       textColor: '#abcdef',
     });
@@ -123,9 +122,21 @@ describe('NewsCard', () => {
 
     const picture = fixture.nativeElement.querySelector('.news-card__picture') as HTMLElement;
     expect(picture.style.flex).toBe('0 0 30%');
+  });
+
+  it('без focalPoint картинка держит центр 50/50', () => {
+    const fixture = createCard();
 
     const img = fixture.nativeElement.querySelector('.news-card__picture img') as HTMLElement;
-    expect(img.style.transform).toBe('scale(1.5)');
+    expect(img.style.objectPosition).toBe('50% 50%');
+  });
+
+  it('focalPoint переопределяет object-position картинки', () => {
+    const fixture = createCard();
+    fixture.componentInstance.focalPoint.set({ x: 20, y: 80 });
+    fixture.detectChanges();
+
+    const img = fixture.nativeElement.querySelector('.news-card__picture img') as HTMLElement;
     expect(img.style.objectPosition).toBe('20% 80%');
   });
 });

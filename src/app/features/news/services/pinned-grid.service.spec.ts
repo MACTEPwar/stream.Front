@@ -9,7 +9,7 @@ import { PinnedGridService } from './pinned-grid.service';
 const mockLayout: PinnedGridLayout = {
   config: { columns: 3, rows: 12 },
   slots: [
-    { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE, coverImageUrl: null },
+    { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE, coverImageUrl: null, focalPoint: null },
   ],
 };
 

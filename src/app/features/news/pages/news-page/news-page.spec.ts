@@ -1,11 +1,13 @@
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, startWith, throwError } from 'rxjs';
 
 import { ModalService } from '@core/services/modal.service';
 import { AdminNews, AdminNewsTag } from '@features/admin/models/news.model';
 import { AdminNewsService } from '@features/admin/services/admin-news.service';
 import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
 import { PaginatedResponse } from '@features/admin/services/admin-users.service';
+import { LARGE_QUERY } from '@shared/utils/breakpoints';
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
@@ -53,17 +55,25 @@ const PINNED_SLOTS: PinnedNewsSlot[] = GRID_NEWS.map((item, index) => ({
   rowStart: index + 1,
   colSpan: index === 3 ? 2 : 1,
   rowSpan: 1,
-  style: DEFAULT_CARD_STYLE, coverImageUrl: null,
+  style: DEFAULT_CARD_STYLE,
+  coverImageUrl: null,
+  focalPoint: null,
 }));
 
 function archivePage(items: AdminNews[], page: number, totalPages: number): PaginatedResponse<AdminNews> {
   return { items, meta: { page, limit: 10, total: items.length, totalPages } };
 }
 
+function breakpointState(matches: boolean): BreakpointState {
+  return { matches, breakpoints: { [LARGE_QUERY]: matches } };
+}
+
 describe('NewsPage', () => {
   let archiveGetPage: ReturnType<typeof vi.fn<NewsArchiveService['getPage']>>;
   let archiveLike: ReturnType<typeof vi.fn<NewsArchiveService['like']>>;
   let archiveUnlike: ReturnType<typeof vi.fn<NewsArchiveService['unlike']>>;
+  let pinnedGridGetLayout: ReturnType<typeof vi.fn<PinnedGridService['getLayout']>>;
+  let breakpointState$: Subject<BreakpointState>;
   const ARCHIVE_PAGE_1 = [
     adminNews('archive-1', { likedByCurrentUser: false, viewedByCurrentUser: false }),
     adminNews('archive-2', { likedByCurrentUser: true, viewedByCurrentUser: true }),
@@ -73,19 +83,30 @@ describe('NewsPage', () => {
     archiveGetPage = vi.fn<NewsArchiveService['getPage']>().mockReturnValue(of(archivePage(ARCHIVE_PAGE_1, 1, 1)));
     archiveLike = vi.fn<NewsArchiveService['like']>();
     archiveUnlike = vi.fn<NewsArchiveService['unlike']>();
+    pinnedGridGetLayout = vi
+      .fn<PinnedGridService['getLayout']>()
+      .mockReturnValue(of({ config: { columns: 3, rows: 12 }, slots: PINNED_SLOTS }));
+    breakpointState$ = new Subject<BreakpointState>();
 
     TestBed.configureTestingModule({
       imports: [NewsPage],
       providers: [
         { provide: AdminNewsTagService, useValue: { getAll: () => of(ADMIN_TAGS) } },
         { provide: AdminNewsService, useValue: { getAll: () => of({ items: GRID_NEWS, meta: { page: 1, limit: 100, total: GRID_NEWS.length, totalPages: 1 } }) } },
-        {
-          provide: PinnedGridService,
-          useValue: { getLayout: () => of({ config: { columns: 3, rows: 12 }, slots: PINNED_SLOTS }) },
-        },
+        { provide: PinnedGridService, useValue: { getLayout: pinnedGridGetLayout } },
         {
           provide: NewsArchiveService,
           useValue: { getPage: archiveGetPage, like: archiveLike, unlike: archiveUnlike },
+        },
+        // jsdom не реализует `matchMedia`, от которого зависит реальный
+        // `BreakpointObserver` (тот же гочтч, что у `p-select`'s `Overlay`,
+        // см. `select.spec.ts`) — начальное синхронное «large»-состояние
+        // (совпадает с реальным поведением `BreakpointObserver.observe()`,
+        // эмитящим текущее совпадение сразу при подписке), дальнейшие смены
+        // вьюпорта — через `breakpointState$` в отдельных тестах ниже.
+        {
+          provide: BreakpointObserver,
+          useValue: { observe: () => breakpointState$.pipe(startWith(breakpointState(true))) },
         },
       ],
     });
@@ -259,5 +280,33 @@ describe('NewsPage', () => {
     const updated = page['archiveEntries']().find((entry) => entry.id === item.id)!;
     expect(updated.viewCount).toBe(999);
     expect(updated.viewedByCurrentUser).toBe(true);
+  });
+
+  it('запрашивает раскладку сетки текущего вьюпорта ровно один раз при инициализации', () => {
+    createPage();
+
+    expect(pinnedGridGetLayout).toHaveBeenCalledTimes(1);
+    expect(pinnedGridGetLayout).toHaveBeenCalledWith('large');
+  });
+
+  it('смена резолвнутого вьюпорта на лету заново запрашивает раскладку под новый пресет', () => {
+    const fixture = createPage();
+    pinnedGridGetLayout.mockClear();
+
+    breakpointState$.next(breakpointState(false));
+    fixture.detectChanges();
+
+    expect(pinnedGridGetLayout).toHaveBeenCalledTimes(1);
+    expect(pinnedGridGetLayout).toHaveBeenCalledWith('small');
+  });
+
+  it('повторная эмиссия того же вьюпорта не запрашивает раскладку ещё раз', () => {
+    const fixture = createPage();
+    pinnedGridGetLayout.mockClear();
+
+    breakpointState$.next(breakpointState(true));
+    fixture.detectChanges();
+
+    expect(pinnedGridGetLayout).not.toHaveBeenCalled();
   });
 });

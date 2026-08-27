@@ -6,12 +6,7 @@
 >
   <div class="news-card__picture" [style.flex]="pictureFlexBasis()">
     @if (item().imageUrl; as imageUrl) {
-      <img
-        [src]="imageUrl"
-        alt=""
-        [style.transform]="imageTransform()"
-        [style.object-position]="imageObjectPosition()"
-      />
+      <img [src]="imageUrl" alt="" [style.object-position]="imageObjectPosition()" />
     }
   </div>
 

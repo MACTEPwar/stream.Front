@@ -1,4 +1,5 @@
 @use 'variables' as vars;
+@use 'breakpoints' as bp;
 
 // Раньше — три фиксированных px-варианта (docs/figma/news1.json). С переходом
 // на bento-сетку 3×12 (`PinnedNewsGrid`, stream.Front#112) карточка
@@ -90,6 +91,13 @@
   letter-spacing: vars.$letter-spacing-8;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+
+  // Карточка сужается на мобильном/планшетном грид-режиме (`bp.small`) —
+  // 22px заголовок начинает доминировать над уменьшенной ячейкой, снижен до
+  // 18px (`$font-size-18`).
+  @include bp.small {
+    font-size: vars.$font-size-18;
+  }
 }
 
 .news-card__excerpt {
@@ -155,7 +163,7 @@
   // архива (`NewsArchiveItem`), по прямому запросу пользователя — единый
   // размер везде, где встречаются pi-eye/pi-heart/pi-filter.
   .pi {
-    font-size: 18px;
+    font-size: vars.$font-size-18;
   }
 }
 

@@ -1,5 +1,8 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -9,6 +12,7 @@ import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.ser
 import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
+import { LARGE_QUERY } from '@shared/utils/breakpoints';
 
 import { NewsArchiveItem } from '../../components/news-archive-item/news-archive-item';
 import { NewsDetailModal } from '../../components/news-detail-modal/news-detail-modal';
@@ -17,7 +21,13 @@ import { PinnedNewsGrid, PinnedNewsGridEntry } from '../../components/pinned-new
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { DEFAULT_GRID_COLUMNS, DEFAULT_GRID_ROWS, PinnedGridConfig, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import {
+  DEFAULT_GRID_COLUMNS,
+  DEFAULT_GRID_ROWS,
+  PinnedGridConfig,
+  PinnedGridViewport,
+  PinnedNewsSlot,
+} from '../../models/pinned-news-slot.model';
 import { NewsArchiveService } from '../../services/news-archive.service';
 import { NewsItemAdapterService } from '../../services/news-item-adapter.service';
 import { PinnedGridService } from '../../services/pinned-grid.service';
@@ -45,7 +55,7 @@ function endOfDay(date: Date): Date {
  * `491:3585`): слева закреплённая сетка карточек (`PinnedNewsGrid`,
  * stream.Front#112), раскладка (`PinnedGridConfig`/`PinnedNewsSlot`) — на
  * реальном API (`stream.Front#119`, поверх `streamer.API#71`,
- * `PinnedGridService.getLayout('large')`), сами новости слотов — тоже
+ * `PinnedGridService.getLayout()`), сами новости слотов — тоже
  * реальный API (`stream.Front#121`, поверх `streamer.API#65`/`#67`,
  * `AdminNewsService.getAll()`/`AdminNewsTagService.getAll()`, адаптированные
  * в `NewsItem`/`NewsTag` через общий `NewsItemAdapterService` — тот же
@@ -56,6 +66,22 @@ function endOfDay(date: Date): Date {
  * Шапка сайта здесь не рендерится — она уже есть глобально (`Shell` в
  * `app.html`, stream.Front#48/#49), включая лого, меню с `NavActiveIndicator`
  * и кнопку «Поддержать».
+ *
+ * **Адаптивный пресет закреплённой сетки (`stream.Front#122`, доработка
+ * `pinned-grid-rework` — правило учитывает ОРИЕНТАЦИЮ, не только ширину)** —
+ * `viewport` (`toSignal(BreakpointObserver.observe([LARGE_QUERY]))`,
+ * `@shared/utils/breakpoints`) резолвит текущее окно в `PinnedGridViewport`
+ * (`small`/`large`, зеркало SCSS-порогов `src/styles/_breakpoints.scss`).
+ * Каждый пресет — ОТДЕЛЬНАЯ раскладка с бэка (свои `slots`/`columns`/`rows`,
+ * не одна сетка, визуально сжимающаяся CSS-ом — см. `PinnedGridEditor`),
+ * поэтому смена пресета на лету заново зовёт `PinnedGridService.getLayout(viewport)`:
+ * реализовано `effect()`-ом, который читает `viewport()` — срабатывает один
+ * раз при инициализации (реальным резолвнутым значением, `BreakpointObserver`
+ * эмитит текущее состояние синхронно при подписке, `toSignal` успевает
+ * получить его до первого рендера) и затем повторно только когда резолвнутый
+ * пресет ДЕЙСТВИТЕЛЬНО меняется (Angular signals не перезапускают `effect()`
+ * на повторную эмиссию с тем же значением) — лишних запросов на каждый пиксель
+ * ресайза нет.
  *
  * **Архив (реальные данные)** — `GET /news`, подгрузка по скроллу
  * (`onArchiveScroll()`, `.news-page__archive-list` уже имеет `overflow-y:
@@ -115,6 +141,14 @@ export class NewsPage implements OnInit {
   private readonly pinnedGridService = inject(PinnedGridService);
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
+  private readonly viewport = toSignal(
+    this.breakpointObserver
+      .observe([LARGE_QUERY])
+      .pipe(map((state): PinnedGridViewport => (state.matches ? 'large' : 'small'))),
+    { initialValue: 'large' as PinnedGridViewport },
+  );
 
   private readonly news = signal<NewsItem[]>([]);
   private readonly tags = signal<NewsTag[]>([]);
@@ -160,6 +194,16 @@ export class NewsPage implements OnInit {
     });
   });
 
+  constructor() {
+    effect(() => {
+      const viewport = this.viewport();
+      this.pinnedGridService.getLayout(viewport).subscribe((layout) => {
+        this.pinnedSlots.set(layout.slots);
+        this.gridConfig.set(layout.config);
+      });
+    });
+  }
+
   ngOnInit(): void {
     this.adminNewsTagService
       .getAll()
@@ -167,10 +211,6 @@ export class NewsPage implements OnInit {
     this.adminNewsService
       .getAll(1, NEWS_PAGE_SIZE)
       .subscribe((response) => this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item))));
-    this.pinnedGridService.getLayout('large').subscribe((layout) => {
-      this.pinnedSlots.set(layout.slots);
-      this.gridConfig.set(layout.config);
-    });
     this.loadArchivePage(1);
   }
 
@@ -217,10 +257,17 @@ export class NewsPage implements OnInit {
   }
 
   protected onOpenDetail(item: AdminNews): void {
-    this.modalService.open(NewsDetailModal, {
-      item,
-      onViewed: (patch: Partial<AdminNews>) => this.patchArchiveItem(item.id, patch),
-    });
+    this.modalService.open(
+      NewsDetailModal,
+      {
+        item,
+        onViewed: (patch: Partial<AdminNews>) => this.patchArchiveItem(item.id, patch),
+      },
+      // На `small` `ModalHost` показывает эту модалку нижней шторкой вместо
+      // центральной панели (`stream.Front#122`) — на `middle`/`large` без
+      // изменений.
+      'sheet-on-mobile',
+    );
   }
 
   private loadArchivePage(page: number): void {

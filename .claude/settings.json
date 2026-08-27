@@ -2,5 +2,24 @@
   "worktree": {
     "baseRef": "fresh",
     "symlinkDirectories": ["node_modules"]
+  },
+  "permissions": {
+    "deny": ["Edit(**/.env)", "Read(**/.env)", "Edit(**/package-lock.json)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [".claude/hooks/format-on-write.js"],
+            "timeout": 30,
+            "statusMessage": "Prettier"
+          }
+        ]
+      }
+    ]
   }
 }

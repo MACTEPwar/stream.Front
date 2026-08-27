@@ -1,13 +1,14 @@
 @if (modalService.activeComponent(); as component) {
   <div
     class="modal-host__backdrop"
+    [class.modal-host__backdrop--sheet]="isSheetVariant()"
     role="button"
     tabindex="0"
     (click)="onBackdropClick($event)"
     (keydown.enter)="close()"
     (keydown.space)="close()"
   >
-    <div class="modal-host__panel" role="dialog">
+    <div class="modal-host__panel" [class.modal-host__panel--sheet]="isSheetVariant()" role="dialog">
       <button
         type="button"
         class="modal-host__close"

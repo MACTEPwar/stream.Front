@@ -92,8 +92,8 @@ describe('NewsItemAdapterService', () => {
     it('сортирует картинки по order и резолвит их через ImageUrlService, imageUrl — первая', () => {
       const admin = adminNews({
         images: [
-          { id: 'img-2', url: '/uploads/2.png', order: 2 },
-          { id: 'img-1', url: '/uploads/1.png', order: 1 },
+          { id: 'img-2', url: '/uploads/2.png', order: 2, focalX: null, focalY: null },
+          { id: 'img-1', url: '/uploads/1.png', order: 1, focalX: 30, focalY: 40 },
         ],
       });
 
@@ -103,6 +103,10 @@ describe('NewsItemAdapterService', () => {
       expect(resolve).toHaveBeenCalledWith('/uploads/2.png');
       expect(item.imageUrl).toBe('resolved:/uploads/1.png');
       expect(item.imageUrls).toEqual(['resolved:/uploads/1.png', 'resolved:/uploads/2.png']);
+      expect(item.images).toEqual([
+        { id: 'img-1', url: 'resolved:/uploads/1.png', focalX: 30, focalY: 40 },
+        { id: 'img-2', url: 'resolved:/uploads/2.png', focalX: null, focalY: null },
+      ]);
     });
   });
 

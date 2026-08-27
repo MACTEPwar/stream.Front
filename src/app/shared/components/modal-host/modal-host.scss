@@ -10,6 +10,17 @@
   background: rgba(0, 0, 0, 0.6);
 }
 
+// `--sheet` — `ModalHost.isSheetVariant()` (`stream.Front#122`): панель
+// прижимается к низу вьюпорта вместо центрирования (bottom sheet), только
+// когда открытая модалка САМА попросила `'sheet-on-mobile'`-презентацию
+// (`ModalService.open()`) И реальная ширина сейчас `small` — на `middle`/
+// `large` или для остальных модалок (`--sheet`-класс не проставлен вовсе)
+// поведение не меняется.
+.modal-host__backdrop--sheet {
+  align-items: flex-end;
+  justify-content: stretch;
+}
+
 // Рамку/фон/паддинг задаёт сам контент (см. AuthModalShell) — панель только
 // клипует углы под border-radius и накидывает тень (designTokens.effects.shadow-4-4
 // из docs/figma/registration-structure.json).
@@ -22,6 +33,18 @@
   background: vars.$color-ffffff;
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
   font-family: vars.$font-family-nunito-sans;
+}
+
+// `--sheet` — на всю ширину, скруглены только верхние углы (низ — заподлицо с
+// краем экрана). Раскладку/пропорции содержимого под узкую ширину донастраивает
+// сам компонент-потребитель (см. `NewsDetailModal`, `@include bp.small` —
+// картинка+текст переключаются в колонку) — `ModalHost` только даёт панели
+// правильную геометрию контейнера.
+.modal-host__panel--sheet {
+  width: 100%;
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 12px 12px 0 0;
 }
 
 .modal-host__close {
