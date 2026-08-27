@@ -4,7 +4,7 @@ import { DrawerModule } from 'primeng/drawer';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 
 import { AUTH_METHOD_TYPE_LABELS } from '@core/models/auth-method.model';
-import { UserRole } from '@core/models/current-user.model';
+import { USER_ROLE_LABELS, UserRole } from '@core/models/current-user.model';
 import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -16,6 +16,7 @@ import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { Select } from '@shared/components/select/select';
 import { TextField } from '@shared/components/text-field/text-field';
 import {
+  ASSIGNABLE_USER_ROLES,
   AdminUser,
   AdminUserAnyRole,
   AdminUserDetail,
@@ -34,16 +35,20 @@ const ROLE_BADGE_SEVERITY: Record<UserRole, BadgeSeverity> = {
 
 const PAGE_SIZE = 20;
 
-const ROLE_OPTIONS: { label: string; value: AdminUserRole }[] = [
-  { label: 'USER', value: 'USER' },
-  { label: 'ADMIN', value: 'ADMIN' },
-];
+// Оба списка строятся из ОДНОГО набора назначаемых ролей и ОДНОГО
+// справочника подписей (`stream.Front#131`) — раньше они перечислялись
+// руками и независимо, поэтому и разошлись: в отборе `MODERATOR` остался,
+// хотя из выбора роли его уже убрали (`УПР-О-03`).
+const ROLE_OPTIONS: { label: string; value: AdminUserRole }[] = ASSIGNABLE_USER_ROLES.map(
+  (role) => ({
+    label: USER_ROLE_LABELS[role],
+    value: role,
+  }),
+);
 
 const ROLE_FILTER_OPTIONS: { label: string; value: AdminUserAnyRole | null }[] = [
   { label: 'Все', value: null },
-  { label: 'USER', value: 'USER' },
-  { label: 'ADMIN', value: 'ADMIN' },
-  { label: 'MODERATOR', value: 'MODERATOR' },
+  ...ROLE_OPTIONS,
 ];
 
 /**
@@ -61,7 +66,17 @@ const ROLE_FILTER_OPTIONS: { label: string; value: AdminUserAnyRole | null }[] =
  */
 @Component({
   selector: 'app-admin-users-page',
-  imports: [TableModule, DrawerModule, Button, ButtonGroup, Badge, Select, TextField, ErrorMessage, DatePipe],
+  imports: [
+    TableModule,
+    DrawerModule,
+    Button,
+    ButtonGroup,
+    Badge,
+    Select,
+    TextField,
+    ErrorMessage,
+    DatePipe,
+  ],
   templateUrl: './admin-users-page.html',
   styleUrl: './admin-users-page.scss',
 })
@@ -99,6 +114,11 @@ export class AdminUsersPage {
 
   protected badgeSeverity(role: UserRole): BadgeSeverity {
     return ROLE_BADGE_SEVERITY[role];
+  }
+
+  /** Слово интерфейса вместо значения модели (`СПС-Ф-02`) — справочник общий, см. `USER_ROLE_LABELS`. */
+  protected roleLabel(role: UserRole): string {
+    return USER_ROLE_LABELS[role];
   }
 
   protected onLazyLoad(event: TableLazyLoadEvent): void {

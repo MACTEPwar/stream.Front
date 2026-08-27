@@ -4,9 +4,14 @@ import { TestBed } from '@angular/core/testing';
 
 import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
-import { CurrentUser } from '@core/models/current-user.model';
+import { CurrentUser, USER_ROLE_LABELS } from '@core/models/current-user.model';
 import { environment } from '@env/environment';
-import { AdminUser, AdminUserDetail, PaginatedResponse } from '../../services/admin-users.service';
+import {
+  ASSIGNABLE_USER_ROLES,
+  AdminUser,
+  AdminUserDetail,
+  PaginatedResponse,
+} from '../../services/admin-users.service';
 import { AdminUsersPage } from './admin-users-page';
 
 const currentAdmin: CurrentUser = {
@@ -18,8 +23,22 @@ const currentAdmin: CurrentUser = {
 };
 
 const mockUsers: AdminUser[] = [
-  { id: 'admin1', name: 'admin', role: 'ADMIN', authMethods: ['LOCAL'], createdAt: '', updatedAt: '' },
-  { id: 'u2', name: 'streamer', role: 'USER', authMethods: ['LOCAL'], createdAt: '', updatedAt: '' },
+  {
+    id: 'admin1',
+    name: 'admin',
+    role: 'ADMIN',
+    authMethods: ['LOCAL'],
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'u2',
+    name: 'streamer',
+    role: 'USER',
+    authMethods: ['LOCAL'],
+    createdAt: '',
+    updatedAt: '',
+  },
 ];
 
 function mockResponse(items: AdminUser[]): PaginatedResponse<AdminUser> {
@@ -64,6 +83,63 @@ describe('AdminUsersPage', () => {
     expect(rows.length).toBe(2);
     expect(rows[0].textContent).toContain('admin');
     expect(rows[1].textContent).toContain('streamer');
+  });
+
+  describe('роль в интерфейсе (stream.Front#131)', () => {
+    it('выводит роль словом на языке интерфейса, а не значением модели', () => {
+      const fixture = createComponent();
+      const el: HTMLElement = fixture.nativeElement;
+
+      const badges = el.querySelectorAll('tbody tr app-badge');
+
+      expect(badges[0].textContent).toContain(USER_ROLE_LABELS.ADMIN);
+      expect(badges[1].textContent).toContain(USER_ROLE_LABELS.USER);
+      expect(el.textContent).not.toContain('ADMIN');
+      expect(el.textContent).not.toContain('USER');
+    });
+
+    it('роли различаются не только цветом — у каждой своё слово', () => {
+      expect(USER_ROLE_LABELS.ADMIN).not.toBe(USER_ROLE_LABELS.USER);
+      expect(USER_ROLE_LABELS.MODERATOR).not.toBe(USER_ROLE_LABELS.USER);
+      expect(USER_ROLE_LABELS.ADMIN).not.toBe(USER_ROLE_LABELS.MODERATOR);
+    });
+
+    it('не предлагает неназначаемую роль в отборе списка (УПР-О-03)', () => {
+      const fixture = createComponent();
+
+      const values = fixture.componentInstance['roleFilterOptions'].map((option) => option.value);
+
+      expect(values).not.toContain('MODERATOR');
+      expect(values).toEqual([null, ...ASSIGNABLE_USER_ROLES]);
+    });
+
+    it('не предлагает её и в выборе при смене роли (УПР-О-03)', () => {
+      const fixture = createComponent();
+
+      const values = fixture.componentInstance['roleOptions'].map((option) => option.value);
+
+      expect(values).not.toContain('MODERATOR');
+      expect(values).toEqual([...ASSIGNABLE_USER_ROLES]);
+    });
+
+    it('подписи обоих списков берутся из общего справочника, а не пишутся в шаблонах', () => {
+      const fixture = createComponent();
+
+      for (const option of fixture.componentInstance['roleOptions']) {
+        expect(option.label).toBe(USER_ROLE_LABELS[option.value]);
+      }
+      for (const option of fixture.componentInstance['roleFilterOptions']) {
+        expect(option.label).toBe(option.value === null ? 'Все' : USER_ROLE_LABELS[option.value]);
+      }
+    });
+
+    it('зарезервированная роль всё ещё показывается словом, если запись с ней встретится', () => {
+      // `УПР-О-03` про то, что роль не ПРЕДЛАГАЮТ, а не про то, что её не
+      // бывает: в модели она существует (`АВТ-О-05`), и список обязан
+      // показать её читаемо, а не латиницей.
+      expect(USER_ROLE_LABELS.MODERATOR).toBeTruthy();
+      expect(USER_ROLE_LABELS.MODERATOR).not.toBe('MODERATOR');
+    });
   });
 
   it('скрывает кнопки «Изменить роль»/«Удалить» для собственной строки, оставляя «Просмотр»', () => {

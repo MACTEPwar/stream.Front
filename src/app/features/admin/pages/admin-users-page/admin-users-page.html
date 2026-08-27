@@ -40,13 +40,28 @@
       <ng-template #body let-user>
         <tr>
           <td>{{ user.name || '—' }}</td>
-          <td><app-badge [text]="user.role" [severity]="badgeSeverity(user.role)" /></td>
+          <td><app-badge [text]="roleLabel(user.role)" [severity]="badgeSeverity(user.role)" /></td>
           <td class="admin-users-page__actions-cell">
             <app-button-group>
-              <app-button text="Просмотр" size="small" severity="contrast" (click)="onViewClick(user)" />
+              <app-button
+                text="Просмотр"
+                size="small"
+                severity="contrast"
+                (click)="onViewClick(user)"
+              />
               @if (!isOwnRow(user)) {
-                <app-button text="Изменить роль" size="small" severity="info" (click)="onEditRoleClick(user)" />
-                <app-button text="Удалить" size="small" severity="danger" (click)="onDeleteClick(user)" />
+                <app-button
+                  text="Изменить роль"
+                  size="small"
+                  severity="info"
+                  (click)="onEditRoleClick(user)"
+                />
+                <app-button
+                  text="Удалить"
+                  size="small"
+                  severity="danger"
+                  (click)="onDeleteClick(user)"
+                />
               }
             </app-button-group>
           </td>
@@ -99,7 +114,9 @@
             <dt>Имя</dt>
             <dd>{{ user.name || '—' }}</dd>
             <dt>Роль</dt>
-            <dd><app-badge [text]="user.role" [severity]="badgeSeverity(user.role)" /></dd>
+            <dd>
+              <app-badge [text]="roleLabel(user.role)" [severity]="badgeSeverity(user.role)" />
+            </dd>
             <dt>Регистрация</dt>
             <dd>{{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}</dd>
           </dl>
