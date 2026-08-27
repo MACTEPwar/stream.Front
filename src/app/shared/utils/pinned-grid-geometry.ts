@@ -1,6 +1,16 @@
 import { PinnedGridViewport } from '@features/news/models/pinned-news-slot.model';
 
-import { BREAKPOINT_LARGE_MIN_WIDTH_PX, BREAKPOINT_TABLET_MIN_HEIGHT_PX, BREAKPOINT_TABLET_MIN_WIDTH_PX } from './breakpoints';
+import {
+  BREAKPOINT_LARGE_MIN_WIDTH_PX,
+  BREAKPOINT_TABLET_MIN_HEIGHT_PX,
+  BREAKPOINT_TABLET_MIN_WIDTH_PX,
+} from './breakpoints';
+import {
+  NEWS_PAGE_PADDING_PX,
+  isNewsArchiveBeside,
+  newsGridWidth,
+  newsPageContentWidth,
+} from './news-layout';
 
 /**
  * Геометрия области под сетку закреплённых новостей на реальной странице
@@ -16,22 +26,12 @@ import { BREAKPOINT_LARGE_MIN_WIDTH_PX, BREAKPOINT_TABLET_MIN_HEIGHT_PX, BREAKPO
  * разойдётся с реальной страницей.
  */
 
-/** `:host { padding }` в `news-page.scss` — своё значение на каждый пресет вьюпорта (`pinned-grid-rework` — `MIDDLE` убран, промежуточное значение 32 с ним). */
-export const NEWS_PAGE_PADDING_PX: Record<PinnedGridViewport, number> = {
-  small: 20,
-  large: 60,
-};
-
-/** `$archive-gap`/`$archive-width` (`news-page.scss`) — архив сбоку сетки ТОЛЬКО на `large`; на `small` уходит под сетку и не отнимает ширину у грида. */
-export const NEWS_PAGE_ARCHIVE_GAP_PX = 110;
-export const NEWS_PAGE_ARCHIVE_WIDTH_PX = 660;
-
-/** `.shell__header` (`shell.scss`) — `padding: 12px 48px` (24px по вертикали) + высота лого 40px = 64px. Влияет на высоту сетки только на `large` (единственный пресет с фиксированной, не content-based, высотой). */
+/** `.shell__header` (`shell.scss`) — `padding: 12px 48px` (24px по вертикали) + высота лого 40px = 64px. Влияет на высоту сетки только там, где она фиксирована, а не content-based. */
 export const SHELL_HEADER_HEIGHT_PX = 64;
 
 export interface GridAreaSize {
   readonly width: number;
-  /** `null` — высота НЕ фиксирована (`small`, `news-page.scss`/`pinned-news-grid.scss` переходят на `height: auto`) — сетка растёт по контенту, как на реальной странице, вместо холста фиксированного размера. */
+  /** `null` — высота НЕ фиксирована: с лентой, ушедшей под витрину, страница переходит на document-level скролл и `news-page.scss`/`pinned-news-grid.scss` берут `height: auto` — сетка растёт по контенту, как на реальной странице, вместо холста фиксированного размера. */
   readonly height: number | null;
 }
 
@@ -47,10 +47,15 @@ export interface GridAreaSize {
  * ширина от `BREAKPOINT_LARGE_MIN_WIDTH_PX` независимо от ориентации;
  * `small` — всё остальное (телефон, планшет книжкой).
  */
-export function resolvePinnedGridViewport(screenWidthPx: number, screenHeightPx: number): PinnedGridViewport {
+export function resolvePinnedGridViewport(
+  screenWidthPx: number,
+  screenHeightPx: number,
+): PinnedGridViewport {
   const isLandscape = screenWidthPx >= screenHeightPx;
   const isLandscapeLarge =
-    isLandscape && screenWidthPx >= BREAKPOINT_TABLET_MIN_WIDTH_PX && screenHeightPx >= BREAKPOINT_TABLET_MIN_HEIGHT_PX;
+    isLandscape &&
+    screenWidthPx >= BREAKPOINT_TABLET_MIN_WIDTH_PX &&
+    screenHeightPx >= BREAKPOINT_TABLET_MIN_HEIGHT_PX;
 
   if (isLandscapeLarge || screenWidthPx >= BREAKPOINT_LARGE_MIN_WIDTH_PX) {
     return 'large';
@@ -60,31 +65,35 @@ export function resolvePinnedGridViewport(screenWidthPx: number, screenHeightPx:
 
 /**
  * Реальная площадь под сетку закреплённых новостей для экрана
- * `screenWidthPx`×`screenHeightPx` — формулы зеркалят `news-page.scss`:
- * - **`large`**: архив занимает `$archive-width` + `$archive-gap` СПРАВА от
- *   сетки, паддинг `:host` со всех четырёх сторон, сверху к паддингу ещё
- *   добавляется высота шапки `Shell`:
- *   `W = screenW − 2×padding − archiveWidth − archiveGap`,
- *   `H = screenH − shellHeaderHeight − 2×padding`.
- * - **`small`**: архив уходит ПОД сетку (`flex-direction: column`), ширина —
- *   экран минус паддинги по бокам, высота — НЕ фиксирована (`height: auto` и
- *   на `.news-page`/`:host`, и на самой сетке, `pinned-news-grid.scss`) —
- *   страница скроллится целиком, возвращается `null` вместо числа.
+ * `screenWidthPx`×`screenHeightPx` — формулы зеркалят `news-page.scss` через
+ * общее правило раздела ширины (`news-layout.ts`, `stream.Front#126`).
+ *
+ * Ключевое: положение ленты определяется НЕ пресетом вьюпорта, а тем,
+ * остаётся ли витрине место (`АДП-О-12`). До #126 холст считал, что на
+ * `large` архив всегда сбоку, — и на 1024×768 рисовал витрине 134 точки, ту
+ * же неверную геометрию, что показывала посетителю сама страница.
+ *
+ * - **лента сбоку**: витрина получает остаток после ленты и зазора, каждый
+ *   из которых сжимается в своём порядке (`РАЗ-Ф-01`); высота фиксирована —
+ *   экран минус шапка `Shell` и паддинги `:host` сверху и снизу;
+ * - **лента внизу**: витрина получает всю доступную ширину (`РАЗ-Ф-02`), а
+ *   страница переходит на document-level скролл, поэтому высота не
+ *   фиксирована — `null` вместо числа.
  */
-export function computePinnedGridAreaSize(screenWidthPx: number, screenHeightPx: number): GridAreaSize {
+export function computePinnedGridAreaSize(
+  screenWidthPx: number,
+  screenHeightPx: number,
+): GridAreaSize {
   const viewport = resolvePinnedGridViewport(screenWidthPx, screenHeightPx);
-  const padding = NEWS_PAGE_PADDING_PX[viewport];
+  const contentWidth = newsPageContentWidth(screenWidthPx, viewport);
 
-  if (viewport === 'large') {
-    return {
-      width: screenWidthPx - 2 * padding - NEWS_PAGE_ARCHIVE_WIDTH_PX - NEWS_PAGE_ARCHIVE_GAP_PX,
-      height: screenHeightPx - SHELL_HEADER_HEIGHT_PX - 2 * padding,
-    };
+  if (!isNewsArchiveBeside(contentWidth)) {
+    return { width: contentWidth, height: null };
   }
 
   return {
-    width: screenWidthPx - 2 * padding,
-    height: null,
+    width: newsGridWidth(contentWidth),
+    height: screenHeightPx - SHELL_HEADER_HEIGHT_PX - 2 * NEWS_PAGE_PADDING_PX[viewport],
   };
 }
 

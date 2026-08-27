@@ -16,6 +16,14 @@ export const BREAKPOINT_TABLET_MIN_WIDTH_PX = 768;
 export const BREAKPOINT_TABLET_MIN_HEIGHT_PX = 600;
 export const BREAKPOINT_LARGE_MIN_WIDTH_PX = 1280;
 
+/**
+ * Порог центрирования — с него содержимое перестаёт растягиваться и встаёт по
+ * центру окна. Зеркало `$content-max-width` (`_breakpoints.scss`), нужен в TS
+ * с `stream.Front#126`: из него выводится эталонная ширина витрины
+ * (`news-layout.ts`).
+ */
+export const CONTENT_MAX_WIDTH_PX = 1920;
+
 /** Комма — OR (native `matchMedia`/CDK `BreakpointObserver` поддерживают список через запятую в одной строке запроса). */
 export const LARGE_QUERY =
   `(orientation: landscape) and (min-width: ${BREAKPOINT_TABLET_MIN_WIDTH_PX}px) and (min-height: ${BREAKPOINT_TABLET_MIN_HEIGHT_PX}px), ` +

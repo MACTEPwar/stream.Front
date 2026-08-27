@@ -65,21 +65,35 @@ function stubHostRect(fixture: { nativeElement: HTMLElement }): void {
 }
 
 function pointerEvent(clientX: number, clientY: number): PointerEvent {
-  return { clientX, clientY, preventDefault: () => {}, stopPropagation: () => {} } as unknown as PointerEvent;
+  return {
+    clientX,
+    clientY,
+    preventDefault: () => {},
+    stopPropagation: () => {},
+  } as unknown as PointerEvent;
 }
 
 describe('PinnedGridEditor', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [PinnedGridEditor],
-      providers: [{ provide: AdminNewsService, useValue: { updateImageFocalPoint: vi.fn().mockReturnValue(of({})) } }],
+      providers: [
+        {
+          provide: AdminNewsService,
+          useValue: { updateImageFocalPoint: vi.fn().mockReturnValue(of({})) },
+        },
+      ],
     });
   });
 
   // Дефолтный экран редактора — «Планшет альбомом» (1180×820, резолвится в
   // 'large' — альбомная ориентация ≥768×600), поэтому все "обычные" тесты
   // заводят данные под раскладку 'large', 'small' остаётся пустым дефолтом.
-  function createEditor(news: NewsItem[], slots: PinnedNewsSlot[], gridConfig: PinnedGridConfig = GRID_CONFIG) {
+  function createEditor(
+    news: NewsItem[],
+    slots: PinnedNewsSlot[],
+    gridConfig: PinnedGridConfig = GRID_CONFIG,
+  ) {
     const fixture = TestBed.createComponent(PinnedGridEditor);
     fixture.componentRef.setInput('news', news);
     fixture.componentRef.setInput('layouts', {
@@ -96,13 +110,17 @@ describe('PinnedGridEditor', () => {
       [slot({ newsId: 'news-1' }), slot({ newsId: 'news-2', colStart: 2 })],
     );
 
-    expect(fixture.nativeElement.querySelectorAll('.pinned-grid-editor__card app-news-card').length).toBe(2);
+    expect(
+      fixture.nativeElement.querySelectorAll('.pinned-grid-editor__card app-news-card').length,
+    ).toBe(2);
   });
 
   it('на карточке — только «редактировать»/«удалить», без выбора новости/ориентации', () => {
     const fixture = createEditor([newsItem('news-1')], [slot({ newsId: 'news-1' })]);
 
-    const controls = fixture.nativeElement.querySelector('.pinned-grid-editor__card-controls') as HTMLElement;
+    const controls = fixture.nativeElement.querySelector(
+      '.pinned-grid-editor__card-controls',
+    ) as HTMLElement;
     expect(controls.querySelectorAll('app-select').length).toBe(0);
     expect(controls.querySelectorAll('app-button').length).toBe(2);
   });
@@ -113,7 +131,10 @@ describe('PinnedGridEditor', () => {
   });
 
   it('отбрасывает осиротевшие слоты (newsId без соответствующей новости в news()) — не занимают ячейки', () => {
-    const fixture = createEditor([newsItem('news-1')], [slot({ newsId: 'ghost', colStart: 1, rowStart: 1 })]);
+    const fixture = createEditor(
+      [newsItem('news-1')],
+      [slot({ newsId: 'ghost', colStart: 1, rowStart: 1 })],
+    );
 
     expect(fixture.componentInstance['localSlots']()).toEqual([]);
     expect(fixture.componentInstance['isCellOccupied']({ col: 1, row: 1 })).toBe(false);
@@ -125,14 +146,19 @@ describe('PinnedGridEditor', () => {
       fixture.componentRef.setInput('news', [newsItem('news-1')]);
       fixture.componentRef.setInput('layouts', {
         small: EMPTY_LAYOUT,
-        large: { config: GRID_CONFIG, slots: [slot({ newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 })] },
+        large: {
+          config: GRID_CONFIG,
+          slots: [slot({ newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 })],
+        },
       } satisfies Record<PinnedGridViewport, PinnedGridLayout>);
       fixture.detectChanges();
 
       fixture.componentInstance['onScreenPresetChange']('phone');
 
       expect(fixture.componentInstance['viewportPreset']()).toBe('small');
-      const autoSlot = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const autoSlot = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       expect(autoSlot).toBeDefined();
       expect(autoSlot.colSpan).toBe(1);
       expect(autoSlot.rowSpan).toBe(1);
@@ -154,38 +180,56 @@ describe('PinnedGridEditor', () => {
     });
 
     it('в small при нехватке места автоматически растёт число строк', () => {
-      const fullSlots: PinnedNewsSlot[] = [slot({ newsId: 'existing', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 6 })];
+      const fullSlots: PinnedNewsSlot[] = [
+        slot({ newsId: 'existing', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 6 }),
+      ];
       const fixture = TestBed.createComponent(PinnedGridEditor);
       fixture.componentRef.setInput('news', [newsItem('existing'), newsItem('news-1')]);
       fixture.componentRef.setInput('layouts', {
         small: { config: { columns: 2, rows: 6 }, slots: fullSlots },
-        large: { config: GRID_CONFIG, slots: [...fullSlots, slot({ newsId: 'news-1', colStart: 3, rowStart: 1 })] },
+        large: {
+          config: GRID_CONFIG,
+          slots: [...fullSlots, slot({ newsId: 'news-1', colStart: 3, rowStart: 1 })],
+        },
       } satisfies Record<PinnedGridViewport, PinnedGridLayout>);
       fixture.detectChanges();
 
       fixture.componentInstance['onScreenPresetChange']('phone');
 
       expect(fixture.componentInstance['localGridConfig']().rows).toBe(7);
-      const autoSlot = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const autoSlot = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       expect(autoSlot.rowStart).toBe(7);
     });
 
     it('в large при нехватке места новость уходит в unplacedForLarge, не пропадает', () => {
       // Раскладка large заполнена ПОЛНОСТЬЮ (1×1), место есть только на small
       // (новость закреплена только там) — auto-размещение на large невозможно.
-      const fullLargeSlots: PinnedNewsSlot[] = [slot({ newsId: 'existing', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 1 })];
+      const fullLargeSlots: PinnedNewsSlot[] = [
+        slot({ newsId: 'existing', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 1 }),
+      ];
       const fixture = TestBed.createComponent(PinnedGridEditor);
       fixture.componentRef.setInput('news', [newsItem('existing'), newsItem('news-1')]);
       fixture.componentRef.setInput('layouts', {
-        small: { config: { columns: 2, rows: 1 }, slots: [...fullLargeSlots, slot({ newsId: 'news-1', colStart: 2, rowStart: 1 })] },
+        small: {
+          config: { columns: 2, rows: 1 },
+          slots: [...fullLargeSlots, slot({ newsId: 'news-1', colStart: 2, rowStart: 1 })],
+        },
         large: { config: { columns: 1, rows: 1 }, slots: fullLargeSlots },
       } satisfies Record<PinnedGridViewport, PinnedGridLayout>);
       fixture.detectChanges();
 
       // Дефолтный экран редактора резолвится в 'large'.
       expect(fixture.componentInstance['viewportPreset']()).toBe('large');
-      expect(fixture.componentInstance['localSlots']().some((s: PinnedNewsSlot) => s.newsId === 'news-1')).toBe(false);
-      expect(fixture.componentInstance['unplacedForLarge']().map((item: NewsItem) => item.id)).toEqual(['news-1']);
+      expect(
+        fixture.componentInstance['localSlots']().some(
+          (s: PinnedNewsSlot) => s.newsId === 'news-1',
+        ),
+      ).toBe(false);
+      expect(
+        fixture.componentInstance['unplacedForLarge']().map((item: NewsItem) => item.id),
+      ).toEqual(['news-1']);
     });
 
     it('редактирование стиля переносится на обе раскладки (общий стиль/обложка)', () => {
@@ -204,7 +248,9 @@ describe('PinnedGridEditor', () => {
       expect(fixture.componentInstance['localSlots']()[0].style.imagePosition).toBe('left');
 
       fixture.componentInstance['onScreenPresetChange']('phone');
-      const autoSlot = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const autoSlot = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       expect(autoSlot.style.imagePosition).toBe('left');
     });
   });
@@ -213,16 +259,23 @@ describe('PinnedGridEditor', () => {
     it('drag: перетаскивание на одну ячейку вправо/вниз меняет colStart/rowStart', () => {
       const fixture = createEditor(
         [newsItem('news-1'), newsItem('news-2')],
-        [slot({ newsId: 'news-1', colStart: 1, rowStart: 1 }), slot({ newsId: 'news-2', colStart: 3, rowStart: 12 })],
+        [
+          slot({ newsId: 'news-1', colStart: 1, rowStart: 1 }),
+          slot({ newsId: 'news-2', colStart: 3, rowStart: 12 }),
+        ],
       );
       stubHostRect(fixture);
 
-      const dragged = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const dragged = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       fixture.componentInstance['onPointerDown'](pointerEvent(0, 0), dragged, 'move');
       fixture.componentInstance['onPointerMove'](pointerEvent(120, 70));
       fixture.componentInstance['commitDrag']();
 
-      const moved = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const moved = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       expect(moved.colStart).toBe(2);
       expect(moved.rowStart).toBe(2);
     });
@@ -230,23 +283,33 @@ describe('PinnedGridEditor', () => {
     it('drag на уже занятую ячейку помечается невалидным и не применяется', () => {
       const fixture = createEditor(
         [newsItem('news-1'), newsItem('news-2')],
-        [slot({ newsId: 'news-1', colStart: 1, rowStart: 1 }), slot({ newsId: 'news-2', colStart: 2, rowStart: 1 })],
+        [
+          slot({ newsId: 'news-1', colStart: 1, rowStart: 1 }),
+          slot({ newsId: 'news-2', colStart: 2, rowStart: 1 }),
+        ],
       );
       stubHostRect(fixture);
 
-      const dragged = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const dragged = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       fixture.componentInstance['onPointerDown'](pointerEvent(0, 0), dragged, 'move');
       fixture.componentInstance['onPointerMove'](pointerEvent(120, 0));
 
       expect(fixture.componentInstance['dragState']()?.valid).toBe(false);
 
       fixture.componentInstance['commitDrag']();
-      const unchanged = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const unchanged = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       expect(unchanged.colStart).toBe(1);
     });
 
     it('resize: растягивание правого края увеличивает colSpan', () => {
-      const fixture = createEditor([newsItem('news-1')], [slot({ newsId: 'news-1', colStart: 1, rowStart: 1 })]);
+      const fixture = createEditor(
+        [newsItem('news-1')],
+        [slot({ newsId: 'news-1', colStart: 1, rowStart: 1 })],
+      );
       stubHostRect(fixture);
 
       const target = fixture.componentInstance['localSlots']()[0];
@@ -285,7 +348,7 @@ describe('PinnedGridEditor', () => {
       ]);
     });
 
-    it('смена новости из drawer\'а редактирования переносит editingNewsId на новый id', () => {
+    it("смена новости из drawer'а редактирования переносит editingNewsId на новый id", () => {
       const fixture = createEditor(
         [newsItem('news-1'), newsItem('news-2')],
         [slot({ newsId: 'news-1', colStart: 2, rowStart: 3 })],
@@ -305,7 +368,9 @@ describe('PinnedGridEditor', () => {
         [slot({ newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 3 })],
       );
 
-      fixture.componentInstance['onToggleOrientation'](fixture.componentInstance['localSlots']()[0]);
+      fixture.componentInstance['onToggleOrientation'](
+        fixture.componentInstance['localSlots']()[0],
+      );
 
       expect(fixture.componentInstance['localSlots']()[0]).toEqual(
         slot({ newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 3, rowSpan: 1 }),
@@ -321,20 +386,27 @@ describe('PinnedGridEditor', () => {
         ],
       );
 
-      expect(fixture.componentInstance['canToggleOrientation'](fixture.componentInstance['localSlots']()[0])).toBe(
-        false,
-      );
+      expect(
+        fixture.componentInstance['canToggleOrientation'](
+          fixture.componentInstance['localSlots']()[0],
+        ),
+      ).toBe(false);
     });
   });
 
   describe('добавление карточки', () => {
     it('«Добавить новость» открывает drawer и сбрасывает форму', () => {
-      const fixture = createEditor([newsItem('news-1'), newsItem('news-2')], [slot({ newsId: 'news-1' })]);
+      const fixture = createEditor(
+        [newsItem('news-1'), newsItem('news-2')],
+        [slot({ newsId: 'news-1' })],
+      );
 
       fixture.componentInstance['onAddClick']();
 
       expect(fixture.componentInstance['addDrawerVisible']()).toBe(true);
-      expect(fixture.componentInstance['unusedNewsForAdd']().map((n: NewsItem) => n.id)).toEqual(['news-2']);
+      expect(fixture.componentInstance['unusedNewsForAdd']().map((n: NewsItem) => n.id)).toEqual([
+        'news-2',
+      ]);
     });
 
     it('отправка формы закрывает drawer и переводит в режим расстановки', () => {
@@ -345,17 +417,26 @@ describe('PinnedGridEditor', () => {
 
       fixture.componentInstance['onAddClick']();
       fixture.componentInstance['onAddFormNewsChange']('news-2');
-      expect(fixture.componentInstance['addFormNewsImages']()).toEqual(['/cover.png', '/cover-2.png']);
+      expect(fixture.componentInstance['addFormNewsImages']()).toEqual([
+        '/cover.png',
+        '/cover-2.png',
+      ]);
 
       fixture.componentInstance['addFormCoverUrl'].set('/cover.png');
       fixture.componentInstance['onAddFormSubmit']();
 
       expect(fixture.componentInstance['addDrawerVisible']()).toBe(false);
-      expect(fixture.componentInstance['pendingNews']()).toEqual({ newsId: 'news-2', coverImageUrl: '/cover.png' });
+      expect(fixture.componentInstance['pendingNews']()).toEqual({
+        newsId: 'news-2',
+        coverImageUrl: '/cover.png',
+      });
     });
 
     it('смена новости в форме добавления сбрасывает выбранную обложку', () => {
-      const fixture = createEditor([newsItem('news-1'), newsItem('news-2', { imageUrls: ['/cover.png'] })], []);
+      const fixture = createEditor(
+        [newsItem('news-1'), newsItem('news-2', { imageUrls: ['/cover.png'] })],
+        [],
+      );
 
       fixture.componentInstance['onAddFormNewsChange']('news-2');
       fixture.componentInstance['addFormCoverUrl'].set('/cover.png');
@@ -371,7 +452,10 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onAddFormNewsChange']('news-2');
       fixture.componentInstance['onAddFormSubmit']();
 
-      expect(fixture.componentInstance['pendingNews']()).toEqual({ newsId: 'news-2', coverImageUrl: null });
+      expect(fixture.componentInstance['pendingNews']()).toEqual({
+        newsId: 'news-2',
+        coverImageUrl: null,
+      });
     });
 
     it('drag-прямоугольник по свободным ячейкам создаёт новый слот с выбранной обложкой', () => {
@@ -380,14 +464,26 @@ describe('PinnedGridEditor', () => {
         [slot({ newsId: 'news-1', colStart: 1, rowStart: 1 })],
       );
 
-      fixture.componentInstance['pendingNews'].set({ newsId: 'news-2', coverImageUrl: '/cover.png' });
+      fixture.componentInstance['pendingNews'].set({
+        newsId: 'news-2',
+        coverImageUrl: '/cover.png',
+      });
       fixture.componentInstance['onPlacementCellPointerDown']({ col: 2, row: 1 });
       fixture.componentInstance['onPlacementCellPointerEnter']({ col: 3, row: 2 });
       window.dispatchEvent(new Event('pointerup'));
 
-      const added = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-2');
+      const added = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-2',
+      );
       expect(added).toEqual(
-        slot({ newsId: 'news-2', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 2, coverImageUrl: '/cover.png' }),
+        slot({
+          newsId: 'news-2',
+          colStart: 2,
+          rowStart: 1,
+          colSpan: 2,
+          rowSpan: 2,
+          coverImageUrl: '/cover.png',
+        }),
       );
       expect(fixture.componentInstance['pendingNews']()).toBeNull();
     });
@@ -405,9 +501,16 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onPlacementCellPointerEnter']({ col: 1, row: 1 });
       window.dispatchEvent(new Event('pointerup'));
 
-      expect(showSpy).toHaveBeenCalledWith('Эти ячейки уже заняты — выберите другую область', 'error');
+      expect(showSpy).toHaveBeenCalledWith(
+        'Эти ячейки уже заняты — выберите другую область',
+        'error',
+      );
       expect(fixture.componentInstance['pendingNews']()).not.toBeNull();
-      expect(fixture.componentInstance['localSlots']().some((s: PinnedNewsSlot) => s.newsId === 'news-2')).toBe(false);
+      expect(
+        fixture.componentInstance['localSlots']().some(
+          (s: PinnedNewsSlot) => s.newsId === 'news-2',
+        ),
+      ).toBe(false);
     });
 
     it('«Отменить добавление» выходит из режима расстановки без создания слота', () => {
@@ -536,13 +639,18 @@ describe('PinnedGridEditor', () => {
 
       fixture.componentInstance['onFocalPointChange']({ x: 20, y: 80 });
 
-      expect(adminNewsService.updateImageFocalPoint).toHaveBeenCalledWith('img-1', { focalX: 20, focalY: 80 });
+      expect(adminNewsService.updateImageFocalPoint).toHaveBeenCalledWith('img-1', {
+        focalX: 20,
+        focalY: 80,
+      });
       expect(fixture.componentInstance['editingFocalPoint']()).toEqual({ x: 20, y: 80 });
     });
 
     it('ошибка сохранения откатывает точку к ПОСЛЕДНЕЙ известной сохранённой (не к центру), если у картинки уже была точка', () => {
       TestBed.overrideProvider(AdminNewsService, {
-        useValue: { updateImageFocalPoint: vi.fn().mockReturnValue(throwError(() => new Error('boom'))) },
+        useValue: {
+          updateImageFocalPoint: vi.fn().mockReturnValue(throwError(() => new Error('boom'))),
+        },
       });
       const fixture = createEditor(
         [
@@ -622,7 +730,9 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onScreenPresetChange']('phone');
 
       expect(fixture.componentInstance['localGridConfig']()).toEqual({ columns: 2, rows: 6 });
-      const news1Slot = fixture.componentInstance['localSlots']().find((s: PinnedNewsSlot) => s.newsId === 'news-1')!;
+      const news1Slot = fixture.componentInstance['localSlots']().find(
+        (s: PinnedNewsSlot) => s.newsId === 'news-1',
+      )!;
       expect(news1Slot.colStart).toBe(1);
       expect(news1Slot.rowStart).toBe(1);
     });
@@ -665,7 +775,10 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onScreenPresetChange']('phone');
 
       expect(fixture.componentInstance['viewportPreset']()).toBe('small');
-      expect(fixture.componentInstance['gridAreaSize']()).toEqual({ width: 375 - 2 * 20, height: null });
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({
+        width: 375 - 2 * 20,
+        height: null,
+      });
     });
 
     it('«Планшет книжкой» (810×1080) резолвится в раскладку small', () => {
@@ -674,34 +787,44 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onScreenPresetChange']('tablet-portrait');
 
       expect(fixture.componentInstance['viewportPreset']()).toBe('small');
-      expect(fixture.componentInstance['gridAreaSize']()).toEqual({ width: 810 - 2 * 20, height: null });
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({
+        width: 810 - 2 * 20,
+        height: null,
+      });
     });
 
-    it('«Планшет альбомом» (1180×820) резолвится в раскладку large', () => {
+    // Лента держит эталонные 660 только на эталонном экране; ниже она
+    // сжимается к своему минимуму 440 ПЕРВОЙ, и витрине достаётся больше,
+    // чем давала прежняя формула `экран − паддинги − 660 − 110`
+    // (`stream.Front#126`, `РАЗ-Ф-01`). Числа ниже — следствие минимумов из
+    // `news-layout.ts`, а не самостоятельные величины.
+    it('«Планшет альбомом» (1180×820) — лента уже на минимуме, витрине остаётся больше', () => {
       const fixture = createEditor([], []);
 
       fixture.componentInstance['onScreenPresetChange']('tablet-landscape');
 
       expect(fixture.componentInstance['viewportPreset']()).toBe('large');
       expect(fixture.componentInstance['gridAreaSize']()).toEqual({
-        width: 1180 - 2 * 60 - 660 - 110,
+        // доступно 1060: лента 440 + зазор 110 + витрина 510
+        width: 510,
         height: 820 - 64 - 2 * 60,
       });
     });
 
-    it('«Ноутбук» (1366×768) резолвится в раскладку large, холст = экран минус паддинги/архив/шапку (зеркало news-page.scss/shell.scss)', () => {
+    it('«Ноутбук» (1366×768) резолвится в раскладку large, холст = экран минус паддинги/ленту/зазор/шапку (зеркало news-page.scss/shell.scss)', () => {
       const fixture = createEditor([], []);
 
       fixture.componentInstance['onScreenPresetChange']('laptop');
 
       expect(fixture.componentInstance['viewportPreset']()).toBe('large');
       expect(fixture.componentInstance['gridAreaSize']()).toEqual({
-        width: 1366 - 2 * 60 - 660 - 110,
+        // доступно 1246: лента 440 + зазор 110 + витрина 696
+        width: 696,
         height: 768 - 64 - 2 * 60,
       });
     });
 
-    it('«Десктоп» (1920×1080) резолвится в раскладку large с той же формулой', () => {
+    it('«Десктоп» (1920×1080) — единственный пресет, где лента держит эталонные 660', () => {
       const fixture = createEditor([], []);
 
       fixture.componentInstance['onScreenPresetChange']('desktop');
@@ -721,7 +844,10 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onCustomScreenHeightInput']('900');
 
       expect(fixture.componentInstance['viewportPreset']()).toBe('small');
-      expect(fixture.componentInstance['gridAreaSize']()).toEqual({ width: 500 - 2 * 20, height: null });
+      expect(fixture.componentInstance['gridAreaSize']()).toEqual({
+        width: 500 - 2 * 20,
+        height: null,
+      });
     });
   });
 
@@ -732,7 +858,9 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onScreenPresetChange']('phone');
 
       expect(fixture.componentInstance['gridAreaSize']().height).toBeNull();
-      expect(fixture.componentInstance['gridTemplateRows']()).toBe(`repeat(${fixture.componentInstance['localGridConfig']().rows}, minmax(160px, 1fr))`);
+      expect(fixture.componentInstance['gridTemplateRows']()).toBe(
+        `repeat(${fixture.componentInstance['localGridConfig']().rows}, minmax(160px, 1fr))`,
+      );
     });
 
     it('на large (высота холста фиксирована) строки честно делят её — голый 1fr, без пола', () => {
@@ -741,7 +869,9 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onScreenPresetChange']('laptop');
 
       expect(fixture.componentInstance['gridAreaSize']().height).not.toBeNull();
-      expect(fixture.componentInstance['gridTemplateRows']()).toBe(`repeat(${fixture.componentInstance['localGridConfig']().rows}, 1fr)`);
+      expect(fixture.componentInstance['gridTemplateRows']()).toBe(
+        `repeat(${fixture.componentInstance['localGridConfig']().rows}, 1fr)`,
+      );
     });
   });
 

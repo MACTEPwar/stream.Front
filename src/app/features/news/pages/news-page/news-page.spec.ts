@@ -11,7 +11,10 @@ import { LARGE_QUERY } from '@shared/utils/breakpoints';
 import { NewsFilter } from '../../models/news-filter.model';
 import { NewsTag } from '../../models/news-tag.model';
 import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
-import { NewsDetailModal, NewsDetailModalData } from '../../components/news-detail-modal/news-detail-modal';
+import {
+  NewsDetailModal,
+  NewsDetailModalData,
+} from '../../components/news-detail-modal/news-detail-modal';
 import { LikeResponse, NewsArchiveService } from '../../services/news-archive.service';
 import { PinnedGridService } from '../../services/pinned-grid.service';
 import { NewsPage } from './news-page';
@@ -21,7 +24,12 @@ function adminTag(id: string, name: string): AdminNewsTag {
 }
 
 const ADMIN_TAGS: AdminNewsTag[] = [adminTag('tournament', 'Турнир'), adminTag('stream', 'Стрим')];
-const TAGS: NewsTag[] = ADMIN_TAGS.map(({ id, name, color, textColor }) => ({ id, name, color, textColor }));
+const TAGS: NewsTag[] = ADMIN_TAGS.map(({ id, name, color, textColor }) => ({
+  id,
+  name,
+  color,
+  textColor,
+}));
 
 function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
   return {
@@ -47,7 +55,9 @@ function gridNews(id: string): AdminNews {
   return adminNews(id, { viewCount: 100, likeCount: 100, tags: [ADMIN_TAGS[0]] });
 }
 
-const GRID_NEWS: AdminNews[] = Array.from({ length: 7 }, (_, index) => gridNews(`news-${index + 1}`));
+const GRID_NEWS: AdminNews[] = Array.from({ length: 7 }, (_, index) =>
+  gridNews(`news-${index + 1}`),
+);
 
 const PINNED_SLOTS: PinnedNewsSlot[] = GRID_NEWS.map((item, index) => ({
   newsId: item.id,
@@ -60,7 +70,11 @@ const PINNED_SLOTS: PinnedNewsSlot[] = GRID_NEWS.map((item, index) => ({
   focalPoint: null,
 }));
 
-function archivePage(items: AdminNews[], page: number, totalPages: number): PaginatedResponse<AdminNews> {
+function archivePage(
+  items: AdminNews[],
+  page: number,
+  totalPages: number,
+): PaginatedResponse<AdminNews> {
   return { items, meta: { page, limit: 10, total: items.length, totalPages } };
 }
 
@@ -80,7 +94,9 @@ describe('NewsPage', () => {
   ];
 
   beforeEach(() => {
-    archiveGetPage = vi.fn<NewsArchiveService['getPage']>().mockReturnValue(of(archivePage(ARCHIVE_PAGE_1, 1, 1)));
+    archiveGetPage = vi
+      .fn<NewsArchiveService['getPage']>()
+      .mockReturnValue(of(archivePage(ARCHIVE_PAGE_1, 1, 1)));
     archiveLike = vi.fn<NewsArchiveService['like']>();
     archiveUnlike = vi.fn<NewsArchiveService['unlike']>();
     pinnedGridGetLayout = vi
@@ -92,7 +108,16 @@ describe('NewsPage', () => {
       imports: [NewsPage],
       providers: [
         { provide: AdminNewsTagService, useValue: { getAll: () => of(ADMIN_TAGS) } },
-        { provide: AdminNewsService, useValue: { getAll: () => of({ items: GRID_NEWS, meta: { page: 1, limit: 100, total: GRID_NEWS.length, totalPages: 1 } }) } },
+        {
+          provide: AdminNewsService,
+          useValue: {
+            getAll: () =>
+              of({
+                items: GRID_NEWS,
+                meta: { page: 1, limit: 100, total: GRID_NEWS.length, totalPages: 1 },
+              }),
+          },
+        },
         { provide: PinnedGridService, useValue: { getLayout: pinnedGridGetLayout } },
         {
           provide: NewsArchiveService,
@@ -122,6 +147,82 @@ describe('NewsPage', () => {
     return page['archiveEntries']().map((item) => item.id);
   }
 
+  /**
+   * Положение ленты (`stream.Front#126`) — по доступной ширине, а не по
+   * пресету компоновки (`АДП-О-12`). Пресет здесь всегда `large`
+   * (`BreakpointObserver` замокан выше), поэтому тесты ниже проверяют
+   * именно то, что раньше было сломано: на `large` лента вставала сбоку
+   * независимо от того, оставалось ли витрине место.
+   */
+  function setWindowWidth(width: number): void {
+    Object.defineProperty(window, 'innerWidth', {
+      value: width,
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  describe('положение ленты', () => {
+    const initialWidth = window.innerWidth;
+
+    afterEach(() => setWindowWidth(initialWidth));
+
+    it('на эталонном экране лента стоит сбоку', () => {
+      setWindowWidth(1920);
+
+      const fixture = createPage();
+
+      expect(fixture.componentInstance['isArchiveBeside']()).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).classList).not.toContain(
+        'news-page--archive-below',
+      );
+    });
+
+    it('на планшете альбомом (1024) лента уходит вниз, хотя пресет остаётся large', () => {
+      setWindowWidth(1024);
+
+      const fixture = createPage();
+
+      // 1024 − 2×60 = 904 доступной ширины: витрине не остаётся достаточных 500
+      expect(fixture.componentInstance['isArchiveBeside']()).toBe(false);
+      expect((fixture.nativeElement as HTMLElement).classList).toContain(
+        'news-page--archive-below',
+      );
+    });
+
+    it('ровно на пороге лента ещё сбоку', () => {
+      setWindowWidth(1080);
+
+      const fixture = createPage();
+
+      expect(fixture.componentInstance['isArchiveBeside']()).toBe(true);
+    });
+
+    it('пересчитывается на ресайз окна без перезагрузки страницы', () => {
+      setWindowWidth(1920);
+      const fixture = createPage();
+      expect(fixture.componentInstance['isArchiveBeside']()).toBe(true);
+
+      setWindowWidth(1024);
+      window.dispatchEvent(new Event('resize'));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance['isArchiveBeside']()).toBe(false);
+      expect((fixture.nativeElement as HTMLElement).classList).toContain(
+        'news-page--archive-below',
+      );
+    });
+
+    it('сетка витрины переходит на content-based высоту вместе с переносом ленты', () => {
+      setWindowWidth(1024);
+
+      const fixture = createPage();
+      const grid = (fixture.nativeElement as HTMLElement).querySelector('app-pinned-news-grid');
+
+      expect(grid?.classList).toContain('pinned-news-grid--auto-height');
+    });
+  });
+
   it('рендерит карточку на каждую новость сетки и строку архива на каждую загруженную запись', () => {
     const fixture = createPage();
     const host = fixture.nativeElement as HTMLElement;
@@ -139,7 +240,9 @@ describe('NewsPage', () => {
   it('карточка со слотом colSpan: 2 занимает две колонки сетки', () => {
     const fixture = createPage();
     const wide = (fixture.nativeElement as HTMLElement).querySelectorAll('app-news-card');
-    const wideCard = Array.from(wide).find((card) => (card as HTMLElement).style.gridColumn.includes('span 2'));
+    const wideCard = Array.from(wide).find((card) =>
+      (card as HTMLElement).style.gridColumn.includes('span 2'),
+    );
 
     expect(wideCard).not.toBeUndefined();
   });
@@ -228,7 +331,9 @@ describe('NewsPage', () => {
   });
 
   it('лайк — оптимистично обновляет счётчик/флаг и подтверждает их ответом сервера', () => {
-    archiveLike.mockReturnValue(of({ likeCount: 11, likedByCurrentUser: true } satisfies LikeResponse));
+    archiveLike.mockReturnValue(
+      of({ likeCount: 11, likedByCurrentUser: true } satisfies LikeResponse),
+    );
     const page = createPage().componentInstance;
     const item = page['archiveEntries']()[0];
     expect(item.likedByCurrentUser).toBe(false);
@@ -255,7 +360,9 @@ describe('NewsPage', () => {
   });
 
   it('снятие лайка вызывает unlike', () => {
-    archiveUnlike.mockReturnValue(of({ likeCount: 9, likedByCurrentUser: false } satisfies LikeResponse));
+    archiveUnlike.mockReturnValue(
+      of({ likeCount: 9, likedByCurrentUser: false } satisfies LikeResponse),
+    );
     const page = createPage().componentInstance;
     const item = page['archiveEntries']().find((entry) => entry.id === 'archive-2')!;
 
