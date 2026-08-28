@@ -2,7 +2,12 @@ import { Component, computed, input } from '@angular/core';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { DEFAULT_GRID_COLUMNS, DEFAULT_GRID_ROWS, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
+import {
+  DEFAULT_GRID_COLUMNS,
+  DEFAULT_GRID_ROWS,
+  FocalPoint,
+  PinnedNewsSlot,
+} from '../../models/pinned-news-slot.model';
 import { NewsCard } from '../news-card/news-card';
 
 export interface PinnedNewsGridEntry {
@@ -53,7 +58,9 @@ export class PinnedNewsGrid {
   readonly columns = input<number>(DEFAULT_GRID_COLUMNS);
   readonly rows = input<number>(DEFAULT_GRID_ROWS);
 
-  protected readonly gridTemplateColumns = computed(() => `repeat(${this.columns()}, minmax(0, 1fr))`);
+  protected readonly gridTemplateColumns = computed(
+    () => `repeat(${this.columns()}, minmax(0, 1fr))`,
+  );
   protected readonly gridTemplateRows = computed(() => `repeat(${this.rows()}, 1fr)`);
 
   protected gridColumn(slot: PinnedNewsSlot): string {
@@ -64,8 +71,19 @@ export class PinnedNewsGrid {
     return `${slot.rowStart} / span ${slot.rowSpan}`;
   }
 
-  /** `slot.coverImageUrl` (выбран при добавлении карточки в `PinnedGridEditor`, `stream.Front#118`) переопределяет `item.imageUrl` только для отображения — `NewsItem`/`NewsCard` не меняются под это отдельным входом. */
+  /**
+   * Картинка карточки — **обложка новости** и только она (`ЗАК-О-06`,
+   * `stream.Front#137`). Прежний откат на первую картинку новости, когда у
+   * пина не выбрана своя, убран намеренно: он делал состояние «осознанно без
+   * обложки» неотличимым от «ещё не выбрали» (`ОБЛ-О-05`). Нет обложки —
+   * карточка обходится без картинки, место под неё отдаётся тексту
+   * (`ЗАК-Ф-05`).
+   */
   protected effectiveItem(entry: PinnedNewsGridEntry): NewsItem {
-    return entry.slot.coverImageUrl !== null ? { ...entry.item, imageUrl: entry.slot.coverImageUrl } : entry.item;
+    return { ...entry.item, imageUrl: entry.slot.cover.url };
+  }
+
+  protected focalPoint(entry: PinnedNewsGridEntry): FocalPoint | null {
+    return entry.slot.cover.focalPoint;
   }
 }

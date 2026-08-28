@@ -13,6 +13,7 @@ const ITEM: NewsItem = {
   id: 'news-1',
   title: 'Lorem ipsum dolor sit amet consectetur.',
   excerpt: 'Lorem ipsum dolor sit amet consectetur. Enim ultricies varius iaculis.',
+  cover: { type: 'image', url: '/images/main-carousel/slide-0-test.png', focalPoint: null },
   imageUrl: '/images/main-carousel/slide-0-test.png',
   imageUrls: ['/images/main-carousel/slide-0-test.png'],
   images: [],

@@ -20,6 +20,7 @@ function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
     id,
     title: `Заголовок ${id}`,
     excerpt: 'Lorem ipsum dolor sit amet consectetur.',
+    cover: { type: 'none', url: null, focalPoint: null },
     imageUrl: null,
     imageUrls: [],
     images: [],
@@ -41,8 +42,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     colSpan: 1,
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
-    coverImageUrl: null,
-    focalPoint: null,
+    cover: { type: 'none', url: null, focalPoint: null },
     ...overrides,
   };
 }
@@ -422,52 +422,21 @@ describe('PinnedGridEditor', () => {
         '/cover-2.png',
       ]);
 
-      fixture.componentInstance['addFormCoverUrl'].set('/cover.png');
       fixture.componentInstance['onAddFormSubmit']();
 
       expect(fixture.componentInstance['addDrawerVisible']()).toBe(false);
       expect(fixture.componentInstance['pendingNews']()).toEqual({
         newsId: 'news-2',
-        coverImageUrl: '/cover.png',
       });
     });
 
-    it('смена новости в форме добавления сбрасывает выбранную обложку', () => {
-      const fixture = createEditor(
-        [newsItem('news-1'), newsItem('news-2', { imageUrls: ['/cover.png'] })],
-        [],
-      );
-
-      fixture.componentInstance['onAddFormNewsChange']('news-2');
-      fixture.componentInstance['addFormCoverUrl'].set('/cover.png');
-      fixture.componentInstance['onAddFormNewsChange']('news-1');
-
-      expect(fixture.componentInstance['addFormCoverUrl']()).toBeNull();
-      expect(fixture.componentInstance['addFormNewsImages']()).toEqual([]);
-    });
-
-    it('без выбранной обложки coverImageUrl остаётся null (используется своя картинка новости)', () => {
-      const fixture = createEditor([newsItem('news-1'), newsItem('news-2')], []);
-
-      fixture.componentInstance['onAddFormNewsChange']('news-2');
-      fixture.componentInstance['onAddFormSubmit']();
-
-      expect(fixture.componentInstance['pendingNews']()).toEqual({
-        newsId: 'news-2',
-        coverImageUrl: null,
-      });
-    });
-
-    it('drag-прямоугольник по свободным ячейкам создаёт новый слот с выбранной обложкой', () => {
+    it('drag-прямоугольник по свободным ячейкам создаёт новый слот', () => {
       const fixture = createEditor(
         [newsItem('news-1'), newsItem('news-2')],
         [slot({ newsId: 'news-1', colStart: 1, rowStart: 1 })],
       );
 
-      fixture.componentInstance['pendingNews'].set({
-        newsId: 'news-2',
-        coverImageUrl: '/cover.png',
-      });
+      fixture.componentInstance['pendingNews'].set({ newsId: 'news-2' });
       fixture.componentInstance['onPlacementCellPointerDown']({ col: 2, row: 1 });
       fixture.componentInstance['onPlacementCellPointerEnter']({ col: 3, row: 2 });
       window.dispatchEvent(new Event('pointerup'));
@@ -482,7 +451,6 @@ describe('PinnedGridEditor', () => {
           rowStart: 1,
           colSpan: 2,
           rowSpan: 2,
-          coverImageUrl: '/cover.png',
         }),
       );
       expect(fixture.componentInstance['pendingNews']()).toBeNull();
@@ -496,7 +464,7 @@ describe('PinnedGridEditor', () => {
       const notificationService = TestBed.inject(NotificationService);
       const showSpy = vi.spyOn(notificationService, 'show');
 
-      fixture.componentInstance['pendingNews'].set({ newsId: 'news-2', coverImageUrl: null });
+      fixture.componentInstance['pendingNews'].set({ newsId: 'news-2' });
       fixture.componentInstance['onPlacementCellPointerDown']({ col: 2, row: 1 });
       fixture.componentInstance['onPlacementCellPointerEnter']({ col: 1, row: 1 });
       window.dispatchEvent(new Event('pointerup'));
@@ -516,7 +484,7 @@ describe('PinnedGridEditor', () => {
     it('«Отменить добавление» выходит из режима расстановки без создания слота', () => {
       const fixture = createEditor([newsItem('news-1')], []);
 
-      fixture.componentInstance['pendingNews'].set({ newsId: 'news-1', coverImageUrl: null });
+      fixture.componentInstance['pendingNews'].set({ newsId: 'news-1' });
       fixture.componentInstance['onCancelPlacement']();
 
       expect(fixture.componentInstance['pendingNews']()).toBeNull();
@@ -535,42 +503,27 @@ describe('PinnedGridEditor', () => {
       expect(fixture.componentInstance['editingSlot']()?.newsId).toBe('news-1');
     });
 
-    it('открывает drawer с копией текущей обложки слота (draftCoverImageUrl)', () => {
+    it('обложка слота — обложка новости, редактор её не переопределяет (stream.Front#137)', () => {
       const fixture = createEditor(
-        [newsItem('news-1', { imageUrls: ['/a.png', '/b.png'] })],
-        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
+        [
+          newsItem('news-1', {
+            imageUrls: ['/a.png', '/b.png'],
+            cover: { type: 'image', url: '/a.png', focalPoint: null },
+          }),
+        ],
+        [],
       );
 
-      fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+      // Слот, построенный редактором при размещении, берёт обложку у новости
+      fixture.componentInstance['pendingNews'].set({ newsId: 'news-1' });
+      fixture.componentInstance['onPlacementCellPointerDown']({ col: 1, row: 1 });
+      window.dispatchEvent(new Event('pointerup'));
 
-      expect(fixture.componentInstance['draftCoverImageUrl']()).toBe('/a.png');
-      expect(fixture.componentInstance['editingNewsImages']()).toEqual(['/a.png', '/b.png']);
-    });
-
-    it('«Без обложки» сбрасывает draftCoverImageUrl в null, «Сохранить» переносит это в слот', () => {
-      const fixture = createEditor(
-        [newsItem('news-1', { imageUrls: ['/a.png'] })],
-        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
-      );
-
-      fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
-      fixture.componentInstance['onDraftCoverImageChange'](null);
-      fixture.componentInstance['onSaveStyleClick']();
-
-      expect(fixture.componentInstance['localSlots']()[0].coverImageUrl).toBeNull();
-    });
-
-    it('выбор другой картинки из галереи и «Сохранить» переносит её в coverImageUrl слота', () => {
-      const fixture = createEditor(
-        [newsItem('news-1', { imageUrls: ['/a.png', '/b.png'] })],
-        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
-      );
-
-      fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
-      fixture.componentInstance['onDraftCoverImageChange']('/b.png');
-      fixture.componentInstance['onSaveStyleClick']();
-
-      expect(fixture.componentInstance['localSlots']()[0].coverImageUrl).toBe('/b.png');
+      expect(fixture.componentInstance['localSlots']()[0].cover).toEqual({
+        type: 'image',
+        url: '/a.png',
+        focalPoint: null,
+      });
     });
 
     it('«Сохранить» переносит draftStyle в localSlots и закрывает drawer', () => {
@@ -608,7 +561,6 @@ describe('PinnedGridEditor', () => {
 
       expect(fixture.componentInstance['editingNewsId']()).toBeNull();
       expect(fixture.componentInstance['draftStyle']()).toBeNull();
-      expect(fixture.componentInstance['draftCoverImageUrl']()).toBeNull();
     });
 
     it('FocalPointPicker отсутствует, если у новости нет картинок', () => {
@@ -626,9 +578,10 @@ describe('PinnedGridEditor', () => {
           newsItem('news-1', {
             imageUrls: ['/a.png'],
             images: [{ id: 'img-1', url: '/a.png', focalX: null, focalY: null }],
+            cover: { type: 'image', url: '/a.png', focalPoint: null },
           }),
         ],
-        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
+        [slot({ newsId: 'news-1' })],
       );
       const adminNewsService = TestBed.inject(AdminNewsService);
 
@@ -657,9 +610,10 @@ describe('PinnedGridEditor', () => {
           newsItem('news-1', {
             imageUrls: ['/a.png'],
             images: [{ id: 'img-1', url: '/a.png', focalX: 30, focalY: 40 }],
+            cover: { type: 'image', url: '/a.png', focalPoint: { x: 30, y: 40 } },
           }),
         ],
-        [slot({ newsId: 'news-1', coverImageUrl: '/a.png' })],
+        [slot({ newsId: 'news-1' })],
       );
 
       fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);

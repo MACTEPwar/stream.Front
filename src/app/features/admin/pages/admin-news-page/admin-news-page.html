@@ -148,11 +148,6 @@
         <app-multi-image-picker [(urls)]="imageUrls" />
       </div>
 
-      <div class="admin-news-page__field">
-        <label class="admin-news-page__label" for="admin-news-has-no-image">Без фото</label>
-        <p-toggleswitch id="admin-news-has-no-image" [(ngModel)]="hasNoImage" />
-      </div>
-
       <app-button
         text="Сохранить"
         [disabled]="isSaving()"

@@ -2,6 +2,7 @@ import { Component, DestroyRef, ElementRef, computed, inject, input, linkedSigna
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DrawerModule } from 'primeng/drawer';
 
+import { NewsCover } from '@features/admin/models/news.model';
 import { AdminNewsService } from '@features/admin/services/admin-news.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -74,13 +75,19 @@ interface PlacementDrag {
 
 interface PendingNews {
   readonly newsId: string;
-  readonly coverImageUrl: string | null;
 }
 
+/**
+ * Общие для обеих раскладок настройки закрепления. Обложки здесь больше нет
+ * (`stream.Front#137`): она стала свойством новости (`streamer.API#80`), пин
+ * её только показывает и переопределить не может.
+ */
 interface NewsMeta {
   readonly style: PinnedNewsCardStyle;
-  readonly coverImageUrl: string | null;
 }
+
+/** Пустая обложка — для служебных слотов и новостей, которых нет в загруженном списке (stream.Front#137). */
+const NO_COVER: NewsCover = { type: 'none', url: null, focalPoint: null };
 
 type DraftStyleNumberField = 'imageSizePercent';
 type DraftStyleColorField = 'backgroundColor' | 'textColor';
@@ -232,7 +239,7 @@ export class PinnedGridEditor {
     for (const viewport of PINNED_GRID_VIEWPORTS) {
       for (const slot of layouts[viewport].slots) {
         if (existing.has(slot.newsId) && !(slot.newsId in result)) {
-          result[slot.newsId] = { style: slot.style, coverImageUrl: slot.coverImageUrl };
+          result[slot.newsId] = { style: slot.style };
         }
       }
     }
@@ -297,32 +304,34 @@ export class PinnedGridEditor {
 
   protected readonly addDrawerVisible = signal(false);
   protected readonly addFormNewsId = signal<string | null>(null);
-  protected readonly addFormCoverUrl = signal<string | null>(null);
   protected readonly pendingNews = signal<PendingNews | null>(null);
   protected readonly placementDrag = signal<PlacementDrag | null>(null);
 
   protected readonly editingNewsId = signal<string | null>(null);
   protected readonly draftStyle = signal<PinnedNewsCardStyle | null>(null);
-  protected readonly draftCoverImageUrl = signal<string | null>(null);
 
   protected readonly editingSlot = computed(() => {
     const newsId = this.editingNewsId();
     return newsId ? (this.localSlots().find((slot) => slot.newsId === newsId) ?? null) : null;
   });
 
-  /** Картинка, для которой сейчас показан `FocalPointPicker` в drawer'е редактирования — обложка слота (`draftCoverImageUrl`), либо первая картинка новости, если обложка не выбрана. */
+  /**
+   * Картинка, для которой показан `FocalPointPicker` в drawer'е
+   * редактирования, — **обложка новости**, если она взята из её набора
+   * (`stream.Front#137`). Прежний откат на первую картинку убран: у новости
+   * без обложки кадрировать нечего, а своя обложка (`custom`) в наборе не
+   * лежит и правится не отсюда.
+   */
   protected readonly editingFocalImage = computed(() => {
     const newsId = this.editingNewsId();
     if (!newsId) {
       return null;
     }
     const item = this.news().find((entry) => entry.id === newsId);
-    if (!item) {
+    if (!item?.cover.url) {
       return null;
     }
-    const coverUrl = this.draftCoverImageUrl();
-    const image = coverUrl ? item.images.find((entry) => entry.url === coverUrl) : item.images[0];
-    return image ?? null;
+    return item.images.find((entry) => entry.url === item.cover.url) ?? null;
   });
 
   protected readonly editingFocalPoint = computed<FocalPointValue | null>(() => {
@@ -417,8 +426,7 @@ export class PinnedGridEditor {
       colSpan: rect.colSpan,
       rowSpan: rect.rowSpan,
       style: DEFAULT_CARD_STYLE,
-      coverImageUrl: null,
-      focalPoint: null,
+      cover: NO_COVER,
     };
     const { columns, rows } = this.localGridConfig();
     return isSlotPlacementValid(candidate, this.localSlots(), columns, rows);
@@ -440,25 +448,27 @@ export class PinnedGridEditor {
       colSpan,
       rowSpan,
       style: meta.style,
-      coverImageUrl: meta.coverImageUrl,
-      focalPoint: this.resolveFocalPointFor(newsId, meta.coverImageUrl, news),
+      cover: this.resolveCoverFor(newsId, news),
     };
   }
 
-  private resolveFocalPointFor(newsId: string, coverImageUrl: string | null, news: NewsItem[]): FocalPoint | null {
+  /**
+   * Обложка слота — обложка самой новости (`stream.Front#137`). Поверх неё
+   * накладывается только несохранённая правка точки фокуса из этого же
+   * редактора (`focalOverrides`), чтобы предпросмотр показывал то, что админ
+   * двигает прямо сейчас.
+   */
+  private resolveCoverFor(newsId: string, news: NewsItem[]): NewsCover {
     const item = news.find((entry) => entry.id === newsId);
     if (!item) {
-      return null;
+      return NO_COVER;
     }
-    const image = coverImageUrl ? item.images.find((entry) => entry.url === coverImageUrl) : item.images[0];
-    if (!image) {
-      return null;
+    if (!item.cover.url) {
+      return item.cover;
     }
-    const override = this.focalOverrides()[image.id];
-    if (override !== undefined) {
-      return override;
-    }
-    return image.focalX !== null && image.focalY !== null ? { x: image.focalX, y: image.focalY } : null;
+    const image = item.images.find((entry) => entry.url === item.cover.url);
+    const override = image ? this.focalOverrides()[image.id] : undefined;
+    return override !== undefined ? { ...item.cover, focalPoint: override } : item.cover;
   }
 
   protected displaySlot(slot: PinnedNewsSlot): PinnedNewsSlot {
@@ -569,7 +579,6 @@ export class PinnedGridEditor {
       current.colSpan,
       current.rowSpan,
       current.style,
-      null,
     );
   }
 
@@ -580,9 +589,6 @@ export class PinnedGridEditor {
     }
     this.onSlotNewsChange(oldNewsId, newNewsId);
     this.editingNewsId.set(newNewsId);
-    // Смена новости — сброс выбранной обложки (та же логика, что и `onAddFormNewsChange`):
-    // список картинок на выбор теперь другой, старый выбор мог не относиться к новой новости.
-    this.draftCoverImageUrl.set(null);
     const newSlot = this.localSlots().find((slot) => slot.newsId === newNewsId);
     if (newSlot) {
       this.draftStyle.set(newSlot.style);
@@ -709,16 +715,11 @@ export class PinnedGridEditor {
 
   protected onAddClick(): void {
     this.addFormNewsId.set(null);
-    this.addFormCoverUrl.set(null);
     this.addDrawerVisible.set(true);
   }
 
   protected onAddFormNewsChange(newsId: string | null): void {
     this.addFormNewsId.set(newsId);
-    // Смена новости — сброс выбранной обложки: список картинок на выбор
-    // теперь другой (`addFormNewsImages`), старый выбор мог не относиться к
-    // новой новости.
-    this.addFormCoverUrl.set(null);
   }
 
   protected onAddFormSubmit(): void {
@@ -726,14 +727,13 @@ export class PinnedGridEditor {
     if (!newsId) {
       return;
     }
-    this.pendingNews.set({ newsId, coverImageUrl: this.addFormCoverUrl() });
+    this.pendingNews.set({ newsId });
     this.addDrawerVisible.set(false);
   }
 
-  /** Разместить вручную новость из списка «не размещено на large» — тот же режим drag-прямоугольника, что и обычное добавление, только стиль/обложка уже есть (`pinnedMeta`), не сбрасываются. */
+  /** Разместить вручную новость из списка «не размещено на large» — тот же режим drag-прямоугольника, что и обычное добавление, только стиль уже есть (`pinnedMeta`) и не сбрасывается. */
   protected onPlaceUnplacedClick(newsId: string): void {
-    const meta = this.pinnedMeta()[newsId];
-    this.pendingNews.set({ newsId, coverImageUrl: meta?.coverImageUrl ?? null });
+    this.pendingNews.set({ newsId });
   }
 
   protected onCancelPlacement(): void {
@@ -789,7 +789,6 @@ export class PinnedGridEditor {
       rect.colSpan,
       rect.rowSpan,
       meta?.style ?? DEFAULT_CARD_STYLE,
-      pending.coverImageUrl,
     );
     this.placementDrag.set(null);
     this.pendingNews.set(null);
@@ -798,11 +797,6 @@ export class PinnedGridEditor {
   protected onEditStyleClick(slot: PinnedNewsSlot): void {
     this.editingNewsId.set(slot.newsId);
     this.draftStyle.set(slot.style);
-    this.draftCoverImageUrl.set(slot.coverImageUrl);
-  }
-
-  protected onDraftCoverImageChange(url: string | null): void {
-    this.draftCoverImageUrl.set(url);
   }
 
   protected onImagePositionChange(position: CardImagePosition | null): void {
@@ -856,17 +850,14 @@ export class PinnedGridEditor {
     if (!newsId || !style) {
       return;
     }
-    const coverImageUrl = this.draftCoverImageUrl();
-    this.applyMetaToNews(newsId, style, coverImageUrl);
+    this.applyMetaToNews(newsId, style);
     this.editingNewsId.set(null);
     this.draftStyle.set(null);
-    this.draftCoverImageUrl.set(null);
   }
 
   protected onCancelStyleClick(): void {
     this.editingNewsId.set(null);
     this.draftStyle.set(null);
-    this.draftCoverImageUrl.set(null);
   }
 
   /** Закрытие drawer'а редактирования не только кнопкой «Отмена» — Esc/клик по backdrop у `p-drawer` меняют `visible` сами, тот же путь отмены. */
@@ -945,16 +936,15 @@ export class PinnedGridEditor {
     colSpan: number,
     rowSpan: number,
     style: PinnedNewsCardStyle,
-    coverImageUrl: string | null,
   ): void {
     this.updateCurrentSlots((slots) => [
       ...slots,
-      this.buildSlot(newsId, colStart, rowStart, colSpan, rowSpan, { style, coverImageUrl }, this.news()),
+      this.buildSlot(newsId, colStart, rowStart, colSpan, rowSpan, { style }, this.news()),
     ]);
   }
 
-  /** Переносит новый стиль/обложку во ВСЕ слоты этой новости в обеих раскладках (материализованных или ещё виртуальных — виртуальные материализуются заодно). */
-  private applyMetaToNews(newsId: string, style: PinnedNewsCardStyle, coverImageUrl: string | null): void {
+  /** Переносит новый стиль во ВСЕ слоты этой новости в обеих раскладках (материализованных или ещё виртуальных — виртуальные материализуются заодно). */
+  private applyMetaToNews(newsId: string, style: PinnedNewsCardStyle): void {
     const reconciledLayouts = this.reconciled().layouts;
     const news = this.news();
     this.localLayouts.update(() => {
@@ -964,7 +954,7 @@ export class PinnedGridEditor {
           config: reconciledLayouts[viewport].config,
           slots: reconciledLayouts[viewport].slots.map((slot) =>
             slot.newsId === newsId
-              ? this.buildSlot(newsId, slot.colStart, slot.rowStart, slot.colSpan, slot.rowSpan, { style, coverImageUrl }, news)
+              ? this.buildSlot(newsId, slot.colStart, slot.rowStart, slot.colSpan, slot.rowSpan, { style }, news)
               : slot,
           ),
         };
