@@ -1,9 +1,19 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
+import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AdminNews } from '@features/admin/models/news.model';
@@ -32,7 +42,7 @@ import {
   PinnedGridViewport,
   PinnedNewsSlot,
 } from '../../models/pinned-news-slot.model';
-import { NewsArchiveService } from '../../services/news-archive.service';
+import { NewsArchiveQuery, NewsArchiveService } from '../../services/news-archive.service';
 import { NewsItemAdapterService } from '../../services/news-item-adapter.service';
 import { PinnedGridService } from '../../services/pinned-grid.service';
 
@@ -149,6 +159,7 @@ export class NewsPage implements OnInit {
   private readonly newsArchiveService = inject(NewsArchiveService);
   private readonly pinnedGridService = inject(PinnedGridService);
   private readonly notificationService = inject(NotificationService);
+  private readonly authService = inject(AuthService);
   private readonly modalService = inject(ModalService);
   private readonly breakpointObserver = inject(BreakpointObserver);
 
@@ -214,22 +225,37 @@ export class NewsPage implements OnInit {
       });
   });
 
-  protected readonly archiveEntries = computed<AdminNews[]>(() => {
-    const onlyLiked = this.showOnlyLiked();
-    const onlyViewed = this.showOnlyViewed();
+  /**
+   * Клиентской фильтрации здесь больше нет (`stream.Front#129`): отбор
+   * целиком на сервере, и показывается ровно то, что он вернул. Прежний
+   * `filter()` поверх загруженной порции и был багом — старая новость не
+   * находилась, а следующие порции приходили без условий и наполняли ленту
+   * рвано.
+   */
+  protected readonly archiveEntries = computed<AdminNews[]>(() => this.archiveItems());
+
+  /**
+   * Единственное место, где условия панели и тумблеров превращаются в
+   * параметры запроса. Границы периода уходят целыми днями **в часовом поясе
+   * читателя**: бэкенд обе границы включает, поэтому выбранный день попадает
+   * в результат целиком.
+   *
+   * Выключенный признак взаимодействия поле НЕ отправляет: `false` на бэке
+   * означает «только НЕ просмотренные», а не «фильтр не применён».
+   */
+  private readonly archiveQuery = computed<NewsArchiveQuery>(() => {
     const { dateFrom, dateTo, tags } = this.filter();
 
-    return this.archiveItems().filter((item) => {
-      if (onlyLiked && !item.likedByCurrentUser) return false;
-      if (onlyViewed && !item.viewedByCurrentUser) return false;
-
-      const publishedAt = new Date(item.publishedAt);
-      if (dateFrom && publishedAt < startOfDay(dateFrom)) return false;
-      if (dateTo && publishedAt > endOfDay(dateTo)) return false;
-
-      return tags.length === 0 || item.tags.some((tag) => tags.includes(tag.id));
-    });
+    return {
+      ...(dateFrom && { publishedFrom: startOfDay(dateFrom).toISOString() }),
+      ...(dateTo && { publishedTo: endOfDay(dateTo).toISOString() }),
+      ...(tags.length > 0 && { tagIds: tags }),
+      ...(this.showOnlyLiked() && { likedByCurrentUser: true }),
+      ...(this.showOnlyViewed() && { viewedByCurrentUser: true }),
+    };
   });
+
+  private readonly filterSidebar = viewChild.required(NewsFilterSidebar);
 
   constructor() {
     effect(() => {
@@ -237,6 +263,19 @@ export class NewsPage implements OnInit {
       this.pinnedGridService.getLayout(viewport).subscribe((layout) => {
         this.pinnedSlots.set(layout.slots);
         this.gridConfig.set(layout.config);
+      });
+    });
+
+    // Смена условий начинает выборку заново, а не дополняет показанное
+    // (`ФИЛ-Ф-01`). `untracked` — чтобы сбросы и запрос внутри не считались
+    // зависимостями эффекта: следить нужно только за самими условиями.
+    effect(() => {
+      const query = this.archiveQuery();
+      untracked(() => {
+        this.archiveItems.set([]);
+        this.archivePage.set(0);
+        this.archiveTotalPages.set(1);
+        this.loadArchivePage(1, query);
       });
     });
   }
@@ -250,7 +289,9 @@ export class NewsPage implements OnInit {
       .subscribe((response) =>
         this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item))),
       );
-    this.loadArchivePage(1);
+    // Первую страницу архива грузит эффект условий отбора (см. конструктор):
+    // он срабатывает при инициализации с пустым набором условий, и отдельный
+    // вызов здесь означал бы два запроса на старте.
   }
 
   /**
@@ -263,9 +304,34 @@ export class NewsPage implements OnInit {
     this.viewportWidth.set(window.innerWidth);
   }
 
+  /**
+   * Сброс **всех** условий одним действием (`ФИЛ-Ф-03`): вместе с тумблерами
+   * очищается и панель — даты и темы живут в ней, и без этого кнопка
+   * сбрасывала бы лишь половину отбора.
+   */
   protected resetArchiveFilters(): void {
     this.showOnlyViewed.set(false);
     this.showOnlyLiked.set(false);
+    this.filterSidebar().reset();
+  }
+
+  /**
+   * Отбор по своим просмотрам и лайкам требует сессии — без неё бэкенд
+   * отвечает `401` (`ФИЛ-О-04`). Гостю показываем подсказку и не включаем
+   * тумблер: тот же приём, что при попытке лайка без входа (`РЕА-Ф-03`).
+   * Проверка идёт до запроса, поэтому лишнего рейса за `401` нет.
+   */
+  protected onOwnReactionFilterChange(kind: 'viewed' | 'liked', checked: boolean): void {
+    if (checked && !this.authService.currentUser()) {
+      this.notificationService.show(
+        'Войдите, чтобы отбирать новости по своим просмотрам и лайкам',
+        'error',
+      );
+      return;
+    }
+
+    const toggle = kind === 'viewed' ? this.showOnlyViewed : this.showOnlyLiked;
+    toggle.set(checked);
   }
 
   protected onArchiveScroll(event: Event): void {
@@ -324,9 +390,15 @@ export class NewsPage implements OnInit {
     );
   }
 
-  private loadArchivePage(page: number): void {
+  /**
+   * Условия уходят вместе с запросом порции, поэтому подгрузка по скроллу
+   * догружает только совпадения (`ФИЛ-Ф-02`). Аргумент нужен эффекту смены
+   * условий: тот уже прочитал `archiveQuery()` и передаёт его явно, чтобы не
+   * читать сигнал повторно внутри `untracked`.
+   */
+  private loadArchivePage(page: number, query: NewsArchiveQuery = this.archiveQuery()): void {
     this.isLoadingArchive.set(true);
-    this.newsArchiveService.getPage(page, ARCHIVE_PAGE_SIZE).subscribe({
+    this.newsArchiveService.getPage(page, ARCHIVE_PAGE_SIZE, query).subscribe({
       next: (response) => {
         this.archiveItems.update((items) =>
           page === 1 ? response.items : [...items, ...response.items],

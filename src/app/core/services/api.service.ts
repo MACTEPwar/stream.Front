@@ -4,7 +4,12 @@ import { Observable, catchError, throwError } from 'rxjs';
 
 import { environment } from '@env/environment';
 
-type ApiParams = Record<string, string | number | boolean>;
+/**
+ * Массив значений (`stream.Front#129`) — `HttpParams({ fromObject })` умеет их
+ * нативно и разворачивает в повторяемый параметр (`tagIds=a&tagIds=b`),
+ * который принимает бэкенд. Склеивать через запятую руками не нужно.
+ */
+type ApiParams = Record<string, string | number | boolean | readonly string[]>;
 interface ApiOptions {
   withCredentials?: boolean;
 }
