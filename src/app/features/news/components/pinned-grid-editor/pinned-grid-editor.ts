@@ -9,7 +9,6 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DrawerModule } from 'primeng/drawer';
 
 import { ImageVariant, NewsCover } from '@features/admin/models/news.model';
@@ -17,6 +16,7 @@ import { AdminNewsService } from '@features/admin/services/admin-news.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { Button } from '@shared/components/button/button';
+import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { ConfirmModal, ConfirmModalData } from '@shared/components/confirm-modal/confirm-modal';
 import {
   CoverPicker,
@@ -24,19 +24,19 @@ import {
   CoverPickerValue,
 } from '@shared/components/cover-picker/cover-picker';
 import {
+  FocalPointCropSample,
   FocalPointPicker,
   FocalPointValue,
 } from '@shared/components/focal-point-picker/focal-point-picker';
 import { Select } from '@shared/components/select/select';
 import {
-  CUSTOM_SCREEN_SIZE_KEY,
   GridAreaSize,
-  SCREEN_SIZE_PRESETS,
-  ScreenSizePreset,
+  PINNED_GRID_CANVAS_SCREENS,
+  PinnedGridCanvasDensity,
   computePinnedGridAreaSize,
-  resolvePinnedGridViewport,
 } from '@shared/utils/pinned-grid-geometry';
 
+import { QuiltReason } from '../news-card/news-card';
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
 import {
@@ -132,39 +132,44 @@ const IMAGE_POSITION_OPTIONS: { label: string; value: CardImagePosition }[] = [
   { label: 'Слева', value: 'left' },
 ];
 
-/** Дефолтный пресет экрана — попадает в `PinnedGridViewport.large` (1180px, альбомная ориентация ≥768×600). */
-const DEFAULT_SCREEN_PRESET_KEY = 'tablet-landscape';
-
-const SCREEN_PRESET_SELECT_OPTIONS: { label: string; value: string }[] = [
-  ...SCREEN_SIZE_PRESETS.map((preset) => ({ label: preset.label, value: preset.key })),
-  { label: 'Свой размер', value: CUSTOM_SCREEN_SIZE_KEY },
+const VIEWPORT_TOGGLE_OPTIONS: { label: string; value: PinnedGridViewport }[] = [
+  { label: 'Компактная', value: 'small' },
+  { label: 'Широкая', value: 'large' },
 ];
+
+const DENSITY_TOGGLE_OPTIONS: { label: string; value: PinnedGridCanvasDensity }[] = [
+  { label: 'Просторно', value: 'reference' },
+  { label: 'Тесно', value: 'tight' },
+];
+
+const QUILT_REASON_LABELS: Record<Exclude<QuiltReason, null>, string> = {
+  picture: 'тесно: не помещается картинка',
+  text: 'тесно: не помещается текст',
+  both: 'тесно: не помещаются картинка и текст',
+};
+
+/** Образцы кадрирования `FocalPointPicker` укладываются в этот квадрат (`ФОК-Ф-04`) — крупнее не даёт места в 420px-drawer'е, мельче нечитаемо. */
+const CROP_SAMPLE_MAX_SIDE_PX = 96;
+/** Короткая сторона не сжимается ниже этого — иначе на очень вытянутых ячейках превью вырождается в линию. */
+const CROP_SAMPLE_MIN_SIDE_PX = 32;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-/** Первая свободная ячейка 1×1 в `columns`×`rows`, не занятая ни одним из `slots` — `null`, если места нет вообще. */
-function findFreeCell(
-  slots: readonly PinnedNewsSlot[],
-  columns: number,
-  rows: number,
-): { colStart: number; rowStart: number } | null {
-  for (let row = 1; row <= rows; row++) {
-    for (let col = 1; col <= columns; col++) {
-      const occupied = slots.some(
-        (slot) =>
-          col >= slot.colStart &&
-          col <= slot.colStart + slot.colSpan - 1 &&
-          row >= slot.rowStart &&
-          row <= slot.rowStart + slot.rowSpan - 1,
-      );
-      if (!occupied) {
-        return { colStart: col, rowStart: row };
-      }
-    }
+/** Пиксельный размер образца кадрирования по соотношению сторон реальной ячейки — вписывает в {@link CROP_SAMPLE_MAX_SIDE_PX}, длинная сторона может выйти за него, только если иначе короткая ушла бы ниже {@link CROP_SAMPLE_MIN_SIDE_PX} (`ФОК-Ф-04`). */
+function normalizedCropSampleSize(ratio: number): { widthPx: number; heightPx: number } {
+  let width = ratio >= 1 ? CROP_SAMPLE_MAX_SIDE_PX : CROP_SAMPLE_MAX_SIDE_PX * ratio;
+  let height = ratio >= 1 ? CROP_SAMPLE_MAX_SIDE_PX / ratio : CROP_SAMPLE_MAX_SIDE_PX;
+  if (width < CROP_SAMPLE_MIN_SIDE_PX) {
+    height *= CROP_SAMPLE_MIN_SIDE_PX / width;
+    width = CROP_SAMPLE_MIN_SIDE_PX;
   }
-  return null;
+  if (height < CROP_SAMPLE_MIN_SIDE_PX) {
+    width *= CROP_SAMPLE_MIN_SIDE_PX / height;
+    height = CROP_SAMPLE_MIN_SIDE_PX;
+  }
+  return { widthPx: Math.round(width), heightPx: Math.round(height) };
 }
 
 /**
@@ -177,20 +182,28 @@ function findFreeCell(
  * вычисляется из слотов ОБЕИХ раскладок — какая из
  * них первой встретит `newsId`, у той и берётся, они обязаны совпадать) —
  * позиция (`colStart`/`rowStart`/`colSpan`/`rowSpan`) — своя на каждую
- * раскладку. В раскладке, которую админ прямо сейчас не редактирует, новость
- * появляется автоматически — `1×1`, первая свободная ячейка
- * (`reconciledLayouts`, чистый `computed`, ничего не пишет в `localLayouts`,
- * пока admin реально не провзаимодействует с этой раскладкой — драг/ресайз/
- * редактирование стиля/ресайз сетки материализуют её в `localLayouts`).
+ * раскладку.
  *
- * **Асимметрия при нехватке места** (прямое решение пользователя) — на
- * `small` строки автоматически добавляются (`config.rows + 1`, реальная
- * страница на `small` `height: auto` и скроллится, места всегда можно
- * нарастить); на `large` сетка обязана уместиться в экран — если свободной
- * ячейки нет, новость уходит в список «не размещено»
- * (`unplacedForLargeIds`), явно показанный админу с предупреждением, вместо
- * молчаливой пропажи. Разместить вручную — кнопка у карточки списка, запускает
- * тот же drag-прямоугольник, что и обычное добавление.
+ * **Размещение — всегда явное действие администратора** (`РАС-Ф-02`,
+ * `stream.Front#128`) — редактор больше НЕ занимает свободную ячейку во
+ * второй раскладке сам и не расширяет под новость сетку: закрепив новость,
+ * админ размещает её в ТЕКУЩЕЙ раскладке (drag-прямоугольник), а вторую
+ * наполняет, переключившись на неё и разместив там отдельно.
+ * `placedViewportsByNewsId` — passive-индикатор (`РАС-Ф-05`), в каких
+ * раскладках новость УЖЕ размещена по-настоящему: подсказка, а не запрет,
+ * ничего не блокирует и не размещает сама. Список закреплённых новостей
+ * (`pinnedNewsList`) с этими бейджами и кнопкой «Разместить здесь» для
+ * недостающей раскладки — единственный способ добавить новость во вторую
+ * раскладку, кроме переключения и обычного добавления заново.
+ *
+ * **Два состояния холста на раскладку, не выбор устройства** (`РАБ-Ф-01`,
+ * `РАБ-Ф-02`, `РАБ-Ф-07`, `РАБ-Ф-08`, `stream.Front#128`) — `viewportPreset`
+ * переключается напрямую (`small`/`large`, ровно то же, что видит
+ * посетитель), `density` — между просторным (эталон) и тесным (самый узкий
+ * экран, где раскладка у посетителя ещё показывается) краями
+ * (`PINNED_GRID_CANVAS_SCREENS`, `pinned-grid-geometry.ts`). Список типовых
+ * устройств и поле произвольного размера убраны целиком — third variant не
+ * предусмотрен.
  *
  * **Focal point — у картинки, не у слота** (`pinned-grid-rework`) — пикер
  * (`FocalPointPicker`) встроен в drawer редактирования карточки, на месте
@@ -198,7 +211,10 @@ function findFreeCell(
  * (`AdminNewsService.updateImageFocalPoint()`), не через «Сохранить»
  * раскладки — влияет на все места, где эта картинка показывается.
  * `focalOverrides` — локальный оптимистичный кэш применённых точек (по `id`
- * картинки), пока родитель не перезагрузит `news()` с backend.
+ * картинки), пока родитель не перезагрузит `news()` с backend. Образцы
+ * кадрирования (`editingCropSamples`) берутся из РЕАЛЬНЫХ форм ячеек этой
+ * новости в обеих раскладках (`ФОК-Ф-04`), а не из отвлечённого набора
+ * фиксированных пропорций.
  *
  * **Обложка — тем же приёмом** (`stream.Front#132`, `РЕД-О-02`): `CoverPicker`
  * в том же drawer'е меняет обложку сразу, отдельным `AdminNewsService.update()`,
@@ -209,13 +225,23 @@ function findFreeCell(
  * типа обложки, для которого ещё не выбрана картинка/файл, — на сервер он не
  * уходит (провалил бы валидацию `AdminNewsService.update()`).
  *
+ * **Режим подложки виден и на холсте** (`РАБ-Ф-09`, `РАБ-Ф-10`) — холст
+ * рендерит тот же `NewsCard`, что и публичная страница, поэтому переход
+ * автоматический; `#previewCard.quiltReason()` читается через template ref
+ * (не `protected` — Angular не даёт видеть `protected`-члены чужого
+ * компонента) и превращается в подсказку через `quiltReasonLabel()`.
+ *
+ * Отдельного iframe-предпросмотра «как у посетителя» больше нет
+ * (`Принятые решения`, `specs/02-admin/05-pinned/spec.md`) — прямой
+ * переключатель раскладки/состояния холста показывает то же самое
+ * напрямую, без второго дублирующего вида.
+ *
  * Остальное — без изменений (`stream.Front#118`): драг/ресайз/добавление —
- * голые Pointer Events, размер сетки/подсветка/геометрия холста/предпросмотр
- * «как посетитель» — та же механика, что раньше.
+ * голые Pointer Events, размер сетки/подсветка — та же механика, что раньше.
  */
 @Component({
   selector: 'app-pinned-grid-editor',
-  imports: [Button, Select, DrawerModule, NewsCard, FocalPointPicker, CoverPicker],
+  imports: [Button, ButtonGroup, Select, DrawerModule, NewsCard, FocalPointPicker, CoverPicker],
   templateUrl: './pinned-grid-editor.html',
   styleUrl: './pinned-grid-editor.scss',
 })
@@ -224,7 +250,6 @@ export class PinnedGridEditor {
   private readonly destroyRef = inject(DestroyRef);
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly adminNewsService = inject(AdminNewsService);
 
   readonly news = input.required<NewsItem[]>();
@@ -233,6 +258,9 @@ export class PinnedGridEditor {
 
   protected readonly emptyTags: NewsTag[] = [];
   protected readonly imagePositionOptions = IMAGE_POSITION_OPTIONS;
+  protected readonly viewportToggleOptions = VIEWPORT_TOGGLE_OPTIONS;
+  protected readonly densityToggleOptions = DENSITY_TOGGLE_OPTIONS;
+  protected readonly pinnedGridViewports = PINNED_GRID_VIEWPORTS;
 
   protected readonly localLayouts = linkedSignal<Record<PinnedGridViewport, PinnedGridLayout>>(() =>
     this.layouts(),
@@ -241,11 +269,10 @@ export class PinnedGridEditor {
 
   protected readonly gridHighlightEnabled = signal(false);
 
-  protected readonly screenPresetKey = signal(DEFAULT_SCREEN_PRESET_KEY);
-  protected readonly screenPresetOptions = SCREEN_PRESET_SELECT_OPTIONS;
-  protected readonly customScreenSizeKey = CUSTOM_SCREEN_SIZE_KEY;
-  protected readonly customScreenWidth = signal(1366);
-  protected readonly customScreenHeight = signal(768);
+  /** Прямой переключатель раскладки (`РАБ-Ф-01`, `РАБ-Ф-02`) — не выводится из размера экрана, задаётся явно. */
+  protected readonly viewportPreset = signal<PinnedGridViewport>('large');
+  /** Просторное/тесное состояние холста ТЕКУЩЕЙ раскладки (`РАБ-Ф-07`, `РАБ-Ф-08`). */
+  protected readonly density = signal<PinnedGridCanvasDensity>('reference');
 
   /** `id` картинки → применённая (но ещё не отражённая в `news()`) точка фокуса, оптимистичный локальный кэш для `FocalPointPicker`. */
   private readonly focalOverrides = signal<Record<string, FocalPoint | null>>({});
@@ -255,35 +282,14 @@ export class PinnedGridEditor {
   /** Тип обложки выбран в `CoverPicker`, но конкретная картинка/файл — ещё нет: держим локально, на сервер не отправляем (`{type, url: null}` не пройдёт валидацию бэка для `image`/`custom`). Сбрасывается при смене редактируемой новости и на каждый реальный коммит. */
   private readonly pendingCoverType = signal<CoverPickerType | null>(null);
 
-  /** Реальный размер окна браузера для холста/предпросмотра — либо готовый пресет, либо ручной ввод («Свой размер»). */
-  protected readonly screenSize = computed<{ width: number; height: number }>(() => {
-    const key = this.screenPresetKey();
-    if (key === CUSTOM_SCREEN_SIZE_KEY) {
-      return { width: this.customScreenWidth(), height: this.customScreenHeight() };
-    }
-    const preset: ScreenSizePreset | undefined = SCREEN_SIZE_PRESETS.find(
-      (item) => item.key === key,
-    );
-    return preset ?? SCREEN_SIZE_PRESETS[0];
-  });
-
-  /** Какая из двух раскладок (`PinnedGridViewport`) сейчас редактируется — выведена из `screenSize()` теми же порогами, что `_breakpoints.scss` (учитывают ориентацию), не отдельный контрол. */
-  protected readonly viewportPreset = computed<PinnedGridViewport>(() =>
-    resolvePinnedGridViewport(this.screenSize().width, this.screenSize().height),
+  /** Реальный размер экрана холста — одно из двух состояний ТЕКУЩЕЙ раскладки (`РАБ-Ф-01`…`РАБ-Ф-08`), не выбор устройства/произвольный ввод. */
+  protected readonly screenSize = computed<{ width: number; height: number }>(
+    () => PINNED_GRID_CANVAS_SCREENS[this.viewportPreset()][this.density()],
   );
 
   /** Реальная площадь под сетку на странице `/news` для `screenSize()` — см. `computePinnedGridAreaSize()`. */
   protected readonly gridAreaSize = computed<GridAreaSize>(() =>
     computePinnedGridAreaSize(this.screenSize().width, this.screenSize().height),
-  );
-
-  protected readonly previewMode = signal(false);
-  protected readonly previewRefreshToken = signal(0);
-
-  protected readonly previewSrc = computed<SafeResourceUrl>(() =>
-    this.sanitizer.bypassSecurityTrustResourceUrl(
-      `/news?pinnedGridPreview=${this.previewRefreshToken()}`,
-    ),
   );
 
   private readonly existingNewsIds = computed(() => new Set(this.news().map((item) => item.id)));
@@ -304,63 +310,53 @@ export class PinnedGridEditor {
   });
 
   /**
-   * Чистая проекция `localLayouts()` — в каждой раскладке появляются все
-   * закреплённые новости (`pinnedMeta`), даже те, что реально размещены
-   * только в другой раскладке (авто-`1×1`, первая свободная ячейка; `small`
-   * при нехватке места добавляет строку, `large` — не может, такие новости
-   * попадают в `unplacedForLarge` вместо слота). НИЧЕГО не пишет обратно в
-   * `localLayouts` — материализация происходит только при реальном
-   * взаимодействии (см. `updateCurrentSlots()`/`onSaveClick()`).
+   * Текущая раскладка — РЕАЛЬНЫЕ слоты `localLayouts()`, без авто-заполнения
+   * (`РАС-Ф-02`, `stream.Front#128`): новость, закреплённая, но не
+   * размещённая явно в этой раскладке, здесь просто отсутствует — админ
+   * видит её в `pinnedNewsList` и размещает сам, когда решит. Осиротевшие
+   * слоты (`newsId` без соответствующей новости в `news()`) отфильтровываются
+   * — та же гигиена, что раньше делала `reconciled()`, без автозаполнения.
    */
-  private readonly reconciled = computed<{
-    layouts: Record<PinnedGridViewport, PinnedGridLayout>;
-    unplacedForLarge: string[];
-  }>(() => {
-    const layouts = this.localLayouts();
-    const meta = this.pinnedMeta();
+  protected readonly currentLayout = computed(() => {
+    const layout = this.localLayouts()[this.viewportPreset()];
     const existing = this.existingNewsIds();
-    const news = this.news();
-    const unplacedForLarge: string[] = [];
-
-    const result = {} as Record<PinnedGridViewport, PinnedGridLayout>;
-    for (const viewport of PINNED_GRID_VIEWPORTS) {
-      let slots = layouts[viewport].slots.filter((slot) => existing.has(slot.newsId));
-      let config = layouts[viewport].config;
-      const missingIds = Object.keys(meta).filter(
-        (newsId) => !slots.some((slot) => slot.newsId === newsId),
-      );
-
-      for (const newsId of missingIds) {
-        const cell = findFreeCell(slots, config.columns, config.rows);
-        if (cell) {
-          slots = [
-            ...slots,
-            this.buildSlot(newsId, cell.colStart, cell.rowStart, 1, 1, meta[newsId], news),
-          ];
-        } else if (viewport === 'small') {
-          config = { ...config, rows: config.rows + 1 };
-          slots = [...slots, this.buildSlot(newsId, 1, config.rows, 1, 1, meta[newsId], news)];
-        } else {
-          unplacedForLarge.push(newsId);
-        }
-      }
-
-      result[viewport] = { config, slots };
-    }
-
-    return { layouts: result, unplacedForLarge };
+    return {
+      config: layout.config,
+      slots: layout.slots.filter((slot) => existing.has(slot.newsId)),
+    };
   });
-
-  protected readonly currentLayout = computed(
-    () => this.reconciled().layouts[this.viewportPreset()],
-  );
   protected readonly localGridConfig = computed(() => this.currentLayout().config);
   protected readonly localSlots = computed(() => this.currentLayout().slots);
 
-  /** Закреплённые новости, для которых на `large` нет свободного места вообще (не показаны на `large`, только на `small`) — по прямому решению пользователя показаны явным списком с предупреждением, не пропадают молча. */
-  protected readonly unplacedForLarge = computed(() => {
-    const ids = new Set(this.reconciled().unplacedForLarge);
-    return this.news().filter((item) => ids.has(item.id));
+  /** В каких раскладках закреплённая новость РЕАЛЬНО размещена сейчас (`РАС-Ф-05`) — passive-индикатор для `pinnedNewsList`, не блокирует ни сохранение, ни что-либо ещё. */
+  private readonly placedViewportsByNewsId = computed<Record<string, PinnedGridViewport[]>>(() => {
+    const layouts = this.localLayouts();
+    const existing = this.existingNewsIds();
+    const result: Record<string, PinnedGridViewport[]> = {};
+    for (const viewport of PINNED_GRID_VIEWPORTS) {
+      for (const slot of layouts[viewport].slots) {
+        if (!existing.has(slot.newsId)) {
+          continue;
+        }
+        (result[slot.newsId] ??= []).push(viewport);
+      }
+    }
+    return result;
+  });
+
+  /** Все закреплённые новости (`pinnedMeta`) с их статусом размещения по раскладкам — питает панель `pinned-grid-editor__placement-status` (`РАС-Ф-05`). */
+  protected readonly pinnedNewsList = computed(() => {
+    const meta = this.pinnedMeta();
+    const placed = this.placedViewportsByNewsId();
+    const newsById = new Map(this.news().map((item) => [item.id, item]));
+    const result: { newsId: string; item: NewsItem; placedIn: PinnedGridViewport[] }[] = [];
+    for (const newsId of Object.keys(meta)) {
+      const item = newsById.get(newsId);
+      if (item) {
+        result.push({ newsId, item, placedIn: placed[newsId] ?? [] });
+      }
+    }
+    return result;
   });
 
   protected readonly columnsDraft = linkedSignal(() => this.localGridConfig().columns);
@@ -439,6 +435,31 @@ export class PinnedGridEditor {
     return image.focalX !== null && image.focalY !== null
       ? { x: image.focalX, y: image.focalY }
       : null;
+  });
+
+  /**
+   * Образцы кадрирования для `FocalPointPicker` — РЕАЛЬНЫЕ формы ячеек этой
+   * новости в обеих раскладках, где она сейчас размещена (`ФОК-Ф-04`), не
+   * отвлечённый набор фиксированных пропорций. Соотношение сторон берётся на
+   * эталонном экране каждой раскладки (`reference` — сама раскладка от
+   * ширины экрана не зависит, только размер ячейки на нём, поэтому именно
+   * эталон, а не текущее состояние холста).
+   */
+  protected readonly editingCropSamples = computed<FocalPointCropSample[]>(() => {
+    const newsId = this.editingNewsId();
+    if (!newsId) {
+      return [];
+    }
+    const samples: FocalPointCropSample[] = [];
+    for (const viewport of PINNED_GRID_VIEWPORTS) {
+      const ratio = this.cellAspectRatioFor(viewport, newsId);
+      if (ratio === null) {
+        continue;
+      }
+      const label = viewport === 'large' ? 'Широкая' : 'Компактная';
+      samples.push({ label, ...normalizedCropSampleSize(ratio) });
+    }
+    return samples;
   });
 
   protected readonly entries = computed(() => {
@@ -527,6 +548,33 @@ export class PinnedGridEditor {
     const { columns, rows } = this.localGridConfig();
     return isSlotPlacementValid(candidate, this.localSlots(), columns, rows);
   });
+
+  /**
+   * Соотношение сторон (ширина/высота) реальной ячейки `newsId` в `viewport`
+   * на ЭТАЛОННОМ экране этой раскладки — `null`, если новость там не
+   * размещена (`editingCropSamples`, `ФОК-Ф-04`). На `small` высота холста
+   * не фиксирована (`gridAreaSize().height === null`), поэтому строка берёт
+   * тот же практический пол, что и сам холст редактора
+   * (`EDITOR_SMALL_MIN_ROW_HEIGHT_PX`) — по нему считаются его же строки.
+   */
+  private cellAspectRatioFor(viewport: PinnedGridViewport, newsId: string): number | null {
+    const layout = this.localLayouts()[viewport];
+    const slot = layout.slots.find((item) => item.newsId === newsId);
+    if (!slot) {
+      return null;
+    }
+    const screen = PINNED_GRID_CANVAS_SCREENS[viewport].reference;
+    const area = computePinnedGridAreaSize(screen.width, screen.height);
+    const { columns, rows } = layout.config;
+    const rowHeightPx =
+      area.height !== null
+        ? (area.height - GRID_GAP_PX * (rows - 1)) / rows
+        : EDITOR_SMALL_MIN_ROW_HEIGHT_PX;
+    const colWidthPx = (area.width - GRID_GAP_PX * (columns - 1)) / columns;
+    const cellWidthPx = colWidthPx * slot.colSpan + GRID_GAP_PX * (slot.colSpan - 1);
+    const cellHeightPx = rowHeightPx * slot.rowSpan + GRID_GAP_PX * (slot.rowSpan - 1);
+    return cellWidthPx > 0 && cellHeightPx > 0 ? cellWidthPx / cellHeightPx : null;
+  }
 
   private buildSlot(
     newsId: string,
@@ -649,39 +697,22 @@ export class PinnedGridEditor {
     return rect ? `${rect.rowStart} / span ${rect.rowSpan}` : '1 / span 1';
   }
 
-  protected onScreenPresetChange(key: string | null): void {
-    if (!key) {
+  protected onViewportChange(viewport: PinnedGridViewport | null): void {
+    if (!viewport) {
       return;
     }
-    this.screenPresetKey.set(key);
+    this.viewportPreset.set(viewport);
   }
 
-  protected onCustomScreenWidthInput(value: string): void {
-    const numeric = Number(value);
-    if (Number.isNaN(numeric) || numeric < 1) {
+  protected onDensityChange(density: PinnedGridCanvasDensity | null): void {
+    if (!density) {
       return;
     }
-    this.customScreenWidth.set(numeric);
+    this.density.set(density);
   }
 
-  protected onCustomScreenHeightInput(value: string): void {
-    const numeric = Number(value);
-    if (Number.isNaN(numeric) || numeric < 1) {
-      return;
-    }
-    this.customScreenHeight.set(numeric);
-  }
-
-  protected onOpenPreviewClick(): void {
-    this.previewMode.set(true);
-  }
-
-  protected onClosePreviewClick(): void {
-    this.previewMode.set(false);
-  }
-
-  protected onRefreshPreviewClick(): void {
-    this.previewRefreshToken.update((token) => token + 1);
+  protected quiltReasonLabel(reason: Exclude<QuiltReason, null>): string {
+    return QUILT_REASON_LABELS[reason];
   }
 
   protected optionsForSlot(currentNewsId: string): NewsItem[] {
@@ -753,11 +784,19 @@ export class PinnedGridEditor {
   }
 
   protected onSaveClick(): void {
-    // Сохраняется РЕКОНСИЛИРОВАННОЕ состояние (`reconciled().layouts`) — каждая
-    // закреплённая новость материализуется в ОБЕИХ раскладках (кроме тех, что
-    // ушли в `unplacedForLarge` — у них там нет валидного места, они не
-    // попадают в `large.slots`, пока админ не разместит их вручную).
-    this.save.emit(this.reconciled().layouts);
+    // Сохраняется РЕАЛЬНОЕ состояние `localLayouts()` — только то, что админ
+    // явно разместил в каждой раскладке (`РАС-Ф-02`), плюс та же гигиена
+    // осиротевших слотов, что и `currentLayout`.
+    const existing = this.existingNewsIds();
+    const cleaned = {} as Record<PinnedGridViewport, PinnedGridLayout>;
+    for (const viewport of PINNED_GRID_VIEWPORTS) {
+      const layout = this.localLayouts()[viewport];
+      cleaned[viewport] = {
+        config: layout.config,
+        slots: layout.slots.filter((slot) => existing.has(slot.newsId)),
+      };
+    }
+    this.save.emit(cleaned);
   }
 
   protected onPointerDown(event: PointerEvent, slot: PinnedNewsSlot, kind: DragKind): void {
@@ -871,8 +910,8 @@ export class PinnedGridEditor {
     this.addDrawerVisible.set(false);
   }
 
-  /** Разместить вручную новость из списка «не размещено на large» — тот же режим drag-прямоугольника, что и обычное добавление, только стиль уже есть (`pinnedMeta`) и не сбрасывается. */
-  protected onPlaceUnplacedClick(newsId: string): void {
+  /** Разместить в ТЕКУЩЕЙ раскладке новость, закреплённую, но здесь ещё не размещённую (`pinnedNewsList`, `РАС-Ф-05`) — тот же режим drag-прямоугольника, что и обычное добавление, только стиль уже есть (`pinnedMeta`) и не сбрасывается. */
+  protected onPlaceInCurrentViewportClick(newsId: string): void {
     this.pendingNews.set({ newsId });
   }
 
@@ -1159,16 +1198,16 @@ export class PinnedGridEditor {
     ]);
   }
 
-  /** Переносит новый стиль во ВСЕ слоты этой новости в обеих раскладках (материализованных или ещё виртуальных — виртуальные материализуются заодно). */
+  /** Переносит новый стиль во ВСЕ слоты этой новости во ВСЕХ раскладках, где она РЕАЛЬНО размещена (`РЕД-О-02`) — виртуальных больше нет, переносить в несуществующий слот не на что. */
   private applyMetaToNews(newsId: string, style: PinnedNewsCardStyle): void {
-    const reconciledLayouts = this.reconciled().layouts;
+    const layouts = this.localLayouts();
     const news = this.news();
     this.localLayouts.update(() => {
       const next = {} as Record<PinnedGridViewport, PinnedGridLayout>;
       for (const viewport of PINNED_GRID_VIEWPORTS) {
         next[viewport] = {
-          config: reconciledLayouts[viewport].config,
-          slots: reconciledLayouts[viewport].slots.map((slot) =>
+          config: layouts[viewport].config,
+          slots: layouts[viewport].slots.map((slot) =>
             slot.newsId === newsId
               ? this.buildSlot(
                   newsId,

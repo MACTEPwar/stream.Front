@@ -7,6 +7,20 @@ export interface FocalPointValue {
   readonly y: number;
 }
 
+/** Один образец кадрирования — конкретный пиксельный размер превью, не абстрактное соотношение сторон (`ФОК-Ф-04`). */
+export interface FocalPointCropSample {
+  readonly label: string;
+  readonly widthPx: number;
+  readonly heightPx: number;
+}
+
+/** Дефолт на случай, если потребитель не передал свои образцы — те же три характерные пропорции, что были здесь раньше (квадрат/широкая/высокая). */
+const DEFAULT_CROP_SAMPLES: readonly FocalPointCropSample[] = [
+  { label: '1:1', widthPx: 64, heightPx: 64 },
+  { label: '16:9', widthPx: 96, heightPx: 54 },
+  { label: '3:4', widthPx: 48, heightPx: 64 },
+];
+
 function clampPercent(value: number): number {
   return Math.min(100, Math.max(0, value));
 }
@@ -16,10 +30,15 @@ function clampPercent(value: number): number {
  * прямому запросу пользователя «где выбирается та самая точка, я не вижу») —
  * показывает картинку целиком, клик/перетаскивание по ней ставит маркер,
  * координаты отдаются в процентах (0..100) через `pointChange`/`pointCommit`.
- * Рядом — превью кропа в трёх характерных пропорциях (квадрат 1:1, широкая
- * 16:9, высокая 3:4, `object-fit: cover` с тем же `object-position`, что и у
- * реального применения точки в `NewsCard`), чтобы сразу было видно, что
- * фокус нигде не отрезает главный объект. `point() === null` — центр
+ * Рядом — превью кропа в образцах, которые передаёт потребитель
+ * (`cropSamples`, `ФОК-Ф-04`) — конкретные пиксельные пропорции, а не
+ * отвлечённый фиксированный набор: `PinnedGridEditor` передаёт реальные формы
+ * ячеек этой новости в обеих раскладках, чтобы проверялось именно то, что
+ * возникнет у посетителя, а не форма, которой у новости может и не быть. Без
+ * входа — три исходных характерных пропорции (квадрат/широкая/высокая) как
+ * дефолт для прочих потребителей. `object-fit: cover` с тем же
+ * `object-position`, что и у реального применения точки в `NewsCard`, чтобы
+ * сразу было видно, что фокус нигде не отрезает главный объект. `point() === null` — центр
  * (50/50), кнопка «Сбросить в центр» эмитит `null` явно (не `{x:50,y:50}`) —
  * так потребитель отличает «сброшено» от «выбрана точка, совпавшая с
  * центром».
@@ -54,6 +73,7 @@ export class FocalPointPicker {
 
   readonly imageUrl = input.required<string>();
   readonly point = input<FocalPointValue | null>(null);
+  readonly cropSamples = input<readonly FocalPointCropSample[]>(DEFAULT_CROP_SAMPLES);
   readonly pointChange = output<FocalPointValue | null>();
   readonly pointCommit = output<FocalPointValue | null>();
 
@@ -63,11 +83,14 @@ export class FocalPointPicker {
   protected readonly displayPoint = computed<FocalPointValue>(
     () => this.livePoint() ?? this.point() ?? { x: 50, y: 50 },
   );
-  protected readonly objectPosition = computed(() => `${this.displayPoint().x}% ${this.displayPoint().y}%`);
+  protected readonly objectPosition = computed(
+    () => `${this.displayPoint().x}% ${this.displayPoint().y}%`,
+  );
 
   protected onCanvasPointerDown(event: PointerEvent): void {
     this.dragging.set(true);
-    const target = event.target as (Element & { setPointerCapture?(pointerId: number): void }) | null;
+    const target = event.target as
+      (Element & { setPointerCapture?(pointerId: number): void }) | null;
     if (target?.setPointerCapture && event.pointerId !== undefined) {
       target.setPointerCapture(event.pointerId);
     }

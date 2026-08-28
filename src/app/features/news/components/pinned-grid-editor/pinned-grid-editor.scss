@@ -59,8 +59,7 @@ $handle-size: 10px;
   font-size: vars.$font-size-14;
 }
 
-.pinned-grid-editor__placement-banner,
-.pinned-grid-editor__preview-banner {
+.pinned-grid-editor__placement-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -73,31 +72,54 @@ $handle-size: 10px;
   font-size: vars.$font-size-14;
 }
 
-// «Не размещено на large» (`pinned-grid-rework`, по прямому решению
-// пользователя) — предупреждение, а не молчаливая пропажа карточки.
-.pinned-grid-editor__unplaced-banner {
+.pinned-grid-editor__toggle-label {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  color: vars.$color-ffffff;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+// Passive-индикатор «в каких раскладках размещена» (`РАС-Ф-05`,
+// `stream.Front#128`) — не блокирует ничего, только подсказывает, что ещё не
+// сделано, поэтому визуально спокойнее (`__placement-banner`) обычного
+// предупреждения.
+.pinned-grid-editor__placement-status {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
   padding: 12px 16px;
   border-radius: 5px;
-  background: rgba(vars.$color-af4141, 0.15);
+  background: rgba(vars.$color-ffffff, 0.06);
   color: vars.$color-ffffff;
   font-family: vars.$font-family-nunito-sans;
   font-size: vars.$font-size-14;
 }
 
-.pinned-grid-editor__unplaced-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.pinned-grid-editor__placement-status-label {
+  opacity: 0.75;
 }
 
-.pinned-grid-editor__unplaced-item {
+.pinned-grid-editor__placement-status-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+}
+
+.pinned-grid-editor__viewport-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(vars.$color-ffffff, 0.3);
+  font-size: vars.$font-size-14;
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+
+.pinned-grid-editor__viewport-badge--placed {
+  border-color: vars.$color-47be61;
+  background: rgba(vars.$color-47be61, 0.2);
+  opacity: 1;
 }
 
 .pinned-grid-editor__focal-field {
@@ -168,18 +190,6 @@ $handle-size: 10px;
   height: auto;
 }
 
-.pinned-grid-editor__viewport-select {
-  min-width: 220px;
-}
-
-.pinned-grid-editor__resolved-viewport {
-  font-family: vars.$font-family-montserrat;
-  font-size: vars.$font-size-14;
-  color: vars.$color-ffffff;
-  opacity: 0.75;
-  white-space: nowrap;
-}
-
 // `flex: 1; min-height: 0` — на `large` (`gridAreaSize().height` — число) весь
 // грид обязан помещаться во вьюпорт целиком без скролла: строки/колонки
 // (`1fr` в `gridTemplateRows()`/`gridTemplateColumns()`, ts) сами сжимаются
@@ -203,12 +213,6 @@ $handle-size: 10px;
   flex: none;
   min-height: 240px;
   height: auto;
-}
-
-.pinned-grid-editor__preview-iframe {
-  flex-shrink: 0;
-  border: 1px dashed rgba(vars.$color-ffffff, 0.3);
-  background: vars.$color-ffffff;
 }
 
 .pinned-grid-editor__card {
@@ -243,6 +247,23 @@ $handle-size: 10px;
   display: block;
   width: 100%;
   height: 100%;
+}
+
+// Подсказка «какой блок не уместился» (`РАБ-Ф-10`) — тот же холст, что видит
+// посетитель, только тут ещё видно ПОЧЕМУ карточка ушла в режим подложки, не
+// только сам факт перехода.
+.pinned-grid-editor__quilt-hint {
+  position: absolute;
+  z-index: 1;
+  right: 4px;
+  bottom: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(vars.$color-af4141, 0.85);
+  color: vars.$color-ffffff;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  pointer-events: none;
 }
 
 .pinned-grid-editor__card-controls {

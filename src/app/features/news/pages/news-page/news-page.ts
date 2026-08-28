@@ -12,7 +12,7 @@ import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
 import { LARGE_QUERY } from '@shared/utils/breakpoints';
-import { isNewsArchiveBeside, newsPageContentWidth } from '@shared/utils/news-layout';
+import { isNewsArchiveBesideForScreen, newsPageContentWidth } from '@shared/utils/news-layout';
 
 import { NewsArchiveItem } from '../../components/news-archive-item/news-archive-item';
 import { NewsDetailModal } from '../../components/news-detail-modal/news-detail-modal';
@@ -165,32 +165,21 @@ export class NewsPage {
   private readonly viewportWidth = signal(window.innerWidth);
 
   /**
-   * Потолок ширины окна, выше которого лента вообще имеет право стоять
-   * сбоку — по прямому запросу пользователя после визуальной проверки: на
-   * 1200px и уже витрине, зажатой между лентой на её минимуме (440) и
-   * зазором, оставалось ~530px, и это нечитаемо мало для главного
-   * содержимого страницы (`РАЗ-О-01`). Формально это отдельный порог
-   * поверх содержимого блоков, а не выведенный из их минимумов
-   * (`РАЗ-Ф-03` в спеке запрещает именно это) — сознательное исключение
-   * ради конкретного диапазона 1080..1200, где формула из минимумов ещё
-   * держит ленту сбоку, а результат уже недостаточно широкий.
-   */
-  private static readonly ARCHIVE_BESIDE_MAX_VIEWPORT_WIDTH_PX = 1200;
-
-  /**
    * Хватает ли витрине места, чтобы лента стояла сбоку (`АДП-О-12`,
-   * `РАЗ-О-02`). Пресет для паддинга берётся у `viewport()` — того же
-   * источника, что раскладку сетки, чтобы не заводить третью копию правила
-   * `large`/`small`.
+   * `РАЗ-О-02`, плюс потолок `NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX`
+   * — см. `news-layout.ts`). Пресет для паддинга берётся у `viewport()` —
+   * того же источника, что раскладку сетки, чтобы не заводить третью копию
+   * правила `large`/`small`.
    *
    * От этого зависит не только положение ленты: страница с лентой снизу
    * переходит на document-level скролл, а сетка и список архива — на
    * content-based высоту (см. `news-page.scss`).
    */
-  protected readonly isArchiveBeside = computed(
-    () =>
-      this.viewportWidth() > NewsPage.ARCHIVE_BESIDE_MAX_VIEWPORT_WIDTH_PX &&
-      isNewsArchiveBeside(newsPageContentWidth(this.viewportWidth(), this.viewport())),
+  protected readonly isArchiveBeside = computed(() =>
+    isNewsArchiveBesideForScreen(
+      this.viewportWidth(),
+      newsPageContentWidth(this.viewportWidth(), this.viewport()),
+    ),
   );
 
   private readonly pinnedSlots = signal<PinnedNewsSlot[]>([]);

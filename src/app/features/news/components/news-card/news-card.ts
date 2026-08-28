@@ -26,6 +26,9 @@ const FLEX_DIRECTION_BY_IMAGE_POSITION: Record<CardImagePosition, string> = {
   right: 'row-reverse',
 };
 
+/** Какой из блоков карточки не уместился в режим подложки — `NewsCard.quiltReason` (`РАБ-Ф-10`). */
+export type QuiltReason = 'picture' | 'text' | 'both' | null;
+
 /** Минимальная толщина блока изображения, ниже которой оно вырождается в полосу (`ЗАК-Ф-12`, таблица порогов в spec). */
 const MIN_PICTURE_THICKNESS_PX = 96;
 /** Минимальная толщина текстового блока — строка заголовка + полоса счётчиков с отступами (`ЗАК-Ф-12`). */
@@ -135,18 +138,40 @@ export class NewsCard {
     return position === 'left' || position === 'right' ? this.hostWidthPx() : this.hostHeightPx();
   });
 
-  protected readonly isQuiltMode = computed(() => {
+  /**
+   * Какой из двух блоков не уместился в режим подложки — `null`, если
+   * карточка в обычном виде (`РАБ-Ф-10`, `specs/02-admin/05-pinned/spec.md`):
+   * редактору витрины мало знать САМ факт перехода (`isQuiltMode`), нужно и
+   * ПОЧЕМУ, иначе смена вида выглядит сбоем, а не правилом. `public`
+   * (не `protected`) — `PinnedGridEditor` читает его через `#ref` на
+   * `<app-news-card>` в своём холсте (Angular не даёт родителю видеть
+   * `protected`-члены чужого компонента).
+   */
+  readonly quiltReason = computed<QuiltReason>(() => {
     if (!this.hasCoverUrl()) {
-      return false;
+      return null;
     }
     const axisSize = this.axisSizePx();
     if (axisSize === null) {
-      return false;
+      return null;
     }
     const pictureThickness = (axisSize * this.cardStyle().imageSizePercent) / 100;
     const textThickness = axisSize - pictureThickness;
-    return pictureThickness < MIN_PICTURE_THICKNESS_PX || textThickness < MIN_TEXT_THICKNESS_PX;
+    const pictureTooThin = pictureThickness < MIN_PICTURE_THICKNESS_PX;
+    const textTooThin = textThickness < MIN_TEXT_THICKNESS_PX;
+    if (pictureTooThin && textTooThin) {
+      return 'both';
+    }
+    if (pictureTooThin) {
+      return 'picture';
+    }
+    if (textTooThin) {
+      return 'text';
+    }
+    return null;
   });
+
+  protected readonly isQuiltMode = computed(() => this.quiltReason() !== null);
 
   /** Без обложки или в режиме подложки место под картинку долей не размечается — либо его нет вовсе (`ЗАК-Ф-05`), либо картинка занимает всё через `position: absolute` (`.news-card--quilt`, `flex` тогда не участвует). */
   protected readonly pictureFlexBasis = computed(() => {
