@@ -23,6 +23,17 @@ import { LikeResponse, NewsArchiveService } from '../../services/news-archive.se
 import { PinnedGridService } from '../../services/pinned-grid.service';
 import { NewsPage } from './news-page';
 
+const PINNED_CONTENT = {
+  title: 'Заголовок закреплённой',
+  description: 'Описание закреплённой',
+  publishedAt: '2023-12-06T00:00:00.000Z',
+  viewCount: 100,
+  likeCount: 10,
+  likedByCurrentUser: false,
+  viewedByCurrentUser: false,
+  tags: [],
+};
+
 function adminTag(id: string, name: string): AdminNewsTag {
   return { id, name, color: '#d4b106', textColor: '#ffffff', createdAt: '', updatedAt: '' };
 }
@@ -71,6 +82,7 @@ const PINNED_SLOTS: PinnedNewsSlot[] = GRID_NEWS.map((item, index) => ({
   rowSpan: 1,
   style: DEFAULT_CARD_STYLE,
   cover: { type: 'none', url: null, focalPoint: null },
+  news: { ...PINNED_CONTENT, tags: [ADMIN_TAGS[0]] },
 }));
 
 function archivePage(
@@ -267,11 +279,29 @@ describe('NewsPage', () => {
     expect(wideCard).not.toBeUndefined();
   });
 
-  it('теги новости сетки резолвятся в бейджи по id', () => {
+  it('теги карточки витрины приходят из ответа раскладки, а не резолвятся по загруженной ленте (stream.Front#133)', () => {
     const fixture = createPage();
     const entry = fixture.componentInstance['gridEntries']()[0];
 
     expect(entry.tags).toEqual([TAGS[0]]);
+  });
+
+  it('витрина строится из ответа раскладки: заголовок и счётчики берутся из слота', () => {
+    const fixture = createPage();
+    const entry = fixture.componentInstance['gridEntries']()[0];
+
+    expect(entry.item.title).toBe('Заголовок закреплённой');
+    expect(entry.item.excerpt).toBe('Описание закреплённой');
+    expect(entry.item.views).toBe(100);
+    expect(entry.item.likes).toBe(10);
+  });
+
+  it('витрина показывает ВСЕ закрепления, даже те, которых нет в ленте (ЗАК-Б-01)', () => {
+    const fixture = createPage();
+
+    // Лента отдаёт две строки, витрина — семь слотов: пересечения между ними
+    // больше нет, и закреплённая новость любой давности видна
+    expect(fixture.componentInstance['gridEntries']().length).toBe(GRID_NEWS.length);
   });
 
   /**

@@ -8,6 +8,17 @@ import {
   validatePinnedNewsSlots,
 } from './pinned-news-slot.model';
 
+const PINNED_CONTENT = {
+  title: 'Заголовок закреплённой',
+  description: 'Описание закреплённой',
+  publishedAt: '2023-12-06T00:00:00.000Z',
+  viewCount: 100,
+  likeCount: 10,
+  likedByCurrentUser: false,
+  viewedByCurrentUser: false,
+  tags: [],
+};
+
 function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
   return {
     newsId: 'news-1',
@@ -17,6 +28,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
     cover: { type: 'none', url: null, focalPoint: null },
+    news: PINNED_CONTENT,
     ...overrides,
   };
 }

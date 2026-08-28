@@ -6,10 +6,21 @@ import { environment } from '@env/environment';
 import { DEFAULT_CARD_STYLE, PinnedGridLayout } from '../models/pinned-news-slot.model';
 import { PinnedGridService } from './pinned-grid.service';
 
+const PINNED_CONTENT = {
+  title: 'Заголовок закреплённой',
+  description: 'Описание закреплённой',
+  publishedAt: '2023-12-06T00:00:00.000Z',
+  viewCount: 100,
+  likeCount: 10,
+  likedByCurrentUser: false,
+  viewedByCurrentUser: false,
+  tags: [],
+};
+
 const mockLayout: PinnedGridLayout = {
   config: { columns: 3, rows: 12 },
   slots: [
-    { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE, cover: { type: 'none', url: null, focalPoint: null } },
+    { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE, cover: { type: 'none', url: null, focalPoint: null }, news: PINNED_CONTENT },
   ],
 };
 

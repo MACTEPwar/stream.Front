@@ -30,6 +30,7 @@ import {
   PinnedGridLayout,
   PinnedGridViewport,
   PinnedNewsCardStyle,
+  PinnedNewsContent,
   PinnedNewsSlot,
   computeGridResizeImpact,
   isSlotPlacementValid,
@@ -88,6 +89,18 @@ interface NewsMeta {
 
 /** Пустая обложка — для служебных слотов и новостей, которых нет в загруженном списке (stream.Front#137). */
 const NO_COVER: NewsCover = { type: 'none', url: null, focalPoint: null };
+
+/** Содержимое для служебного слота-кандидата и новостей, которых нет в загруженном списке. */
+const EMPTY_CONTENT: PinnedNewsContent = {
+  title: '',
+  description: '',
+  publishedAt: new Date(0).toISOString(),
+  viewCount: 0,
+  likeCount: 0,
+  likedByCurrentUser: null,
+  viewedByCurrentUser: null,
+  tags: [],
+};
 
 type DraftStyleNumberField = 'imageSizePercent';
 type DraftStyleColorField = 'backgroundColor' | 'textColor';
@@ -427,6 +440,7 @@ export class PinnedGridEditor {
       rowSpan: rect.rowSpan,
       style: DEFAULT_CARD_STYLE,
       cover: NO_COVER,
+      news: EMPTY_CONTENT,
     };
     const { columns, rows } = this.localGridConfig();
     return isSlotPlacementValid(candidate, this.localSlots(), columns, rows);
@@ -449,6 +463,35 @@ export class PinnedGridEditor {
       rowSpan,
       style: meta.style,
       cover: this.resolveCoverFor(newsId, news),
+      news: this.resolveContentFor(newsId, news),
+    };
+  }
+
+  /**
+   * Содержимое карточки для локально построенного слота (`stream.Front#133`).
+   * Редактор его не рисует — превью строится из собственного `NewsItem`
+   * (`entry.item`), — и на сервер оно не уходит: `updateLayout()` урезает
+   * слоты до `PinnedNewsPlacement`. Заполняется, чтобы локальный слот был
+   * структурно тем же, что приходит с сервера.
+   *
+   * `tags` остаются пустыми: полных тем редактор не загружает, а `NewsItem`
+   * несёт только их id.
+   */
+  private resolveContentFor(newsId: string, news: NewsItem[]): PinnedNewsContent {
+    const item = news.find((entry) => entry.id === newsId);
+    if (!item) {
+      return EMPTY_CONTENT;
+    }
+
+    return {
+      title: item.title,
+      description: item.excerpt,
+      publishedAt: item.publishedAt.toISOString(),
+      viewCount: item.views,
+      likeCount: item.likes,
+      likedByCurrentUser: item.likedByCurrentUser,
+      viewedByCurrentUser: item.viewedByCurrentUser,
+      tags: [],
     };
   }
 

@@ -15,6 +15,17 @@ import {
 } from '../../models/pinned-news-slot.model';
 import { PinnedGridEditor } from './pinned-grid-editor';
 
+const PINNED_CONTENT = {
+  title: 'Заголовок закреплённой',
+  description: 'Описание закреплённой',
+  publishedAt: '2023-12-06T00:00:00.000Z',
+  viewCount: 100,
+  likeCount: 10,
+  likedByCurrentUser: false,
+  viewedByCurrentUser: false,
+  tags: [],
+};
+
 function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
   return {
     id,
@@ -43,6 +54,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
     cover: { type: 'none', url: null, focalPoint: null },
+    news: PINNED_CONTENT,
     ...overrides,
   };
 }
@@ -343,9 +355,18 @@ describe('PinnedGridEditor', () => {
 
       fixture.componentInstance['onSlotNewsChange']('news-1', 'news-2');
 
-      expect(fixture.componentInstance['localSlots']()).toEqual([
-        slot({ newsId: 'news-2', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 2 }),
-      ]);
+      // Содержимое пересобирается из NewsItem новой новости, поэтому
+      // сверяем положение/размер/стиль, а не весь слот целиком (stream.Front#133)
+      const slots = fixture.componentInstance['localSlots']();
+      expect(slots).toHaveLength(1);
+      expect(slots[0]).toMatchObject({
+        newsId: 'news-2',
+        colStart: 2,
+        rowStart: 3,
+        colSpan: 1,
+        rowSpan: 2,
+        style: DEFAULT_CARD_STYLE,
+      });
     });
 
     it("смена новости из drawer'а редактирования переносит editingNewsId на новый id", () => {
@@ -444,15 +465,13 @@ describe('PinnedGridEditor', () => {
       const added = fixture.componentInstance['localSlots']().find(
         (s: PinnedNewsSlot) => s.newsId === 'news-2',
       );
-      expect(added).toEqual(
-        slot({
-          newsId: 'news-2',
-          colStart: 2,
-          rowStart: 1,
-          colSpan: 2,
-          rowSpan: 2,
-        }),
-      );
+      expect(added).toMatchObject({
+        newsId: 'news-2',
+        colStart: 2,
+        rowStart: 1,
+        colSpan: 2,
+        rowSpan: 2,
+      });
       expect(fixture.componentInstance['pendingNews']()).toBeNull();
     });
 
