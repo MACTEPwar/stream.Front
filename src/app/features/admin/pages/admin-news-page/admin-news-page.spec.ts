@@ -11,8 +11,22 @@ import { AdminNews, AdminNewsTag } from '../../models/news.model';
 import { AdminNewsPage } from './admin-news-page';
 
 const mockTags: AdminNewsTag[] = [
-  { id: 't1', name: 'Турниры', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' },
-  { id: 't2', name: 'Анонсы', color: '#00FF00', textColor: '#1E1E1E', createdAt: '', updatedAt: '' },
+  {
+    id: 't1',
+    name: 'Турниры',
+    color: '#FF5733',
+    textColor: '#FFFFFF',
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 't2',
+    name: 'Анонсы',
+    color: '#00FF00',
+    textColor: '#1E1E1E',
+    createdAt: '',
+    updatedAt: '',
+  },
 ];
 
 const mockNews: AdminNews = {
@@ -99,7 +113,9 @@ describe('AdminNewsPage', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    httpMock.expectNone(`${environment.apiUrl}/news?page=1&limit=20&search=${encodeURIComponent('турнир')}`);
+    httpMock.expectNone(
+      `${environment.apiUrl}/news?page=1&limit=20&search=${encodeURIComponent('турнир')}`,
+    );
 
     vi.advanceTimersByTime(400);
 
@@ -128,18 +144,23 @@ describe('AdminNewsPage', () => {
     expect(fixture.componentInstance['editingNewsId']()).toBeNull();
     expect(fixture.componentInstance['title']()).toBe('');
     expect(fixture.componentInstance['imageUrls']()).toEqual([]);
+    expect(fixture.componentInstance['cover']()).toEqual({ type: 'none', url: null });
   });
 
   it('«Изменить» открывает drawer, предзаполненный данными новости (картинки отсортированы по order)', async () => {
     const fixture = await createComponent();
 
-    fixture.componentInstance['onEditClick'](mockNews);
+    fixture.componentInstance['onEditClick']({
+      ...mockNews,
+      cover: { type: 'image', url: '/uploads/1.jpg', focalPoint: null },
+    });
 
     expect(fixture.componentInstance['drawerVisible']()).toBe(true);
     expect(fixture.componentInstance['editingNewsId']()).toBe('n1');
     expect(fixture.componentInstance['title']()).toBe('Заголовок');
     expect(fixture.componentInstance['selectedTagIds']()).toEqual(['t1']);
     expect(fixture.componentInstance['imageUrls']()).toEqual(['/uploads/1.jpg', '/uploads/2.jpg']);
+    expect(fixture.componentInstance['cover']()).toEqual({ type: 'image', url: '/uploads/1.jpg' });
   });
 
   it('создаёт новость и перезапрашивает страницу', async () => {
@@ -155,10 +176,13 @@ describe('AdminNewsPage', () => {
     // Отметки «без фото» в контракте больше нет (stream.Front#137): состояние
     // обложки задаётся полем cover, интерфейс для него — stream.Front#132.
     expect(req.request.body.hasNoImage).toBeUndefined();
+    expect(req.request.body.cover).toEqual({ type: 'none', url: undefined });
     req.flush(mockNews);
 
     expect(fixture.componentInstance['drawerVisible']()).toBe(false);
-    httpMock.expectOne(`${environment.apiUrl}/news?page=1&limit=20`).flush(mockResponse([mockNews]));
+    httpMock
+      .expectOne(`${environment.apiUrl}/news?page=1&limit=20`)
+      .flush(mockResponse([mockNews]));
   });
 
   it('редактирует новость через PATCH и перезапрашивает страницу', async () => {
@@ -174,7 +198,9 @@ describe('AdminNewsPage', () => {
     req.flush({ ...mockNews, title: 'Обновлённый заголовок' });
 
     expect(fixture.componentInstance['drawerVisible']()).toBe(false);
-    httpMock.expectOne(`${environment.apiUrl}/news?page=1&limit=20`).flush(mockResponse([mockNews]));
+    httpMock
+      .expectOne(`${environment.apiUrl}/news?page=1&limit=20`)
+      .flush(mockResponse([mockNews]));
   });
 
   it('не сохраняет и показывает toast, если заголовок или описание пусты', async () => {
@@ -185,6 +211,24 @@ describe('AdminNewsPage', () => {
     fixture.componentInstance['onSaveClick']();
 
     expect(showSpy).toHaveBeenCalledWith('Заполните заголовок и описание', 'error');
+    httpMock.expectNone(`${environment.apiUrl}/admin/news`);
+  });
+
+  it('не сохраняет, если обложка «одно из изображений» указывает на картинку вне текущего набора', async () => {
+    const fixture = await createComponent();
+    const showSpy = vi.spyOn(notificationService, 'show');
+
+    fixture.componentInstance['onAddClick']();
+    fixture.componentInstance['title'].set('Заголовок');
+    fixture.componentInstance['description'].set('Описание');
+    fixture.componentInstance['imageUrls'].set(['/uploads/kept.jpg']);
+    fixture.componentInstance['cover'].set({ type: 'image', url: '/uploads/removed.jpg' });
+    fixture.componentInstance['onSaveClick']();
+
+    expect(showSpy).toHaveBeenCalledWith(
+      'Обложка ссылается на изображение вне набора — выберите другое состояние обложки',
+      'error',
+    );
     httpMock.expectNone(`${environment.apiUrl}/admin/news`);
   });
 

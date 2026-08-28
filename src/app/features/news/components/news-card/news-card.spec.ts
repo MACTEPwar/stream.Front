@@ -6,7 +6,11 @@ import { Badge } from '@shared/components/badge/badge';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { DEFAULT_CARD_STYLE, FocalPoint, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
+import {
+  DEFAULT_CARD_STYLE,
+  FocalPoint,
+  PinnedNewsCardStyle,
+} from '../../models/pinned-news-slot.model';
 import { NewsCard } from './news-card';
 
 const ITEM: NewsItem = {
@@ -33,7 +37,12 @@ const TAGS: NewsTag[] = [
 @Component({
   selector: 'app-news-card-host',
   imports: [NewsCard],
-  template: `<app-news-card [item]="item()" [tags]="tags()" [cardStyle]="cardStyle()" [focalPoint]="focalPoint()" />`,
+  template: `<app-news-card
+    [item]="item()"
+    [tags]="tags()"
+    [cardStyle]="cardStyle()"
+    [focalPoint]="focalPoint()"
+  />`,
 })
 class NewsCardHost {
   readonly item = signal<NewsItem>(ITEM);
@@ -87,7 +96,8 @@ describe('NewsCard', () => {
 
   it('иконка лайка — pi-heart-fill при likedByCurrentUser: true, иначе pi-heart', () => {
     const fixture = createCard();
-    const icon = () => fixture.nativeElement.querySelectorAll('.news-card__counter i')[1] as HTMLElement;
+    const icon = () =>
+      fixture.nativeElement.querySelectorAll('.news-card__counter i')[1] as HTMLElement;
 
     expect(icon().className).toBe('pi pi-heart');
 
@@ -97,13 +107,27 @@ describe('NewsCard', () => {
     expect(icon().className).toBe('pi pi-heart-fill');
   });
 
-  it('без imageUrl картинка не рендерится — остаётся плейсхолдер-прямоугольник', () => {
+  it('без imageUrl картинка не рендерится, а место под неё не резервируется — текст занимает всю площадь (ЗАК-Ф-05)', () => {
     const fixture = createCard();
     fixture.componentInstance.item.set({ ...ITEM, imageUrl: null });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.news-card__picture')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.news-card__picture img')).toBeNull();
+    const picture = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '.news-card__picture',
+    );
+    expect(picture).not.toBeNull();
+    expect(picture?.querySelector('img')).toBeNull();
+    expect(picture?.style.flex).toBe('0 0 0%');
+  });
+
+  it('с imageUrl место под картинку резервируется по imageSizePercent из стиля', () => {
+    const fixture = createCard();
+    fixture.detectChanges();
+
+    const picture = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '.news-card__picture',
+    );
+    expect(picture?.style.flex).toBe(`0 0 ${DEFAULT_CARD_STYLE.imageSizePercent}%`);
   });
 
   it('применяет style: фон/цвет текста/направление по imagePosition', () => {

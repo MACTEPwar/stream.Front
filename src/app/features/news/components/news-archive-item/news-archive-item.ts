@@ -19,9 +19,10 @@ import { formatCompactCount } from '../../utils/format-compact-count';
  *
  * `item` — реальный backend-контракт (`AdminNews`, `stream.Front#118` поверх
  * `streamer.API#65`/`#67`), НЕ мок `NewsItem` — теги уже приходят с цветом
- * (`AdminNewsTag.color`/`textColor`), картинка — первая по `order` из
- * `images[]` (резолвится через `ImageUrlService`, `/uploads/*`-путь валиден
- * только относительно backend origin).
+ * (`AdminNewsTag.color`/`textColor`), картинка — обложка новости, `item().cover.url`
+ * (резолвится через `ImageUrlService`, `/uploads/*`-путь валиден только
+ * относительно backend origin); при отсутствии обложки строка обходится без
+ * превью целиком (`ЛЕН-Ф-03`, см. шаблон и `.scss`).
  *
  * **Просмотры и лайки — оба `Checkbox`** (`severity="primary"`, `stream.Front#121`
  * — раньше просмотры были голым текстом), НЕ отдельная иконка + счётчик
@@ -61,21 +62,27 @@ export class NewsArchiveItem {
   readonly likeToggle = output<boolean>();
   readonly openDetail = output<void>();
 
+  /**
+   * Обложка новости (`ОБЛ`), не первая картинка набора (`stream.Front#132`,
+   * `ОБЛ-О-05`, `ЛЕН-Ф-03`) — раньше строка ленты подменяла отсутствующую
+   * обложку первым изображением, из-за чего «осознанно без обложки» было
+   * неотличимо от «ещё не выбрали».
+   */
   protected readonly imageUrl = computed(() => {
-    const images = this.item().images;
-    if (images.length === 0) {
-      return null;
-    }
-    const first = images.slice().sort((a, b) => a.order - b.order)[0];
-    return this.imageUrlService.resolve(first.url);
+    const url = this.item().cover.url;
+    return url ? this.imageUrlService.resolve(url) : null;
   });
 
   protected readonly isLiked = computed(() => !!this.item().likedByCurrentUser);
   protected readonly isViewed = computed(() => !!this.item().viewedByCurrentUser);
-  protected readonly likeIconClass = computed(() => (this.isLiked() ? 'pi pi-heart-fill' : 'pi pi-heart'));
+  protected readonly likeIconClass = computed(() =>
+    this.isLiked() ? 'pi pi-heart-fill' : 'pi pi-heart',
+  );
   protected readonly viewsLabel = computed(() => formatCompactCount(this.item().viewCount));
   protected readonly likesLabel = computed(() => formatCompactCount(this.item().likeCount));
-  protected readonly dateLabel = computed(() => formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'));
+  protected readonly dateLabel = computed(() =>
+    formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'),
+  );
 
   protected onLikeToggle(checked: boolean): void {
     this.likeToggle.emit(checked);

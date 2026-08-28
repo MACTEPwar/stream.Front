@@ -1,17 +1,25 @@
 <article class="news-archive-item">
-  <button type="button" class="news-archive-item__picture" (click)="onOpenDetail()">
-    @if (imageUrl(); as url) {
+  @if (imageUrl(); as url) {
+    <button type="button" class="news-archive-item__picture" (click)="onOpenDetail()">
       <img [src]="url" alt="" />
+
+      <div class="news-archive-item__tags news-archive-item__tags--overlay">
+        @for (tag of item().tags; track tag.id) {
+          <app-badge [text]="tag.name" [color]="tag.color" [textColor]="tag.textColor" />
+        }
+      </div>
+    </button>
+  }
+
+  <div class="news-archive-item__body" [class.news-archive-item__body--full]="!imageUrl()">
+    @if (!imageUrl() && item().tags.length > 0) {
+      <div class="news-archive-item__tags news-archive-item__tags--inline">
+        @for (tag of item().tags; track tag.id) {
+          <app-badge [text]="tag.name" [color]="tag.color" [textColor]="tag.textColor" />
+        }
+      </div>
     }
 
-    <div class="news-archive-item__tags">
-      @for (tag of item().tags; track tag.id) {
-        <app-badge [text]="tag.name" [color]="tag.color" [textColor]="tag.textColor" />
-      }
-    </div>
-  </button>
-
-  <div class="news-archive-item__body">
     <button type="button" class="news-archive-item__text" (click)="onOpenDetail()">
       <h3 class="news-archive-item__heading">{{ item().title }}</h3>
       <p class="news-archive-item__excerpt">{{ item().description }}</p>

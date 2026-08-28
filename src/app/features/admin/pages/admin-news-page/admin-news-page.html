@@ -57,8 +57,18 @@
           <td>{{ item.viewCount }} / {{ item.likeCount }}</td>
           <td class="admin-news-page__actions-cell">
             <app-button-group>
-              <app-button text="Изменить" size="small" severity="info" (click)="onEditClick(item)" />
-              <app-button text="Удалить" size="small" severity="danger" (click)="onDeleteClick(item)" />
+              <app-button
+                text="Изменить"
+                size="small"
+                severity="info"
+                (click)="onEditClick(item)"
+              />
+              <app-button
+                text="Удалить"
+                size="small"
+                severity="danger"
+                (click)="onDeleteClick(item)"
+              />
             </app-button-group>
           </td>
         </tr>
@@ -146,6 +156,15 @@
       <div class="admin-news-page__field">
         <span class="admin-news-page__label">Изображения</span>
         <app-multi-image-picker [(urls)]="imageUrls" />
+      </div>
+
+      <div class="admin-news-page__field">
+        <span class="admin-news-page__label">Обложка</span>
+        <app-cover-picker
+          [imageUrls]="imageUrls()"
+          [value]="cover()"
+          (valueChange)="cover.set($event)"
+        />
       </div>
 
       <app-button
