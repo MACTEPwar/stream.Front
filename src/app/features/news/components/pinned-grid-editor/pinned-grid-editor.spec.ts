@@ -398,7 +398,7 @@ describe('PinnedGridEditor', () => {
   });
 
   describe('добавление карточки', () => {
-    it('«Добавить новость» открывает drawer и сбрасывает форму', () => {
+    it('«Добавить новость» открывает drawer и сбрасывает форму — в списке только то, что ещё не занимает место в ТЕКУЩЕЙ раскладке', () => {
       const fixture = createEditor(
         [newsItem('news-1'), newsItem('news-2')],
         [slot({ newsId: 'news-1' })],
@@ -407,8 +407,24 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onAddClick']();
 
       expect(fixture.componentInstance['addDrawerVisible']()).toBe(true);
-      expect(fixture.componentInstance['unusedNewsForAdd']().map((n: NewsItem) => n.id)).toEqual([
+      expect(fixture.componentInstance['newsForAdd']().map((n: NewsItem) => n.id)).toEqual([
         'news-2',
+      ]);
+    });
+
+    it('новость, закреплённая только в ДРУГОЙ раскладке, — ЕСТЬ в списке добавления (по прямому запросу пользователя: раньше список фильтровался по обеим раскладкам разом и на полностью заполненной раскладке выглядел пустым/сломанным)', () => {
+      const fixture = TestBed.createComponent(PinnedGridEditor);
+      fixture.componentRef.setInput('news', [newsItem('news-1')]);
+      fixture.componentRef.setInput('layouts', {
+        small: EMPTY_LAYOUT,
+        large: { config: GRID_CONFIG, slots: [slot({ newsId: 'news-1' })] },
+      } satisfies Record<PinnedGridViewport, PinnedGridLayout>);
+      fixture.detectChanges();
+
+      fixture.componentInstance['onViewportChange']('small');
+
+      expect(fixture.componentInstance['newsForAdd']().map((n: NewsItem) => n.id)).toEqual([
+        'news-1',
       ]);
     });
 

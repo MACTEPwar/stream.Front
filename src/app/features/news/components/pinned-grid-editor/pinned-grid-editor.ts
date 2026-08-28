@@ -498,9 +498,21 @@ export class PinnedGridEditor {
     return result;
   });
 
-  protected readonly unusedNewsForAdd = computed(() => {
-    const usedIds = new Set(Object.keys(this.pinnedMeta()));
-    return this.news().filter((item) => !usedIds.has(item.id));
+  /**
+   * Список для «Добавить новость» — исключает только то, что уже занимает
+   * место в ТЕКУЩЕЙ раскладке (иначе получился бы второй слот той же
+   * новости в одной раскладке, `ЗАК-О-05`). Новость, закреплённая только в
+   * ДРУГОЙ раскладке, здесь ЕСТЬ — тот же результат, что и «Разместить
+   * здесь» в `pinnedNewsList`, просто другой вход в то же самое действие
+   * (по прямому запросу пользователя: раньше список фильтровался по
+   * `pinnedMeta()`, общему для обеих раскладок, и на раскладке, где уже всё
+   * закреплено, «Добавить новость» выглядел как сломанный пустой список).
+   * `commitPlacement()`/`placeInCurrentViewport()` сами подхватывают
+   * существующий стиль такой новости через `pinnedMeta()`, если он уже есть.
+   */
+  protected readonly newsForAdd = computed(() => {
+    const placedInCurrentViewport = new Set(this.localSlots().map((slot) => slot.newsId));
+    return this.news().filter((item) => !placedInCurrentViewport.has(item.id));
   });
 
   /** Картинки выбранной в форме добавления новости (`stream.Front#118`) — источник для выбора обложки пина, не отдельная загрузка файла. */
