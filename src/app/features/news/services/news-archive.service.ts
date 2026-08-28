@@ -16,6 +16,30 @@ export interface ViewResponse {
 }
 
 /**
+ * Условия отбора ленты — 1:1 с query-параметрами `GET /news`
+ * (`streamer.API#77`). Все опциональны и комбинируются `AND`.
+ *
+ * **Отсутствие поля ≠ `false`.** У признаков взаимодействия `false` означает
+ * «только НЕ просмотренные»/«без моего лайка», поэтому снятый тумблер обязан
+ * поле не отправлять, а не отправлять `false`. Глобальный `ValidationPipe`
+ * бэкенда работает с `forbidNonWhitelisted`, так что лишний параметр даст
+ * `400`, а не будет молча проигнорирован.
+ *
+ * Признаки взаимодействия требуют сессии — без неё бэкенд отвечает `401`
+ * (см. `NewsPage.onOwnReactionFilterChange()`).
+ */
+export interface NewsArchiveQuery {
+  /** Нижняя граница периода публикации, ISO. Включается в результат. */
+  publishedFrom?: string;
+  /** Верхняя граница периода публикации, ISO. Тоже включается. */
+  publishedTo?: string;
+  /** Несколько тем сразу — новость подходит, если относится к любой из них. */
+  tagIds?: readonly string[];
+  likedByCurrentUser?: boolean;
+  viewedByCurrentUser?: boolean;
+}
+
+/**
  * Реальный источник панели архива публичной страницы «Новости»
  * (`stream.Front#118`, поверх `streamer.API#65`/`#67`) — `GET /news`
  * (публичный, сортировка по умолчанию на бэке — `publishedAt desc`, "новые
@@ -32,8 +56,22 @@ export interface ViewResponse {
 export class NewsArchiveService {
   private readonly api = inject(ApiService);
 
-  getPage(page: number, limit: number): Observable<PaginatedResponse<AdminNews>> {
-    return this.api.get<PaginatedResponse<AdminNews>>('/news', { page, limit });
+  /**
+   * `query` уходит вместе с запросом порции, а не применяется к уже
+   * загруженному списку (`stream.Front#129`, поверх `streamer.API#77`): сервер
+   * отбирает по всему архиву и считает по отобранному `meta.total`, поэтому
+   * признак «больше грузить нечего» достоверен.
+   */
+  getPage(
+    page: number,
+    limit: number,
+    query: NewsArchiveQuery = {},
+  ): Observable<PaginatedResponse<AdminNews>> {
+    return this.api.get<PaginatedResponse<AdminNews>>('/news', {
+      page,
+      limit,
+      ...query,
+    });
   }
 
   like(id: string): Observable<LikeResponse> {

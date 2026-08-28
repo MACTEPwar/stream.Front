@@ -58,7 +58,16 @@ export type { NewsFilter } from '../../models/news-filter.model';
  */
 @Component({
   selector: 'app-news-filter-sidebar',
-  imports: [Button, Checkbox, ChipModule, Datepicker, DrawerModule, OverlayBadgeModule, PopoverModule, TextField],
+  imports: [
+    Button,
+    Checkbox,
+    ChipModule,
+    Datepicker,
+    DrawerModule,
+    OverlayBadgeModule,
+    PopoverModule,
+    TextField,
+  ],
   templateUrl: './news-filter-sidebar.html',
   styleUrl: './news-filter-sidebar.scss',
 })
@@ -110,13 +119,23 @@ export class NewsFilterSidebar implements OnInit {
     this.filterChange.emit(filter);
   }
 
-  protected clear(): void {
+  /**
+   * Публичный, потому что панель — не единственное место, откуда условия
+   * сбрасывают: тулбар архива обязан сбросить **все** условия одним действием
+   * (`ФИЛ-Ф-03`, `stream.Front#129`), а даты и темы живут здесь. Кнопка
+   * «Очистить» внутри панели зовёт этот же метод.
+   */
+  reset(): void {
     this.draft.reset();
     this.appliedDateFrom.set(null);
     this.appliedDateTo.set(null);
     this.appliedTagIds.set(new Set());
     this.visible.set(false);
     this.filterChange.emit({ dateFrom: null, dateTo: null, tags: [] });
+  }
+
+  protected clear(): void {
+    this.reset();
   }
 
   /**

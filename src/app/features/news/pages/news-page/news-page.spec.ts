@@ -1,8 +1,12 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { TestBed } from '@angular/core/testing';
+import { WritableSignal, signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, startWith, throwError } from 'rxjs';
 
+import { CurrentUser } from '@core/models/current-user.model';
+import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
+import { NotificationService } from '@core/services/notification.service';
 import { AdminNews, AdminNewsTag } from '@features/admin/models/news.model';
 import { AdminNewsService } from '@features/admin/services/admin-news.service';
 import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
@@ -88,6 +92,13 @@ describe('NewsPage', () => {
   let archiveUnlike: ReturnType<typeof vi.fn<NewsArchiveService['unlike']>>;
   let pinnedGridGetLayout: ReturnType<typeof vi.fn<PinnedGridService['getLayout']>>;
   let breakpointState$: Subject<BreakpointState>;
+  let notificationShow: ReturnType<typeof vi.fn>;
+  /**
+   * Сигнал, а не обычное поле: приложение работает без zone.js, и подмена
+   * значения в тесте должна сама поднимать перерасчёт (см. `CLAUDE.md`
+   * репозитория и зависимые `computed` страницы).
+   */
+  let currentUser: WritableSignal<CurrentUser | null>;
   const ARCHIVE_PAGE_1 = [
     adminNews('archive-1', { likedByCurrentUser: false, viewedByCurrentUser: false }),
     adminNews('archive-2', { likedByCurrentUser: true, viewedByCurrentUser: true }),
@@ -103,10 +114,20 @@ describe('NewsPage', () => {
       .fn<PinnedGridService['getLayout']>()
       .mockReturnValue(of({ config: { columns: 3, rows: 12 }, slots: PINNED_SLOTS }));
     breakpointState$ = new Subject<BreakpointState>();
+    notificationShow = vi.fn();
+    currentUser = signal<CurrentUser | null>({
+      id: 'u1',
+      role: 'USER',
+      name: 'Читатель',
+      avatarUrl: null,
+      authMethods: [],
+    });
 
     TestBed.configureTestingModule({
       imports: [NewsPage],
       providers: [
+        { provide: AuthService, useValue: { currentUser } },
+        { provide: NotificationService, useValue: { show: notificationShow } },
         { provide: AdminNewsTagService, useValue: { getAll: () => of(ADMIN_TAGS) } },
         {
           provide: AdminNewsService,
@@ -234,7 +255,7 @@ describe('NewsPage', () => {
   it('загружает первую страницу архива при инициализации', () => {
     createPage();
 
-    expect(archiveGetPage).toHaveBeenCalledWith(1, 10);
+    expect(archiveGetPage).toHaveBeenCalledWith(1, 10, {});
   });
 
   it('карточка со слотом colSpan: 2 занимает две колонки сетки', () => {
@@ -254,55 +275,169 @@ describe('NewsPage', () => {
     expect(entry.tags).toEqual([TAGS[0]]);
   });
 
-  it('тоггл «сердце» показывает только лайкнутые текущим пользователем строки архива', () => {
-    const page = createPage().componentInstance;
+  /**
+   * Отбор ушёл на сервер (`stream.Front#129`, поверх `streamer.API#77`).
+   * Прежние тесты проверяли клиентскую фильтрацию загруженной порции — то
+   * самое поведение, из-за которого старая новость не находилась, а лента
+   * наполнялась рвано. Теперь проверяется, что условия доходят до запроса, а
+   * пришедшее показывается как есть.
+   */
+  describe('серверный отбор (stream.Front#129)', () => {
+    /**
+     * Условия отбора теперь запускают ЗАПРОС, а не пересчёт `computed`,
+     * поэтому после их смены нужен прогон change detection — эффект
+     * срабатывает в нём (приложение без zone.js, само по себе ничего не
+     * «дозреет»).
+     */
+    function changeFilters(fixture: ComponentFixture<NewsPage>, change: () => void) {
+      change();
+      fixture.detectChanges();
+    }
 
-    page['showOnlyLiked'].set(true);
+    it('шлёт признак «с моим лайком» в запрос, а не фильтрует загруженное', () => {
+      const fixture = createPage();
+      const page = fixture.componentInstance;
 
-    expect(archiveIds(page)).toEqual(['archive-2']);
-  });
+      changeFilters(fixture, () => page['showOnlyLiked'].set(true));
 
-  it('тоггл «глаз» показывает только просмотренные текущим пользователем строки архива', () => {
-    const page = createPage().componentInstance;
+      expect(archiveGetPage).toHaveBeenLastCalledWith(1, 10, { likedByCurrentUser: true });
+      expect(archiveIds(page)).toEqual(['archive-1', 'archive-2']);
+    });
 
-    page['showOnlyViewed'].set(true);
+    it('шлёт признак «просмотренные» в запрос', () => {
+      const fixture = createPage();
 
-    expect(archiveIds(page)).toEqual(['archive-2']);
-  });
+      changeFilters(fixture, () => fixture.componentInstance['showOnlyViewed'].set(true));
 
-  it('сброс тоггла «сердце» возвращает полный список архива', () => {
-    const page = createPage().componentInstance;
+      expect(archiveGetPage).toHaveBeenLastCalledWith(1, 10, { viewedByCurrentUser: true });
+    });
 
-    page['showOnlyLiked'].set(true);
-    page['resetArchiveFilters']();
+    it('шлёт темы и период, границы — целыми днями читателя', () => {
+      const fixture = createPage();
 
-    expect(archiveIds(page)).toEqual(['archive-1', 'archive-2']);
-  });
+      changeFilters(fixture, () =>
+        fixture.componentInstance['filter'].set({
+          dateFrom: new Date(2026, 7, 1),
+          dateTo: new Date(2026, 7, 27),
+          tags: ['stream', 'tournament'],
+        } satisfies NewsFilter),
+      );
 
-  it('фильтр по тегам сайдбара применяется только к архиву, не к сетке', () => {
-    const page = createPage().componentInstance;
+      expect(archiveGetPage).toHaveBeenLastCalledWith(1, 10, {
+        publishedFrom: new Date(2026, 7, 1, 0, 0, 0, 0).toISOString(),
+        publishedTo: new Date(2026, 7, 27, 23, 59, 59, 999).toISOString(),
+        tagIds: ['stream', 'tournament'],
+      });
+    });
 
-    page['filter'].set({ dateFrom: null, dateTo: null, tags: ['stream'] } satisfies NewsFilter);
+    it('смена условий начинает выборку заново, а не дополняет показанное (ФИЛ-Ф-01)', () => {
+      archiveGetPage
+        .mockReturnValueOnce(of(archivePage(ARCHIVE_PAGE_1, 1, 2)))
+        .mockReturnValueOnce(of(archivePage([adminNews('archive-3')], 2, 2)))
+        .mockReturnValueOnce(of(archivePage([adminNews('archive-9')], 1, 1)));
+      const fixture = createPage();
+      const page = fixture.componentInstance;
 
-    expect(page['gridEntries']().length).toBe(GRID_NEWS.length);
-    expect(archiveIds(page)).toEqual([]);
-  });
+      page['onArchiveScroll']({
+        target: { scrollHeight: 1000, scrollTop: 950, clientHeight: 100 },
+      } as unknown as Event);
+      expect(archiveIds(page)).toHaveLength(3);
 
-  it('фильтр по тегам сайдбара оставляет в архиве только строки с совпадающим тегом', () => {
-    archiveGetPage.mockReturnValue(
-      of(
-        archivePage(
-          [adminNews('archive-1', { tags: [ADMIN_TAGS[1]] }), adminNews('archive-2', { tags: [] })],
-          1,
-          1,
+      changeFilters(fixture, () => page['showOnlyLiked'].set(true));
+
+      // Список заменён результатом нового отбора, а не дополнен им
+      expect(archiveIds(page)).toEqual(['archive-9']);
+      expect(archiveGetPage).toHaveBeenLastCalledWith(1, 10, { likedByCurrentUser: true });
+    });
+
+    it('подгрузка следующей порции сохраняет активные условия (ФИЛ-Ф-02)', () => {
+      archiveGetPage.mockReturnValue(of(archivePage(ARCHIVE_PAGE_1, 1, 2)));
+      const fixture = createPage();
+      const page = fixture.componentInstance;
+
+      changeFilters(fixture, () => page['showOnlyLiked'].set(true));
+      page['onArchiveScroll']({
+        target: { scrollHeight: 1000, scrollTop: 950, clientHeight: 100 },
+      } as unknown as Event);
+
+      expect(archiveGetPage).toHaveBeenLastCalledWith(2, 10, { likedByCurrentUser: true });
+    });
+
+    it('сбрасывает все условия одним действием — и тумблеры, и панель (ФИЛ-Ф-03)', () => {
+      const fixture = createPage();
+      const page = fixture.componentInstance;
+
+      changeFilters(fixture, () => {
+        page['showOnlyLiked'].set(true);
+        page['filter'].set({ dateFrom: null, dateTo: null, tags: ['stream'] } satisfies NewsFilter);
+      });
+
+      changeFilters(fixture, () => page['resetArchiveFilters']());
+
+      expect(page['showOnlyLiked']()).toBe(false);
+      expect(page['filter']()).toEqual({ dateFrom: null, dateTo: null, tags: [] });
+      expect(archiveGetPage).toHaveBeenLastCalledWith(1, 10, {});
+    });
+
+    it('показывает всё, что вернул сервер, без повторной фильтрации на клиенте', () => {
+      archiveGetPage.mockReturnValue(
+        of(
+          archivePage(
+            [
+              adminNews('archive-1', { tags: [ADMIN_TAGS[1]] }),
+              adminNews('archive-2', { tags: [] }),
+            ],
+            1,
+            1,
+          ),
         ),
-      ),
-    );
-    const page = createPage().componentInstance;
+      );
+      const fixture = createPage();
+      const page = fixture.componentInstance;
 
-    page['filter'].set({ dateFrom: null, dateTo: null, tags: ['stream'] } satisfies NewsFilter);
+      changeFilters(fixture, () =>
+        page['filter'].set({ dateFrom: null, dateTo: null, tags: ['stream'] } satisfies NewsFilter),
+      );
 
-    expect(archiveIds(page)).toEqual(['archive-1']);
+      // Вторая строка без совпадающего тега — раньше клиент бы её отбросил;
+      // теперь отбор целиком на сервере, и клиент показывает ответ как есть
+      expect(archiveIds(page)).toEqual(['archive-1', 'archive-2']);
+    });
+
+    it('витрина на фильтры не реагирует (ЗАК-О-07)', () => {
+      const fixture = createPage();
+      const page = fixture.componentInstance;
+
+      changeFilters(fixture, () => {
+        page['filter'].set({ dateFrom: null, dateTo: null, tags: ['stream'] } satisfies NewsFilter);
+        page['showOnlyLiked'].set(true);
+      });
+
+      expect(page['gridEntries']().length).toBe(GRID_NEWS.length);
+    });
+
+    it('гостю подсказывает войти и не включает тумблер вместо запроса с 401', () => {
+      currentUser.set(null);
+      const fixture = createPage();
+      const page = fixture.componentInstance;
+      archiveGetPage.mockClear();
+
+      changeFilters(fixture, () => page['onOwnReactionFilterChange']('liked', true));
+
+      expect(page['showOnlyLiked']()).toBe(false);
+      expect(archiveGetPage).not.toHaveBeenCalled();
+      expect(notificationShow).toHaveBeenCalledWith(expect.stringContaining('ойдите'), 'error');
+    });
+
+    it('авторизованному тумблер включается обычным образом', () => {
+      const fixture = createPage();
+      const page = fixture.componentInstance;
+
+      changeFilters(fixture, () => page['onOwnReactionFilterChange']('liked', true));
+
+      expect(page['showOnlyLiked']()).toBe(true);
+      expect(archiveGetPage).toHaveBeenLastCalledWith(1, 10, { likedByCurrentUser: true });
+    });
   });
 
   it('прокрутка архива почти до конца грузит следующую страницу и добавляет её к списку', () => {
@@ -315,7 +450,7 @@ describe('NewsPage', () => {
       target: { scrollHeight: 1000, scrollTop: 950, clientHeight: 100 },
     } as unknown as Event);
 
-    expect(archiveGetPage).toHaveBeenCalledWith(2, 10);
+    expect(archiveGetPage).toHaveBeenCalledWith(2, 10, {});
     expect(archiveIds(page)).toEqual(['archive-1', 'archive-2', 'archive-3']);
   });
 

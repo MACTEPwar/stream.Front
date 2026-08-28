@@ -20,7 +20,7 @@
           [squareIcon]="true"
           severity="contrast"
           [checked]="showOnlyViewed()"
-          (checkedChange)="showOnlyViewed.set($event)"
+          (checkedChange)="onOwnReactionFilterChange('viewed', $event)"
         >
           <i class="pi pi-eye" aria-hidden="true"></i>
         </app-checkbox>
@@ -30,7 +30,7 @@
           [squareIcon]="true"
           severity="contrast"
           [checked]="showOnlyLiked()"
-          (checkedChange)="showOnlyLiked.set($event)"
+          (checkedChange)="onOwnReactionFilterChange('liked', $event)"
         >
           <i class="pi pi-heart" aria-hidden="true"></i>
         </app-checkbox>
