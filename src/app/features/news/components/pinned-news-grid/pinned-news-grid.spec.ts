@@ -20,7 +20,7 @@ function newsItem(id: string): NewsItem {
     id,
     title: `Заголовок ${id}`,
     excerpt: 'Lorem ipsum dolor sit amet consectetur.',
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     imageUrl: null,
     imageUrls: [],
     images: [],
@@ -41,7 +41,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     colSpan: 1,
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     news: PINNED_CONTENT,
     ...overrides,
   };
@@ -73,7 +73,11 @@ describe('PinnedNewsGrid', () => {
 
   it('ставит grid-column/grid-row по координатам слота', () => {
     const entries: PinnedNewsGridEntry[] = [
-      { item: newsItem('news-1'), tags: [], slot: slot({ colStart: 2, rowStart: 3, colSpan: 2, rowSpan: 4 }) },
+      {
+        item: newsItem('news-1'),
+        tags: [],
+        slot: slot({ colStart: 2, rowStart: 3, colSpan: 2, rowSpan: 4 }),
+      },
     ];
 
     const fixture = createGrid(entries);

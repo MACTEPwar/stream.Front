@@ -20,7 +20,16 @@ const PINNED_CONTENT = {
 const mockLayout: PinnedGridLayout = {
   config: { columns: 3, rows: 12 },
   slots: [
-    { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE, cover: { type: 'none', url: null, focalPoint: null }, news: PINNED_CONTENT },
+    {
+      newsId: 'news-1',
+      colStart: 1,
+      rowStart: 1,
+      colSpan: 1,
+      rowSpan: 7,
+      style: DEFAULT_CARD_STYLE,
+      cover: { type: 'none', url: null, focalPoint: null, variants: [] },
+      news: PINNED_CONTENT,
+    },
   ],
 };
 
@@ -62,7 +71,14 @@ describe('PinnedGridService', () => {
     expect(req.request.body).toEqual({
       config: mockLayout.config,
       slots: [
-        { newsId: 'news-1', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 7, style: DEFAULT_CARD_STYLE },
+        {
+          newsId: 'news-1',
+          colStart: 1,
+          rowStart: 1,
+          colSpan: 1,
+          rowSpan: 7,
+          style: DEFAULT_CARD_STYLE,
+        },
       ],
     });
     expect(req.request.body.slots[0].cover).toBeUndefined();

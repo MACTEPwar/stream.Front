@@ -39,11 +39,11 @@ const mockNews: AdminNews = {
   likedByCurrentUser: null,
   viewedByCurrentUser: null,
   images: [
-    { id: 'i2', url: '/uploads/2.jpg', order: 2, focalX: null, focalY: null },
-    { id: 'i1', url: '/uploads/1.jpg', order: 1, focalX: null, focalY: null },
+    { id: 'i2', url: '/uploads/2.jpg', order: 2, focalX: null, focalY: null, variants: [] },
+    { id: 'i1', url: '/uploads/1.jpg', order: 1, focalX: null, focalY: null, variants: [] },
   ],
   tags: [mockTags[0]],
-  cover: { type: 'none', url: null, focalPoint: null },
+  cover: { type: 'none', url: null, focalPoint: null, variants: [] },
   createdAt: '2026-07-31T00:00:00.000Z',
   updatedAt: '2026-07-31T00:00:00.000Z',
 };
@@ -152,7 +152,7 @@ describe('AdminNewsPage', () => {
 
     fixture.componentInstance['onEditClick']({
       ...mockNews,
-      cover: { type: 'image', url: '/uploads/1.jpg', focalPoint: null },
+      cover: { type: 'image', url: '/uploads/1.jpg', focalPoint: null, variants: [] },
     });
 
     expect(fixture.componentInstance['drawerVisible']()).toBe(true);

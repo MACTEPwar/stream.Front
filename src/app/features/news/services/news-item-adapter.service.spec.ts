@@ -17,7 +17,7 @@ function adminNews(overrides: Partial<AdminNews> = {}): AdminNews {
     viewedByCurrentUser: null,
     images: [],
     tags: [],
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     createdAt: '',
     updatedAt: '',
     ...overrides,
@@ -78,8 +78,12 @@ describe('NewsItemAdapterService', () => {
     });
 
     it('viewedByCurrentUser маппится из AdminNews, null трактуется как false', () => {
-      expect(service.toNewsItem(adminNews({ viewedByCurrentUser: true })).viewedByCurrentUser).toBe(true);
-      expect(service.toNewsItem(adminNews({ viewedByCurrentUser: null })).viewedByCurrentUser).toBe(false);
+      expect(service.toNewsItem(adminNews({ viewedByCurrentUser: true })).viewedByCurrentUser).toBe(
+        true,
+      );
+      expect(service.toNewsItem(adminNews({ viewedByCurrentUser: null })).viewedByCurrentUser).toBe(
+        false,
+      );
     });
 
     it('без картинок imageUrl — null, imageUrls — пустой массив', () => {
@@ -92,8 +96,15 @@ describe('NewsItemAdapterService', () => {
     it('сортирует картинки по order и резолвит их через ImageUrlService', () => {
       const admin = adminNews({
         images: [
-          { id: 'img-2', url: '/uploads/2.png', order: 2, focalX: null, focalY: null },
-          { id: 'img-1', url: '/uploads/1.png', order: 1, focalX: 30, focalY: 40 },
+          {
+            id: 'img-2',
+            url: '/uploads/2.png',
+            order: 2,
+            focalX: null,
+            focalY: null,
+            variants: [],
+          },
+          { id: 'img-1', url: '/uploads/1.png', order: 1, focalX: 30, focalY: 40, variants: [] },
         ],
       });
 
@@ -103,18 +114,64 @@ describe('NewsItemAdapterService', () => {
       expect(resolve).toHaveBeenCalledWith('/uploads/2.png');
       expect(item.imageUrls).toEqual(['resolved:/uploads/1.png', 'resolved:/uploads/2.png']);
       expect(item.images).toEqual([
-        { id: 'img-1', url: 'resolved:/uploads/1.png', focalX: 30, focalY: 40 },
-        { id: 'img-2', url: 'resolved:/uploads/2.png', focalX: null, focalY: null },
+        { id: 'img-1', url: 'resolved:/uploads/1.png', focalX: 30, focalY: 40, variants: [] },
+        { id: 'img-2', url: 'resolved:/uploads/2.png', focalX: null, focalY: null, variants: [] },
       ]);
+    });
+
+    it('резолвит url каждого размерного варианта картинки/обложки (stream.Front#130)', () => {
+      const admin = adminNews({
+        images: [
+          {
+            id: 'img-1',
+            url: '/uploads/1.png',
+            order: 1,
+            focalX: null,
+            focalY: null,
+            variants: [
+              { width: 175, url: '/uploads/1-175w.png' },
+              { width: 330, url: '/uploads/1-330w.png' },
+            ],
+          },
+        ],
+        cover: {
+          type: 'image',
+          url: '/uploads/1.png',
+          focalPoint: null,
+          variants: [{ width: 175, url: '/uploads/1-175w.png' }],
+        },
+      });
+
+      const item = service.toNewsItem(admin);
+
+      expect(item.images[0].variants).toEqual([
+        { width: 175, url: 'resolved:/uploads/1-175w.png' },
+        { width: 330, url: 'resolved:/uploads/1-330w.png' },
+      ]);
+      expect(item.cover.variants).toEqual([{ width: 175, url: 'resolved:/uploads/1-175w.png' }]);
     });
 
     it('imageUrl — ОБЛОЖКА новости, а не первая картинка набора (stream.Front#137)', () => {
       const admin = adminNews({
         images: [
-          { id: 'img-1', url: '/uploads/1.png', order: 1, focalX: null, focalY: null },
-          { id: 'img-2', url: '/uploads/2.png', order: 2, focalX: null, focalY: null },
+          {
+            id: 'img-1',
+            url: '/uploads/1.png',
+            order: 1,
+            focalX: null,
+            focalY: null,
+            variants: [],
+          },
+          {
+            id: 'img-2',
+            url: '/uploads/2.png',
+            order: 2,
+            focalX: null,
+            focalY: null,
+            variants: [],
+          },
         ],
-        cover: { type: 'image', url: '/uploads/2.png', focalPoint: { x: 70, y: 30 } },
+        cover: { type: 'image', url: '/uploads/2.png', focalPoint: { x: 70, y: 30 }, variants: [] },
       });
 
       const item = service.toNewsItem(admin);
@@ -124,13 +181,23 @@ describe('NewsItemAdapterService', () => {
         type: 'image',
         url: 'resolved:/uploads/2.png',
         focalPoint: { x: 70, y: 30 },
+        variants: [],
       });
     });
 
     it('без обложки картинки нет вовсе — первая её не подменяет (ОБЛ-О-05)', () => {
       const admin = adminNews({
-        images: [{ id: 'img-1', url: '/uploads/1.png', order: 1, focalX: null, focalY: null }],
-        cover: { type: 'none', url: null, focalPoint: null },
+        images: [
+          {
+            id: 'img-1',
+            url: '/uploads/1.png',
+            order: 1,
+            focalX: null,
+            focalY: null,
+            variants: [],
+          },
+        ],
+        cover: { type: 'none', url: null, focalPoint: null, variants: [] },
       });
 
       const item = service.toNewsItem(admin);
@@ -144,7 +211,12 @@ describe('NewsItemAdapterService', () => {
     it('маппит id/name/color/textColor и не переносит серверные поля', () => {
       const tag = adminTag({ id: 't1', name: 'Турнир', color: '#ff0000', textColor: '#ffffff' });
 
-      expect(service.toNewsTag(tag)).toEqual({ id: 't1', name: 'Турнир', color: '#ff0000', textColor: '#ffffff' });
+      expect(service.toNewsTag(tag)).toEqual({
+        id: 't1',
+        name: 'Турнир',
+        color: '#ff0000',
+        textColor: '#ffffff',
+      });
     });
   });
 });

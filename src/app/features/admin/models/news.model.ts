@@ -7,6 +7,16 @@
  * совпадают со здешними `images: AdminNewsImage[]`/`color: string`; перевод
  * публичной страницы на реальный API — отдельная будущая задача.
  */
+/**
+ * Один размерный вариант изображения (`streamer.API#78`, `ImageVariantDto`)
+ * — сервер отдаёт готовый набор, клиент выбирает по `width`, не угадывая имя
+ * файла по конвенции (`stream.Front#130`, `selectImageVariant()`).
+ */
+export interface ImageVariant {
+  readonly width: number;
+  readonly url: string;
+}
+
 export interface AdminNewsImage {
   id: string;
   url: string;
@@ -14,6 +24,8 @@ export interface AdminNewsImage {
   /** Focal point картинки, 0..100 (%), `null` — центр 50/50 (`pinned-grid-rework`, поверх `streamer.API#73`). Правится через `AdminNewsService.updateImageFocalPoint()` (`PATCH /admin/news/images/:id/focal-point`), не через `update()` самой новости. */
   focalX: number | null;
   focalY: number | null;
+  /** Размерные варианты ЭТОЙ картинки (`streamer.API#78`) — только реально существующие (вариант шире оригинала не создаётся). */
+  variants: readonly ImageVariant[];
 }
 
 export interface UpdateImageFocalPointPayload {
@@ -100,6 +112,8 @@ export interface NewsCover {
   readonly type: NewsCoverType;
   readonly url: string | null;
   readonly focalPoint: NewsCoverFocalPoint | null;
+  /** Размерные варианты обложки (`streamer.API#78`), пусто при `url: null`. */
+  readonly variants: readonly ImageVariant[];
 }
 
 export type UpdateNewsPayload = Partial<CreateNewsPayload>;

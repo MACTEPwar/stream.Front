@@ -15,8 +15,8 @@ const ITEM: AdminNews = {
   likedByCurrentUser: false,
   viewedByCurrentUser: false,
   images: [
-    { id: 'img-2', url: '/uploads/second.jpg', order: 2, focalX: null, focalY: null },
-    { id: 'img-1', url: '/uploads/first.jpg', order: 1, focalX: null, focalY: null },
+    { id: 'img-2', url: '/uploads/second.jpg', order: 2, focalX: null, focalY: null, variants: [] },
+    { id: 'img-1', url: '/uploads/first.jpg', order: 1, focalX: null, focalY: null, variants: [] },
   ],
   tags: [
     {
@@ -28,14 +28,14 @@ const ITEM: AdminNews = {
       updatedAt: '',
     },
   ],
-  cover: { type: 'image', url: '/uploads/cover.jpg', focalPoint: null },
+  cover: { type: 'image', url: '/uploads/cover.jpg', focalPoint: null, variants: [] },
   createdAt: '',
   updatedAt: '',
 };
 
 const ITEM_WITHOUT_COVER: AdminNews = {
   ...ITEM,
-  cover: { type: 'none', url: null, focalPoint: null },
+  cover: { type: 'none', url: null, focalPoint: null, variants: [] },
 };
 
 @Component({
@@ -175,7 +175,12 @@ describe('NewsArchiveItem', () => {
     const fixture = createItem();
     fixture.componentInstance.item.set({
       ...ITEM,
-      cover: { type: 'image', url: '/uploads/cover.jpg', focalPoint: { x: 30, y: 70 } },
+      cover: {
+        type: 'image',
+        url: '/uploads/cover.jpg',
+        focalPoint: { x: 30, y: 70 },
+        variants: [],
+      },
     });
     fixture.detectChanges();
     const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
@@ -183,6 +188,28 @@ describe('NewsArchiveItem', () => {
     );
 
     expect(img?.style.objectPosition).toBe('30% 70%');
+  });
+
+  it('выбирает вариант обложки под ширину превью 175px, а не оригинал целиком (stream.Front#130)', () => {
+    const fixture = createItem();
+    fixture.componentInstance.item.set({
+      ...ITEM,
+      cover: {
+        type: 'image',
+        url: '/uploads/cover.jpg',
+        focalPoint: null,
+        variants: [
+          { width: 175, url: '/uploads/cover-175w.jpg' },
+          { width: 330, url: '/uploads/cover-330w.jpg' },
+        ],
+      },
+    });
+    fixture.detectChanges();
+    const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
+      '.news-archive-item__picture img',
+    );
+
+    expect(img?.src).toContain('/uploads/cover-175w.jpg');
   });
 
   it('без точки фокуса превью держит центр 50/50', () => {

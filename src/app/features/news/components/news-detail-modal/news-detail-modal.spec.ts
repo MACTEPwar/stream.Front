@@ -16,7 +16,9 @@ const ITEM: AdminNews = {
   likeCount: 44,
   likedByCurrentUser: false,
   viewedByCurrentUser: false,
-  images: [{ id: 'img-1', url: '/uploads/first.jpg', order: 1, focalX: null, focalY: null }],
+  images: [
+    { id: 'img-1', url: '/uploads/first.jpg', order: 1, focalX: null, focalY: null, variants: [] },
+  ],
   tags: [
     {
       id: 'tournament',
@@ -27,7 +29,7 @@ const ITEM: AdminNews = {
       updatedAt: '',
     },
   ],
-  cover: { type: 'none', url: null, focalPoint: null },
+  cover: { type: 'none', url: null, focalPoint: null, variants: [] },
   createdAt: '',
   updatedAt: '',
 };
@@ -120,5 +122,84 @@ describe('NewsDetailModal', () => {
     fixture.detectChanges();
 
     expect(host.querySelector('.news-detail-modal__picture img')).toBeNull();
+  });
+
+  describe('выбор размерного варианта по месту показа (stream.Front#130)', () => {
+    // `.news-detail-modal__picture` сама по себе гибкая (`min(1200px, 86vw)`
+    // на десктопе / фикс. `200px` на `bp.small`) — реальная ширина измеряется
+    // `ResizeObserver`'ом, не пересчитывается из CSS-формул. Тот же приём
+    // фейка, что у `NewsCard`/`SectionTitle`.
+    class FakeResizeObserver {
+      static instances: FakeResizeObserver[] = [];
+      private readonly callback: ResizeObserverCallback;
+
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+        FakeResizeObserver.instances.push(this);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      observe(): void {}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      disconnect(): void {}
+
+      trigger(width: number): void {
+        this.callback(
+          [{ contentRect: { width } } as ResizeObserverEntry],
+          this as unknown as ResizeObserver,
+        );
+      }
+    }
+
+    let originalResizeObserver: typeof ResizeObserver | undefined;
+
+    beforeEach(() => {
+      originalResizeObserver = globalThis.ResizeObserver;
+      FakeResizeObserver.instances = [];
+      globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+    });
+
+    afterEach(() => {
+      globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+    });
+
+    const ITEM_WITH_VARIANTS: AdminNews = {
+      ...ITEM,
+      images: [
+        {
+          id: 'img-1',
+          url: '/uploads/first.jpg',
+          order: 1,
+          focalX: null,
+          focalY: null,
+          variants: [
+            { width: 480, url: '/uploads/first-480w.jpg' },
+            { width: 720, url: '/uploads/first-720w.jpg' },
+          ],
+        },
+      ],
+    };
+
+    it('выбирает вариант по реально измеренной ширине блока картинки', () => {
+      const fixture = createModal({ item: ITEM_WITH_VARIANTS });
+      FakeResizeObserver.instances[0]?.trigger(500);
+      fixture.detectChanges();
+
+      const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
+        '.news-detail-modal__picture img',
+      );
+      expect(img?.src).toContain('/uploads/first-720w.jpg');
+    });
+
+    it('пока ширина не измерена — используется оригинал', () => {
+      const fixture = createModal({ item: ITEM_WITH_VARIANTS });
+
+      const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
+        '.news-detail-modal__picture img',
+      );
+      expect(img?.src).toContain('/uploads/first.jpg');
+      expect(img?.src).not.toContain('480w');
+      expect(img?.src).not.toContain('720w');
+    });
   });
 });

@@ -6,9 +6,9 @@
   [style.color]="cardStyle().textColor"
 >
   <div class="news-card__picture" [style.flex]="pictureFlexBasis()">
-    @if (hasVisibleImage()) {
+    @if (pictureSrc(); as src) {
       <img
-        [src]="item().imageUrl"
+        [src]="src"
         alt=""
         [style.object-position]="imageObjectPosition()"
         (error)="onImageError()"

@@ -17,7 +17,7 @@ const mockNews: AdminNews = {
   viewedByCurrentUser: null,
   images: [],
   tags: [],
-  cover: { type: 'none', url: null, focalPoint: null },
+  cover: { type: 'none', url: null, focalPoint: null, variants: [] },
   createdAt: '2026-07-31T12:00:00.000Z',
   updatedAt: '2026-07-31T12:00:00.000Z',
 };
@@ -58,7 +58,9 @@ describe('AdminNewsService', () => {
 
   it('getAll() бьёт в GET /news с пагинацией и опциональными фильтрами', () => {
     let result: unknown;
-    service.getAll(2, 10, { search: 'турнир', tagId: 't1' }).subscribe((response) => (result = response));
+    service
+      .getAll(2, 10, { search: 'турнир', tagId: 't1' })
+      .subscribe((response) => (result = response));
 
     const req = httpMock.expectOne(
       `${environment.apiUrl}/news?page=2&limit=10&search=${encodeURIComponent('турнир')}&tagId=t1`,
@@ -102,9 +104,18 @@ describe('AdminNewsService', () => {
   });
 
   it('updateImageFocalPoint() бьёт в PATCH /admin/news/images/:id/focal-point с телом координат', () => {
-    const mockImage: AdminNewsImage = { id: 'img-1', url: '/uploads/1.jpg', order: 0, focalX: 30, focalY: 40 };
+    const mockImage: AdminNewsImage = {
+      id: 'img-1',
+      url: '/uploads/1.jpg',
+      order: 0,
+      focalX: 30,
+      focalY: 40,
+      variants: [],
+    };
     let result: AdminNewsImage | undefined;
-    service.updateImageFocalPoint('img-1', { focalX: 30, focalY: 40 }).subscribe((image) => (result = image));
+    service
+      .updateImageFocalPoint('img-1', { focalX: 30, focalY: 40 })
+      .subscribe((image) => (result = image));
 
     const req = httpMock.expectOne(`${environment.apiUrl}/admin/news/images/img-1/focal-point`);
     expect(req.request.method).toBe('PATCH');

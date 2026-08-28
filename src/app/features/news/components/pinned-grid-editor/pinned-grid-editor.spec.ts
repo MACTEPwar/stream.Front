@@ -31,7 +31,7 @@ function newsItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
     id,
     title: `Заголовок ${id}`,
     excerpt: 'Lorem ipsum dolor sit amet consectetur.',
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     imageUrl: null,
     imageUrls: [],
     images: [],
@@ -53,7 +53,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     colSpan: 1,
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     news: PINNED_CONTENT,
     ...overrides,
   };
@@ -530,7 +530,7 @@ describe('PinnedGridEditor', () => {
         [
           newsItem('news-1', {
             imageUrls: ['/a.png', '/b.png'],
-            cover: { type: 'image', url: '/a.png', focalPoint: null },
+            cover: { type: 'image', url: '/a.png', focalPoint: null, variants: [] },
           }),
         ],
         [],
@@ -545,6 +545,7 @@ describe('PinnedGridEditor', () => {
         type: 'image',
         url: '/a.png',
         focalPoint: null,
+        variants: [],
       });
     });
 
@@ -599,8 +600,8 @@ describe('PinnedGridEditor', () => {
         [
           newsItem('news-1', {
             imageUrls: ['/a.png'],
-            images: [{ id: 'img-1', url: '/a.png', focalX: null, focalY: null }],
-            cover: { type: 'image', url: '/a.png', focalPoint: null },
+            images: [{ id: 'img-1', url: '/a.png', focalX: null, focalY: null, variants: [] }],
+            cover: { type: 'image', url: '/a.png', focalPoint: null, variants: [] },
           }),
         ],
         [slot({ newsId: 'news-1' })],
@@ -631,8 +632,8 @@ describe('PinnedGridEditor', () => {
         [
           newsItem('news-1', {
             imageUrls: ['/a.png'],
-            images: [{ id: 'img-1', url: '/a.png', focalX: 30, focalY: 40 }],
-            cover: { type: 'image', url: '/a.png', focalPoint: { x: 30, y: 40 } },
+            images: [{ id: 'img-1', url: '/a.png', focalX: 30, focalY: 40, variants: [] }],
+            cover: { type: 'image', url: '/a.png', focalPoint: { x: 30, y: 40 }, variants: [] },
           }),
         ],
         [slot({ newsId: 'news-1' })],
@@ -677,7 +678,7 @@ describe('PinnedGridEditor', () => {
           [
             newsItem('news-1', {
               imageUrls: ['/a.png'],
-              cover: { type: 'none', url: null, focalPoint: null },
+              cover: { type: 'none', url: null, focalPoint: null, variants: [] },
             }),
           ],
           [slot({ newsId: 'news-1' })],
@@ -729,7 +730,7 @@ describe('PinnedGridEditor', () => {
           [
             newsItem('news-1', {
               imageUrls: ['/a.png'],
-              cover: { type: 'none', url: null, focalPoint: null },
+              cover: { type: 'none', url: null, focalPoint: null, variants: [] },
             }),
           ],
           [slot({ newsId: 'news-1' })],
