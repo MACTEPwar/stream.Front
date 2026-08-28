@@ -43,8 +43,9 @@ export class NewsDetailModal implements OnInit {
   private readonly newsArchiveService = inject(NewsArchiveService);
 
   protected readonly item = signal<AdminNews | null>(null);
+  private readonly failedImageUrl = signal<string | null>(null);
 
-  protected readonly imageUrl = computed(() => {
+  private readonly rawImageUrl = computed(() => {
     const images = this.item()?.images ?? [];
     if (images.length === 0) {
       return null;
@@ -53,9 +54,17 @@ export class NewsDetailModal implements OnInit {
     return this.imageUrlService.resolve(first.url);
   });
 
+  /** Битый url ведёт себя как отсутствующее изображение (`АДП-Ф-32`), тот же приём, что `NewsCard`/`NewsArchiveItem` (`stream.Front#127`). */
+  protected readonly imageUrl = computed(() => {
+    const url = this.rawImageUrl();
+    return url && url !== this.failedImageUrl() ? url : null;
+  });
+
   protected readonly viewsLabel = computed(() => formatCompactCount(this.item()?.viewCount ?? 0));
   protected readonly likesLabel = computed(() => formatCompactCount(this.item()?.likeCount ?? 0));
-  protected readonly likeIconClass = computed(() => (this.item()?.likedByCurrentUser ? 'pi pi-heart-fill' : 'pi pi-heart'));
+  protected readonly likeIconClass = computed(() =>
+    this.item()?.likedByCurrentUser ? 'pi pi-heart-fill' : 'pi pi-heart',
+  );
   protected readonly dateLabel = computed(() => {
     const publishedAt = this.item()?.publishedAt;
     return publishedAt ? formatDate(publishedAt, 'dd.MM.yyyy', 'en-US') : '';
@@ -82,5 +91,9 @@ export class NewsDetailModal implements OnInit {
       },
       error: (error) => console.error('Не удалось отметить новость как просмотренную', error),
     });
+  }
+
+  protected onImageError(): void {
+    this.failedImageUrl.set(this.rawImageUrl());
   }
 }

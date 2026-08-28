@@ -21,6 +21,40 @@
   overflow: hidden;
   border-radius: 5px;
   box-shadow: vars.$shadow-9-0;
+  // Якорь для `.__picture`/`.__body` в режиме подложки (`.news-card--quilt`
+  // ниже) — оба становятся `position: absolute` друг на друге.
+  position: relative;
+}
+
+// Режим подложки (`ЗАК-Ф-12`—`ЗАК-Ф-15`, `stream.Front#127`) — включается
+// `isQuiltMode()` по измеренному размеру ячейки, не отсюда. Картинка растянута
+// на всю карточку, текст — поверх той же площадью; порядок в DOM (`.__body`
+// после `.__picture`) сам решает стек без явного `z-index`.
+.news-card--quilt {
+  .news-card__picture {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .news-card__body {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  // Заголовок (`ЗАК-Ф-14` — не убирается никогда) прижат к низу своего блока
+  // (a11y-review: без этого `.news-card__text` растягивается почти на всю
+  // высоту карточки через унаследованный `flex: 1 1 auto`, а заголовок
+  // дефолтным `flex-start` оказывался у ВЕРХНЕГО края — в самой прозрачной
+  // части градиента подложки, где контраст с произвольной картинкой не
+  // гарантирован). Теперь заголовок кластеризуется вплотную к тегам/дате —
+  // все они в плотной зоне градиента (см. `quiltScrimBackground`).
+  .news-card__text {
+    justify-content: flex-end;
+  }
 }
 
 .news-card__picture {

@@ -2,7 +2,7 @@
   <div class="news-detail-modal">
     <div class="news-detail-modal__picture">
       @if (imageUrl(); as url) {
-        <img [src]="url" alt="" />
+        <img [src]="url" alt="" (error)="onImageError()" />
       }
     </div>
 

@@ -17,7 +17,16 @@ const ITEM: AdminNews = {
   likedByCurrentUser: false,
   viewedByCurrentUser: false,
   images: [{ id: 'img-1', url: '/uploads/first.jpg', order: 1, focalX: null, focalY: null }],
-  tags: [{ id: 'tournament', name: 'Турнир', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' }],
+  tags: [
+    {
+      id: 'tournament',
+      name: 'Турнир',
+      color: '#FF5733',
+      textColor: '#FFFFFF',
+      createdAt: '',
+      updatedAt: '',
+    },
+  ],
   cover: { type: 'none', url: null, focalPoint: null },
   createdAt: '',
   updatedAt: '',
@@ -44,7 +53,9 @@ describe('NewsDetailModal', () => {
   });
 
   function createModal(data: NewsDetailModalData) {
-    markViewed.mockReturnValue(of({ viewCount: 5301, viewedByCurrentUser: true } satisfies ViewResponse));
+    markViewed.mockReturnValue(
+      of({ viewCount: 5301, viewedByCurrentUser: true } satisfies ViewResponse),
+    );
     const fixture = TestBed.createComponent(NewsDetailModalHost);
     fixture.componentInstance.data.set(data);
     fixture.detectChanges();
@@ -84,7 +95,30 @@ describe('NewsDetailModal', () => {
     fixture.detectChanges();
 
     expect(consoleError).toHaveBeenCalled();
-    expect((fixture.nativeElement as HTMLElement).querySelector('.news-detail-modal__title')).not.toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.news-detail-modal__title'),
+    ).not.toBeNull();
     consoleError.mockRestore();
+  });
+
+  it('изображение не обрезается — object-fit: contain, не cover (КАР-Ф-04)', () => {
+    const fixture = createModal({ item: ITEM });
+    const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
+      '.news-detail-modal__picture img',
+    );
+
+    expect(img).not.toBeNull();
+    expect(getComputedStyle(img as HTMLImageElement).objectFit).toBe('contain');
+  });
+
+  it('изображение, не загрузившееся с ошибкой, ведёт себя как отсутствующее (АДП-Ф-32)', () => {
+    const fixture = createModal({ item: ITEM });
+    const host = fixture.nativeElement as HTMLElement;
+    const img = host.querySelector<HTMLImageElement>('.news-detail-modal__picture img');
+
+    img?.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(host.querySelector('.news-detail-modal__picture img')).toBeNull();
   });
 });
