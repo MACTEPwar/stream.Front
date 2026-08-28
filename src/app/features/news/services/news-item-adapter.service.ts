@@ -5,6 +5,7 @@ import { AdminNews, AdminNewsTag, NewsCover } from '@features/admin/models/news.
 
 import { NewsItem } from '../models/news.model';
 import { NewsTag } from '../models/news-tag.model';
+import { PinnedNewsSlot } from '../models/pinned-news-slot.model';
 
 /**
  * Адаптирует реальные backend-модели админки (`AdminNews`/`AdminNewsTag`,
@@ -53,6 +54,41 @@ export class NewsItemAdapterService {
       publishedAt: new Date(admin.publishedAt),
       viewedByCurrentUser: admin.viewedByCurrentUser ?? false,
       likedByCurrentUser: admin.likedByCurrentUser ?? false,
+    };
+  }
+
+  /**
+   * Карточка витрины из слота раскладки (`stream.Front#133`, поверх
+   * `streamer.API#76`) — содержимое приходит вместе с раскладкой, и клиенту
+   * не нужно доискивать его в ленте. Раньше витрина собиралась окольным
+   * путём: подгружалась сотня свежих новостей, и показывались те
+   * закрепления, что в неё попали, — закреплённая новость старше сотни
+   * молча исчезала у посетителя.
+   *
+   * `imageUrls`/`images` остаются пустыми намеренно: галерея витрине не
+   * нужна, картинку даёт обложка, а тащить её на каждый слот значило бы
+   * вернуть тот же лишний объём, ради которого задача и заведена.
+   */
+  toPinnedNewsItem(slot: PinnedNewsSlot): NewsItem {
+    const cover: NewsCover = {
+      ...slot.cover,
+      url: slot.cover.url === null ? null : this.imageUrlService.resolve(slot.cover.url),
+    };
+
+    return {
+      id: slot.newsId,
+      title: slot.news.title,
+      excerpt: slot.news.description,
+      cover,
+      imageUrl: cover.url,
+      imageUrls: [],
+      images: [],
+      tagIds: slot.news.tags.map((tag) => tag.id),
+      views: slot.news.viewCount,
+      likes: slot.news.likeCount,
+      publishedAt: new Date(slot.news.publishedAt),
+      viewedByCurrentUser: slot.news.viewedByCurrentUser ?? false,
+      likedByCurrentUser: slot.news.likedByCurrentUser ?? false,
     };
   }
 

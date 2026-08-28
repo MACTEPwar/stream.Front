@@ -2,7 +2,6 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
-  OnInit,
   computed,
   effect,
   inject,
@@ -17,8 +16,6 @@ import { AuthService } from '@core/services/auth.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AdminNews } from '@features/admin/models/news.model';
-import { AdminNewsService } from '@features/admin/services/admin-news.service';
-import { AdminNewsTagService } from '@features/admin/services/admin-news-tag.service';
 import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
@@ -33,8 +30,6 @@ import {
   PinnedNewsGridEntry,
 } from '../../components/pinned-news-grid/pinned-news-grid';
 import { NewsFilter } from '../../models/news-filter.model';
-import { NewsItem } from '../../models/news.model';
-import { NewsTag } from '../../models/news-tag.model';
 import {
   DEFAULT_GRID_COLUMNS,
   DEFAULT_GRID_ROWS,
@@ -47,8 +42,6 @@ import { NewsItemAdapterService } from '../../services/news-item-adapter.service
 import { PinnedGridService } from '../../services/pinned-grid.service';
 
 const ARCHIVE_PAGE_SIZE = 10;
-/** Сколько новостей грузить сразу для закреплённой сетки (тот же паттерн/значение, что `AdminNewsPinnedPage`). */
-const NEWS_PAGE_SIZE = 100;
 /** Запускает подгрузку следующей страницы архива, когда до низа списка остаётся меньше этого расстояния (px). */
 const ARCHIVE_SCROLL_THRESHOLD_PX = 80;
 
@@ -152,9 +145,7 @@ function endOfDay(date: Date): Date {
     '(window:orientationchange)': 'syncViewportWidth()',
   },
 })
-export class NewsPage implements OnInit {
-  private readonly adminNewsService = inject(AdminNewsService);
-  private readonly adminNewsTagService = inject(AdminNewsTagService);
+export class NewsPage {
   private readonly newsItemAdapter = inject(NewsItemAdapterService);
   private readonly newsArchiveService = inject(NewsArchiveService);
   private readonly pinnedGridService = inject(PinnedGridService);
@@ -195,8 +186,6 @@ export class NewsPage implements OnInit {
     isNewsArchiveBeside(newsPageContentWidth(this.viewportWidth(), this.viewport())),
   );
 
-  private readonly news = signal<NewsItem[]>([]);
-  private readonly tags = signal<NewsTag[]>([]);
   private readonly pinnedSlots = signal<PinnedNewsSlot[]>([]);
   protected readonly gridConfig = signal<PinnedGridConfig>({
     columns: DEFAULT_GRID_COLUMNS,
@@ -212,18 +201,23 @@ export class NewsPage implements OnInit {
   protected readonly showOnlyViewed = signal(false);
   protected readonly showOnlyLiked = signal(false);
 
-  private readonly tagsById = computed(() => new Map(this.tags().map((tag) => [tag.id, tag])));
-
-  protected readonly gridEntries = computed<PinnedNewsGridEntry[]>(() => {
-    const newsById = new Map(this.news().map((item) => [item.id, item]));
-
-    return this.pinnedSlots()
-      .filter((slot) => newsById.has(slot.newsId))
-      .map((slot) => {
-        const item = newsById.get(slot.newsId)!;
-        return { item, tags: this.resolveTags(item), slot };
-      });
-  });
+  /**
+   * Витрина строится ЦЕЛИКОМ из ответа раскладки (`stream.Front#133`, поверх
+   * `streamer.API#76`): содержимое карточки приходит вместе со слотом.
+   *
+   * Раньше здесь была подгрузка сотни свежих новостей и пересечение с ней по
+   * `newsId` — закреплённая новость старше сотни в это пересечение не
+   * попадала и молча исчезала из витрины у посетителя, хотя администратор
+   * видел её в редакторе. Заодно витрина ждала загрузки ленты, чтобы
+   * отрисоваться, — теперь два блока страницы не связаны по данным вовсе.
+   */
+  protected readonly gridEntries = computed<PinnedNewsGridEntry[]>(() =>
+    this.pinnedSlots().map((slot) => ({
+      item: this.newsItemAdapter.toPinnedNewsItem(slot),
+      tags: slot.news.tags.map((tag) => this.newsItemAdapter.toNewsTag(tag)),
+      slot,
+    })),
+  );
 
   /**
    * Клиентской фильтрации здесь больше нет (`stream.Front#129`): отбор
@@ -278,20 +272,6 @@ export class NewsPage implements OnInit {
         this.loadArchivePage(1, query);
       });
     });
-  }
-
-  ngOnInit(): void {
-    this.adminNewsTagService
-      .getAll()
-      .subscribe((tags) => this.tags.set(tags.map((tag) => this.newsItemAdapter.toNewsTag(tag))));
-    this.adminNewsService
-      .getAll(1, NEWS_PAGE_SIZE)
-      .subscribe((response) =>
-        this.news.set(response.items.map((item) => this.newsItemAdapter.toNewsItem(item))),
-      );
-    // Первую страницу архива грузит эффект условий отбора (см. конструктор):
-    // он срабатывает при инициализации с пустым набором условий, и отдельный
-    // вызов здесь означал бы два запроса на старте.
   }
 
   /**
@@ -417,8 +397,4 @@ export class NewsPage implements OnInit {
     );
   }
 
-  private resolveTags(item: NewsItem): NewsTag[] {
-    const byId = this.tagsById();
-    return item.tagIds.map((tagId) => byId.get(tagId)).filter((tag): tag is NewsTag => !!tag);
-  }
 }

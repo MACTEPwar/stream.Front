@@ -4,6 +4,17 @@ import { NewsItem } from '../../models/news.model';
 import { DEFAULT_CARD_STYLE, PinnedNewsSlot } from '../../models/pinned-news-slot.model';
 import { PinnedNewsGrid, PinnedNewsGridEntry } from './pinned-news-grid';
 
+const PINNED_CONTENT = {
+  title: 'Заголовок закреплённой',
+  description: 'Описание закреплённой',
+  publishedAt: '2023-12-06T00:00:00.000Z',
+  viewCount: 100,
+  likeCount: 10,
+  likedByCurrentUser: false,
+  viewedByCurrentUser: false,
+  tags: [],
+};
+
 function newsItem(id: string): NewsItem {
   return {
     id,
@@ -31,6 +42,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
     cover: { type: 'none', url: null, focalPoint: null },
+    news: PINNED_CONTENT,
     ...overrides,
   };
 }

@@ -1,4 +1,4 @@
-import { NewsCover } from '@features/admin/models/news.model';
+import { AdminNewsTag, NewsCover } from '@features/admin/models/news.model';
 
 /**
  * Дефолтный размер сетки закреплённых новостей (`stream.Front#112`) — старт
@@ -98,6 +98,32 @@ export interface PinnedNewsSlot {
    * состояние, и слот её только показывает.
    */
   readonly cover: NewsCover;
+  /**
+   * Содержимое карточки (`stream.Front#133`, поверх `streamer.API#76`) —
+   * приходит вместе с раскладкой. Раньше клиент подгружал сотню свежих
+   * новостей и показывал те закрепления, что в неё попали: закреплённая
+   * новость старше сотни молча исчезала из витрины у посетителя, хотя
+   * администратор видел её в редакторе.
+   */
+  readonly news: PinnedNewsContent;
+}
+
+/**
+ * Ровно то, что рисует карточка витрины. `images[]` новости сюда не входят —
+ * картинку даёт `cover`, а галерея витрине не нужна; `tags` приходят полными
+ * объектами, потому что карточка рисует плашку с собственными цветами.
+ */
+export interface PinnedNewsContent {
+  readonly title: string;
+  readonly description: string;
+  /** ISO-строка, как везде в контракте. */
+  readonly publishedAt: string;
+  readonly viewCount: number;
+  readonly likeCount: number;
+  /** `null` без авторизации — это отличимо от «не реагировал» (`РЕА-Б-02`). */
+  readonly likedByCurrentUser: boolean | null;
+  readonly viewedByCurrentUser: boolean | null;
+  readonly tags: readonly AdminNewsTag[];
 }
 
 /**

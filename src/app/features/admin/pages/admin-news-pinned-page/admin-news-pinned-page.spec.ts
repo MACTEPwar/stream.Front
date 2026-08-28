@@ -8,6 +8,17 @@ import { DEFAULT_CARD_STYLE, PinnedGridLayout, PinnedGridViewport } from '../../
 import { PinnedGridService } from '../../../news/services/pinned-grid.service';
 import { AdminNewsPinnedPage } from './admin-news-pinned-page';
 
+const PINNED_CONTENT = {
+  title: 'Заголовок закреплённой',
+  description: 'Описание закреплённой',
+  publishedAt: '2023-12-06T00:00:00.000Z',
+  viewCount: 100,
+  likeCount: 10,
+  likedByCurrentUser: false,
+  viewedByCurrentUser: false,
+  tags: [],
+};
+
 function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
   return {
     id,
@@ -41,6 +52,7 @@ function pinnedLayout(newsId: string): PinnedGridLayout {
         rowSpan: 7,
         style: DEFAULT_CARD_STYLE,
         cover: { type: 'none', url: null, focalPoint: null },
+        news: PINNED_CONTENT,
       },
     ],
   };
@@ -127,6 +139,7 @@ describe('AdminNewsPinnedPage', () => {
           rowSpan: 12,
           style: DEFAULT_CARD_STYLE,
           cover: { type: 'none', url: null, focalPoint: null },
+          news: PINNED_CONTENT,
         },
       ],
     };
@@ -160,6 +173,7 @@ describe('AdminNewsPinnedPage', () => {
           rowSpan: 12,
           style: DEFAULT_CARD_STYLE,
           cover: { type: 'none', url: null, focalPoint: null },
+          news: PINNED_CONTENT,
         },
       ],
     };
