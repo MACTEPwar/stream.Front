@@ -1,4 +1,4 @@
-import { NewsCover } from '@features/admin/models/news.model';
+import { ImageVariant, NewsCover } from '@features/admin/models/news.model';
 
 /**
  * Одна новость в сетке/архиве страницы «Новости» (`docs/figma/news1.json`).
@@ -11,6 +11,8 @@ export interface NewsItemImage {
   url: string;
   focalX: number | null;
   focalY: number | null;
+  /** Размерные варианты этой картинки (`streamer.API#78`), для выбора по месту показа (`stream.Front#130`). */
+  variants: readonly ImageVariant[];
 }
 
 export interface NewsItem {

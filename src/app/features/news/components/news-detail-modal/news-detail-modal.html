@@ -1,6 +1,6 @@
 @if (item(); as newsItem) {
   <div class="news-detail-modal">
-    <div class="news-detail-modal__picture">
+    <div class="news-detail-modal__picture" #pictureEl>
       @if (imageUrl(); as url) {
         <img [src]="url" alt="" (error)="onImageError()" />
       }

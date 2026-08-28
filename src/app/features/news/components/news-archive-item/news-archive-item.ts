@@ -7,6 +7,10 @@ import { Badge } from '@shared/components/badge/badge';
 import { Checkbox } from '@shared/components/checkbox/checkbox';
 
 import { formatCompactCount } from '../../utils/format-compact-count';
+import { selectImageVariant } from '../../utils/select-image-variant';
+
+/** Ширина превью — фиксированная `flex: 0 0 175px` в `.news-archive-item__picture` (`.scss`), не измеряется: строка не сжимает превью (`ЛЕН-Ф-06`), значение всегда одно и то же. */
+const PREVIEW_WIDTH_PX = 175;
 
 /**
  * Строка панели архива новостей справа (`stream.Front#121`, переверстано
@@ -63,10 +67,22 @@ export class NewsArchiveItem {
   readonly openDetail = output<void>();
 
   private readonly failedImageUrl = signal<string | null>(null);
+  /** SPA без SSR — `window` есть всегда, тот же подход, что у `NewsCard`. */
+  private readonly devicePixelRatio = window.devicePixelRatio || 1;
 
+  /** Выбор размерного варианта — по СЫРОМУ (нерезолвленному) `url`/`variants` из `AdminNews.cover` (`stream.Front#130`), резолвится уже итоговый выбор — резолвить весь список вариантов ради одного использованного незачем. */
   private readonly rawImageUrl = computed(() => {
-    const url = this.item().cover.url;
-    return url ? this.imageUrlService.resolve(url) : null;
+    const cover = this.item().cover;
+    if (!cover.url) {
+      return null;
+    }
+    const chosen = selectImageVariant(
+      cover.url,
+      cover.variants,
+      PREVIEW_WIDTH_PX,
+      this.devicePixelRatio,
+    );
+    return this.imageUrlService.resolve(chosen);
   });
 
   /**

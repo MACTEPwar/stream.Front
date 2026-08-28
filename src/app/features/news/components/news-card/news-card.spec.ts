@@ -17,7 +17,12 @@ const ITEM: NewsItem = {
   id: 'news-1',
   title: 'Lorem ipsum dolor sit amet consectetur.',
   excerpt: 'Lorem ipsum dolor sit amet consectetur. Enim ultricies varius iaculis.',
-  cover: { type: 'image', url: '/images/main-carousel/slide-0-test.png', focalPoint: null },
+  cover: {
+    type: 'image',
+    url: '/images/main-carousel/slide-0-test.png',
+    focalPoint: null,
+    variants: [],
+  },
   imageUrl: '/images/main-carousel/slide-0-test.png',
   imageUrls: ['/images/main-carousel/slide-0-test.png'],
   images: [],
@@ -321,6 +326,84 @@ describe('NewsCard', () => {
 
       body = fixture.nativeElement.querySelector('.news-card__body') as HTMLElement;
       expect(body.style.background).toContain('0, 0, 0');
+    });
+  });
+
+  describe('выбор размерного варианта по месту показа (stream.Front#130)', () => {
+    // Тот же `FakeResizeObserver`, что и у режима подложки выше (тесты в
+    // разных `describe` не делят состояние jsdom/TestBed) — здесь измерение
+    // используется для другой цели: не порог перехода в подложку, а реальная
+    // ширина блока картинки, от которой зависит выбор варианта.
+    class FakeResizeObserver {
+      static instances: FakeResizeObserver[] = [];
+      private readonly callback: ResizeObserverCallback;
+
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+        FakeResizeObserver.instances.push(this);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      observe(): void {}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      disconnect(): void {}
+
+      trigger(width: number, height: number): void {
+        this.callback(
+          [{ contentRect: { width, height } } as ResizeObserverEntry],
+          this as unknown as ResizeObserver,
+        );
+      }
+    }
+
+    let originalResizeObserver: typeof ResizeObserver | undefined;
+
+    beforeEach(() => {
+      originalResizeObserver = globalThis.ResizeObserver;
+      FakeResizeObserver.instances = [];
+      globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+    });
+
+    afterEach(() => {
+      globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+    });
+
+    const VARIANTS = [
+      { width: 330, url: 'resolved:/uploads/cover-330w.jpg' },
+      { width: 480, url: 'resolved:/uploads/cover-480w.jpg' },
+      { width: 1030, url: 'resolved:/uploads/cover-1030w.jpg' },
+    ];
+
+    it('выбирает вариант по реально измеренной ширине блока картинки, не оригинал', () => {
+      const fixture = createCard();
+      fixture.componentInstance.item.set({ ...ITEM, cover: { ...ITEM.cover, variants: VARIANTS } });
+      // top/imageSizePercent 50% — ширина картинки = вся ширина host (делится
+      // только высота); 400px нужно ближайшему варианту не меньше этого — 480
+      // (330 тесен), а не 1030 и тем более не оригинал.
+      FakeResizeObserver.instances[0]?.trigger(400, 1000);
+      fixture.detectChanges();
+
+      const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>('.news-card__picture img');
+      expect(img?.src).toContain('/uploads/cover-480w.jpg');
+    });
+
+    it('без подходящего варианта — используется оригинал', () => {
+      const fixture = createCard();
+      fixture.componentInstance.item.set({ ...ITEM, cover: { ...ITEM.cover, variants: VARIANTS } });
+      FakeResizeObserver.instances[0]?.trigger(2000, 1000);
+      fixture.detectChanges();
+
+      const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>('.news-card__picture img');
+      expect(img?.src).toContain(ITEM.imageUrl as string);
+    });
+
+    it('пока размер не измерен — используется оригинал (безопасный дефолт)', () => {
+      const fixture = createCard();
+      fixture.componentInstance.item.set({ ...ITEM, cover: { ...ITEM.cover, variants: VARIANTS } });
+      fixture.detectChanges();
+
+      const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>('.news-card__picture img');
+      expect(img?.src).toContain(ITEM.imageUrl as string);
     });
   });
 });

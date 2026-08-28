@@ -27,7 +27,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     colSpan: 1,
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     news: PINNED_CONTENT,
     ...overrides,
   };
@@ -73,7 +73,11 @@ describe('validatePinnedNewsSlots', () => {
   });
 
   it('уважает переданные columns/rows, отличные от дефолта', () => {
-    const errors = validatePinnedNewsSlots([slot({ colStart: 1, colSpan: 5 })], 5, DEFAULT_GRID_ROWS);
+    const errors = validatePinnedNewsSlots(
+      [slot({ colStart: 1, colSpan: 5 })],
+      5,
+      DEFAULT_GRID_ROWS,
+    );
     expect(errors).toEqual([]);
   });
 
@@ -94,10 +98,9 @@ describe('validatePinnedNewsSlots', () => {
 
 describe('isSlotPlacementValid', () => {
   it('кандидат в границах без пересечений — валиден', () => {
-    const valid = isSlotPlacementValid(
-      slot({ colStart: 1, rowStart: 1 }),
-      [slot({ newsId: 'news-2', colStart: 2, rowStart: 1 })],
-    );
+    const valid = isSlotPlacementValid(slot({ colStart: 1, rowStart: 1 }), [
+      slot({ newsId: 'news-2', colStart: 2, rowStart: 1 }),
+    ]);
     expect(valid).toBe(true);
   });
 
@@ -107,10 +110,9 @@ describe('isSlotPlacementValid', () => {
   });
 
   it('кандидат пересекается с другим слотом — невалиден', () => {
-    const valid = isSlotPlacementValid(
-      slot({ colStart: 1, rowStart: 1 }),
-      [slot({ newsId: 'news-2', colStart: 1, rowStart: 1 })],
-    );
+    const valid = isSlotPlacementValid(slot({ colStart: 1, rowStart: 1 }), [
+      slot({ newsId: 'news-2', colStart: 1, rowStart: 1 }),
+    ]);
     expect(valid).toBe(false);
   });
 

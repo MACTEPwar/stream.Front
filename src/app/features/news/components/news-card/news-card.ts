@@ -13,6 +13,7 @@ import {
 import { formatCompactCount } from '../../utils/format-compact-count';
 import { hexToRgba } from '../../utils/hex-to-rgba';
 import { isLightColor } from '../../utils/is-light-color';
+import { selectImageVariant } from '../../utils/select-image-variant';
 
 /** Прозрачность разделителя над блоком просмотров/лайков — 10% от `textColor` карточки, не сплошной цвет (`docs/figma`, `stream.Front#121`). */
 const DIVIDER_OPACITY = 0.1;
@@ -110,6 +111,8 @@ export class NewsCard {
   private readonly hostWidthPx = signal<number | null>(null);
   private readonly hostHeightPx = signal<number | null>(null);
   private readonly failedImageUrl = signal<string | null>(null);
+  /** SPA без SSR (`CLAUDE.md`) — `window` есть всегда, отдельного guard'а не требуется, тот же подход, что у `ImageUrlService`/`UploadService`. */
+  private readonly devicePixelRatio = window.devicePixelRatio || 1;
 
   protected readonly viewsLabel = computed(() => formatCompactCount(this.item().views));
   protected readonly likesLabel = computed(() => formatCompactCount(this.item().likes));
@@ -120,10 +123,8 @@ export class NewsCard {
     formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'),
   );
 
-  protected readonly hasVisibleImage = computed(() => {
-    const url = this.item().imageUrl;
-    return !!url && url !== this.failedImageUrl();
-  });
+  /** Обложка задана вообще (сырое присутствие `imageUrl`, без учёта ошибки загрузки) — читает `isQuiltMode()`/`pictureWidthPx()` ниже. Не путать с `hasVisibleImage` — тем, что реально показывается сейчас (см. ниже, циклической зависимости с выбором варианта это избегает). */
+  private readonly hasCoverUrl = computed(() => !!this.item().imageUrl);
 
   protected readonly flexDirection = computed(
     () => FLEX_DIRECTION_BY_IMAGE_POSITION[this.cardStyle().imagePosition],
@@ -135,7 +136,7 @@ export class NewsCard {
   });
 
   protected readonly isQuiltMode = computed(() => {
-    if (!this.hasVisibleImage()) {
+    if (!this.hasCoverUrl()) {
       return false;
     }
     const axisSize = this.axisSizePx();
@@ -154,6 +155,51 @@ export class NewsCard {
     }
     return this.hasVisibleImage() ? `0 0 ${this.cardStyle().imageSizePercent}%` : '0 0 0%';
   });
+
+  /**
+   * Реальная ширина блока картинки в px (`stream.Front#130`, `АДП-Ф-23`) —
+   * источник для выбора размерного варианта, не размер окна. В режиме
+   * подложки картинка растянута на весь `:host` — ширина host'а целиком;
+   * иначе зависит от `imagePosition`: `top`/`bottom` — картинка на всю
+   * ширину (делится только высота), `left`/`right` — доля `imageSizePercent`
+   * от ширины. `null`, пока `:host` ещё не измерен `ResizeObserver`'ом.
+   */
+  private readonly pictureWidthPx = computed(() => {
+    const hostWidth = this.hostWidthPx();
+    if (hostWidth === null) {
+      return null;
+    }
+    if (this.isQuiltMode()) {
+      return hostWidth;
+    }
+    const position = this.cardStyle().imagePosition;
+    return position === 'left' || position === 'right'
+      ? (hostWidth * this.cardStyle().imageSizePercent) / 100
+      : hostWidth;
+  });
+
+  /** `url` выбранного варианта (или оригинал, пока размер не измерен/подходящего варианта нет) — БЕЗ учёта того, не сломался ли именно он при загрузке (см. `hasVisibleImage`/`pictureSrc` ниже). */
+  private readonly candidateImageSrc = computed(() => {
+    const url = this.item().imageUrl;
+    if (!url) {
+      return null;
+    }
+    const width = this.pictureWidthPx();
+    if (width === null) {
+      return url;
+    }
+    return selectImageVariant(url, this.item().cover.variants, width, this.devicePixelRatio);
+  });
+
+  /** Реально показывается сейчас — обложка есть, и именно ЭТОТ (возможно, вариантный) `url` ещё не упал с ошибкой загрузки. */
+  protected readonly hasVisibleImage = computed(() => {
+    const src = this.candidateImageSrc();
+    return src !== null && src !== this.failedImageUrl();
+  });
+
+  protected readonly pictureSrc = computed(() =>
+    this.hasVisibleImage() ? this.candidateImageSrc() : null,
+  );
 
   protected readonly imageObjectPosition = computed(() => {
     const focalPoint = this.focalPoint();
@@ -201,6 +247,6 @@ export class NewsCard {
   }
 
   protected onImageError(): void {
-    this.failedImageUrl.set(this.item().imageUrl);
+    this.failedImageUrl.set(this.candidateImageSrc());
   }
 }

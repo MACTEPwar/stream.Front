@@ -1,7 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 
 import { ImageUrlService } from '@core/services/image-url.service';
-import { AdminNews, AdminNewsTag, NewsCover } from '@features/admin/models/news.model';
+import {
+  AdminNews,
+  AdminNewsTag,
+  ImageVariant,
+  NewsCover,
+} from '@features/admin/models/news.model';
 
 import { NewsItem } from '../models/news.model';
 import { NewsTag } from '../models/news-tag.model';
@@ -30,6 +35,7 @@ export class NewsItemAdapterService {
       url: this.imageUrlService.resolve(image.url),
       focalX: image.focalX,
       focalY: image.focalY,
+      variants: this.resolveVariants(image.variants),
     }));
     const imageUrls = images.map((image) => image.url);
     // Картинка новости — её ОБЛОЖКА, а не первая картинка набора
@@ -39,6 +45,7 @@ export class NewsItemAdapterService {
     const cover: NewsCover = {
       ...admin.cover,
       url: admin.cover.url === null ? null : this.imageUrlService.resolve(admin.cover.url),
+      variants: this.resolveVariants(admin.cover.variants),
     };
     return {
       id: admin.id,
@@ -73,6 +80,7 @@ export class NewsItemAdapterService {
     const cover: NewsCover = {
       ...slot.cover,
       url: slot.cover.url === null ? null : this.imageUrlService.resolve(slot.cover.url),
+      variants: this.resolveVariants(slot.cover.variants),
     };
 
     return {
@@ -94,5 +102,13 @@ export class NewsItemAdapterService {
 
   toNewsTag(tag: AdminNewsTag): NewsTag {
     return { id: tag.id, name: tag.name, color: tag.color, textColor: tag.textColor };
+  }
+
+  /** Резолвит `url` каждого варианта тем же способом, что и основной `url` картинки/обложки (`/uploads/*` → абсолютный backend-адрес, `stream.Front#130`). */
+  private resolveVariants(variants: readonly ImageVariant[]): ImageVariant[] {
+    return variants.map((variant) => ({
+      width: variant.width,
+      url: this.imageUrlService.resolve(variant.url),
+    }));
   }
 }

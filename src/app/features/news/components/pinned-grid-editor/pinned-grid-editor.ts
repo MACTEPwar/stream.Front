@@ -12,7 +12,7 @@ import {
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DrawerModule } from 'primeng/drawer';
 
-import { NewsCover } from '@features/admin/models/news.model';
+import { ImageVariant, NewsCover } from '@features/admin/models/news.model';
 import { AdminNewsService } from '@features/admin/services/admin-news.service';
 import { ModalService } from '@core/services/modal.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -108,7 +108,7 @@ interface NewsMeta {
 }
 
 /** Пустая обложка — для служебных слотов и новостей, которых нет в загруженном списке (stream.Front#137). */
-const NO_COVER: NewsCover = { type: 'none', url: null, focalPoint: null };
+const NO_COVER: NewsCover = { type: 'none', url: null, focalPoint: null, variants: [] };
 
 /** Содержимое для служебного слота-кандидата и новостей, которых нет в загруженном списке. */
 const EMPTY_CONTENT: PinnedNewsContent = {
@@ -1023,6 +1023,7 @@ export class PinnedGridEditor {
       type: value.type,
       url: value.url,
       focalPoint: this.focalPointForCoverImage(item, value),
+      variants: this.variantsForCoverImage(item, value),
     };
     this.coverOverrides.update((overrides) => ({ ...overrides, [newsId]: optimistic }));
     this.adminNewsService
@@ -1044,6 +1045,14 @@ export class PinnedGridEditor {
     return image && image.focalX !== null && image.focalY !== null
       ? { x: image.focalX, y: image.focalY }
       : null;
+  }
+
+  /** Обложка `image` наследует и размерные варианты самой картинки (`streamer.API#78`/`stream.Front#130`) — тот же приём, что `focalPointForCoverImage()`, чтобы оптимистичное превью сразу выбирало вариант по месту, не оригинал целиком до ответа сервера. */
+  private variantsForCoverImage(item: NewsItem, value: CoverPickerValue): readonly ImageVariant[] {
+    if (value.type !== 'image' || !value.url) {
+      return [];
+    }
+    return item.images.find((entry) => entry.url === value.url)?.variants ?? [];
   }
 
   protected onSaveStyleClick(): void {

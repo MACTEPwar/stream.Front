@@ -58,7 +58,7 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
     viewedByCurrentUser: false,
     images: [],
     tags: [],
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     createdAt: '',
     updatedAt: '',
     ...overrides,
@@ -81,7 +81,7 @@ const PINNED_SLOTS: PinnedNewsSlot[] = GRID_NEWS.map((item, index) => ({
   colSpan: index === 3 ? 2 : 1,
   rowSpan: 1,
   style: DEFAULT_CARD_STYLE,
-  cover: { type: 'none', url: null, focalPoint: null },
+  cover: { type: 'none', url: null, focalPoint: null, variants: [] },
   news: { ...PINNED_CONTENT, tags: [ADMIN_TAGS[0]] },
 }));
 

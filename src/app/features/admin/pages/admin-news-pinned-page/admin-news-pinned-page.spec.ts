@@ -4,7 +4,11 @@ import { of, throwError } from 'rxjs';
 import { NotificationService } from '@core/services/notification.service';
 import { AdminNews } from '../../models/news.model';
 import { AdminNewsService } from '../../services/admin-news.service';
-import { DEFAULT_CARD_STYLE, PinnedGridLayout, PinnedGridViewport } from '../../../news/models/pinned-news-slot.model';
+import {
+  DEFAULT_CARD_STYLE,
+  PinnedGridLayout,
+  PinnedGridViewport,
+} from '../../../news/models/pinned-news-slot.model';
 import { PinnedGridService } from '../../../news/services/pinned-grid.service';
 import { AdminNewsPinnedPage } from './admin-news-pinned-page';
 
@@ -31,7 +35,7 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
     viewedByCurrentUser: false,
     images: [],
     tags: [],
-    cover: { type: 'none', url: null, focalPoint: null },
+    cover: { type: 'none', url: null, focalPoint: null, variants: [] },
     createdAt: '',
     updatedAt: '',
     ...overrides,
@@ -51,7 +55,7 @@ function pinnedLayout(newsId: string): PinnedGridLayout {
         colSpan: 1,
         rowSpan: 7,
         style: DEFAULT_CARD_STYLE,
-        cover: { type: 'none', url: null, focalPoint: null },
+        cover: { type: 'none', url: null, focalPoint: null, variants: [] },
         news: PINNED_CONTENT,
       },
     ],
@@ -69,8 +73,22 @@ describe('AdminNewsPinnedPage', () => {
           adminNews('news-a'),
           adminNews('news-b', {
             images: [
-              { id: 'img-2', url: '/uploads/2.png', order: 2, focalX: null, focalY: null },
-              { id: 'img-1', url: '/uploads/1.png', order: 1, focalX: null, focalY: null },
+              {
+                id: 'img-2',
+                url: '/uploads/2.png',
+                order: 2,
+                focalX: null,
+                focalY: null,
+                variants: [],
+              },
+              {
+                id: 'img-1',
+                url: '/uploads/1.png',
+                order: 1,
+                focalX: null,
+                focalY: null,
+                variants: [],
+              },
             ],
           }),
         ],
@@ -83,7 +101,10 @@ describe('AdminNewsPinnedPage', () => {
       imports: [AdminNewsPinnedPage],
       providers: [
         { provide: AdminNewsService, useValue: { getAll: getAllSpy } },
-        { provide: PinnedGridService, useValue: { getLayout: getLayoutSpy, updateLayout: vi.fn() } },
+        {
+          provide: PinnedGridService,
+          useValue: { getLayout: getLayoutSpy, updateLayout: vi.fn() },
+        },
       ],
     });
   });
@@ -116,7 +137,10 @@ describe('AdminNewsPinnedPage', () => {
     // imageUrl — обложка новости, а не первая картинка набора
     // (stream.Front#137); у этой фикстуры обложки нет
     expect(withImages?.imageUrl).toBeNull();
-    expect(withImages?.imageUrls.map((url) => url.split('/uploads/')[1])).toEqual(['1.png', '2.png']);
+    expect(withImages?.imageUrls.map((url) => url.split('/uploads/')[1])).toEqual([
+      '1.png',
+      '2.png',
+    ]);
   });
 
   it('«save» из редактора вызывает PinnedGridService.updateLayout на каждый из двух вьюпортов и показывает toast', () => {
@@ -138,7 +162,7 @@ describe('AdminNewsPinnedPage', () => {
           colSpan: 3,
           rowSpan: 12,
           style: DEFAULT_CARD_STYLE,
-          cover: { type: 'none', url: null, focalPoint: null },
+          cover: { type: 'none', url: null, focalPoint: null, variants: [] },
           news: PINNED_CONTENT,
         },
       ],
@@ -172,7 +196,7 @@ describe('AdminNewsPinnedPage', () => {
           colSpan: 3,
           rowSpan: 12,
           style: DEFAULT_CARD_STYLE,
-          cover: { type: 'none', url: null, focalPoint: null },
+          cover: { type: 'none', url: null, focalPoint: null, variants: [] },
           news: PINNED_CONTENT,
         },
       ],
