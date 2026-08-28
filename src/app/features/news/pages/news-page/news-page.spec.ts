@@ -222,12 +222,30 @@ describe('NewsPage', () => {
       );
     });
 
-    it('ровно на пороге лента ещё сбоку', () => {
-      setWindowWidth(1080);
+    // Потолок 1200px (`NewsPage.ARCHIVE_BESIDE_MAX_VIEWPORT_WIDTH_PX`) —
+    // отдельное условие ПОВЕРХ порога из минимумов блоков (по прямому
+    // запросу пользователя): в диапазоне 1080..1200 порог из минимумов уже
+    // разрешает ленте стоять сбоку, но витрине там остаётся всего ~530px.
+    it('на 1200 и уже — лента уже снизу, даже когда порог из минимумов ещё разрешил бы сбоку', () => {
+      setWindowWidth(1200);
+
+      const fixture = createPage();
+
+      expect(fixture.componentInstance['isArchiveBeside']()).toBe(false);
+      expect((fixture.nativeElement as HTMLElement).classList).toContain(
+        'news-page--archive-below',
+      );
+    });
+
+    it('на 1201 — уже сбоку', () => {
+      setWindowWidth(1201);
 
       const fixture = createPage();
 
       expect(fixture.componentInstance['isArchiveBeside']()).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).classList).not.toContain(
+        'news-page--archive-below',
+      );
     });
 
     it('пересчитывается на ресайз окна без перезагрузки страницы', () => {

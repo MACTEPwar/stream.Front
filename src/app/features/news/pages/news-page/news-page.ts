@@ -1,14 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  untracked,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
@@ -173,6 +165,19 @@ export class NewsPage {
   private readonly viewportWidth = signal(window.innerWidth);
 
   /**
+   * Потолок ширины окна, выше которого лента вообще имеет право стоять
+   * сбоку — по прямому запросу пользователя после визуальной проверки: на
+   * 1200px и уже витрине, зажатой между лентой на её минимуме (440) и
+   * зазором, оставалось ~530px, и это нечитаемо мало для главного
+   * содержимого страницы (`РАЗ-О-01`). Формально это отдельный порог
+   * поверх содержимого блоков, а не выведенный из их минимумов
+   * (`РАЗ-Ф-03` в спеке запрещает именно это) — сознательное исключение
+   * ради конкретного диапазона 1080..1200, где формула из минимумов ещё
+   * держит ленту сбоку, а результат уже недостаточно широкий.
+   */
+  private static readonly ARCHIVE_BESIDE_MAX_VIEWPORT_WIDTH_PX = 1200;
+
+  /**
    * Хватает ли витрине места, чтобы лента стояла сбоку (`АДП-О-12`,
    * `РАЗ-О-02`). Пресет для паддинга берётся у `viewport()` — того же
    * источника, что раскладку сетки, чтобы не заводить третью копию правила
@@ -182,8 +187,10 @@ export class NewsPage {
    * переходит на document-level скролл, а сетка и список архива — на
    * content-based высоту (см. `news-page.scss`).
    */
-  protected readonly isArchiveBeside = computed(() =>
-    isNewsArchiveBeside(newsPageContentWidth(this.viewportWidth(), this.viewport())),
+  protected readonly isArchiveBeside = computed(
+    () =>
+      this.viewportWidth() > NewsPage.ARCHIVE_BESIDE_MAX_VIEWPORT_WIDTH_PX &&
+      isNewsArchiveBeside(newsPageContentWidth(this.viewportWidth(), this.viewport())),
   );
 
   private readonly pinnedSlots = signal<PinnedNewsSlot[]>([]);
@@ -396,5 +403,4 @@ export class NewsPage {
       items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
     );
   }
-
 }
