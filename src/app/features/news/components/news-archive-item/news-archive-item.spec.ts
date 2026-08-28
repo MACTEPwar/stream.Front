@@ -18,10 +18,24 @@ const ITEM: AdminNews = {
     { id: 'img-2', url: '/uploads/second.jpg', order: 2, focalX: null, focalY: null },
     { id: 'img-1', url: '/uploads/first.jpg', order: 1, focalX: null, focalY: null },
   ],
-  tags: [{ id: 'tournament', name: 'Турнир', color: '#FF5733', textColor: '#FFFFFF', createdAt: '', updatedAt: '' }],
-  cover: { type: 'none', url: null, focalPoint: null },
+  tags: [
+    {
+      id: 'tournament',
+      name: 'Турнир',
+      color: '#FF5733',
+      textColor: '#FFFFFF',
+      createdAt: '',
+      updatedAt: '',
+    },
+  ],
+  cover: { type: 'image', url: '/uploads/cover.jpg', focalPoint: null },
   createdAt: '',
   updatedAt: '',
+};
+
+const ITEM_WITHOUT_COVER: AdminNews = {
+  ...ITEM,
+  cover: { type: 'none', url: null, focalPoint: null },
 };
 
 @Component({
@@ -54,7 +68,9 @@ describe('NewsArchiveItem', () => {
     const host = createItem().nativeElement as HTMLElement;
 
     expect(host.querySelector('.news-archive-item__heading')?.textContent).toContain(ITEM.title);
-    expect(host.querySelector('.news-archive-item__excerpt')?.textContent).toContain(ITEM.description);
+    expect(host.querySelector('.news-archive-item__excerpt')?.textContent).toContain(
+      ITEM.description,
+    );
     expect(host.querySelector('.news-archive-item__date')?.textContent?.trim()).toBe('06.12.2023');
 
     const views = host.querySelector('.news-archive-item__counter-checkbox--readonly');
@@ -66,11 +82,11 @@ describe('NewsArchiveItem', () => {
     expect(likes?.textContent?.trim()).toBe('44');
   });
 
-  it('рисует картинку первой по order, а не первой в массиве', () => {
+  it('рисует обложку новости, а не первую картинку набора (ОБЛ-О-05)', () => {
     const host = createItem().nativeElement as HTMLElement;
     const img = host.querySelector<HTMLImageElement>('.news-archive-item__picture img');
 
-    expect(img?.src).toContain('/uploads/first.jpg');
+    expect(img?.src).toContain('/uploads/cover.jpg');
   });
 
   it('бейджи тегов рендерятся поверх превью', () => {
@@ -79,6 +95,22 @@ describe('NewsArchiveItem', () => {
 
     expect(tags).not.toBeNull();
     expect(tags?.querySelectorAll('app-badge').length).toBe(ITEM.tags.length);
+  });
+
+  it('без обложки строка обходится без превью — текст занимает всю ширину, теги переезжают в тело (ЛЕН-Ф-03)', () => {
+    const fixture = TestBed.createComponent(NewsArchiveItemHost);
+    fixture.componentInstance.item.set(ITEM_WITHOUT_COVER);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('.news-archive-item__picture')).toBeNull();
+
+    const body = host.querySelector('.news-archive-item__body');
+    expect(body?.classList.contains('news-archive-item__body--full')).toBe(true);
+
+    const inlineTags = host.querySelector('.news-archive-item__tags--inline');
+    expect(inlineTags).not.toBeNull();
+    expect(inlineTags?.querySelectorAll('app-badge').length).toBe(ITEM_WITHOUT_COVER.tags.length);
   });
 
   it('эмитит likeToggle с противоположным текущему likedByCurrentUser состоянием при клике', async () => {
@@ -98,7 +130,9 @@ describe('NewsArchiveItem', () => {
   it('чекбокс просмотров отражает viewedByCurrentUser', () => {
     const fixture = createItem();
     const checkedLabel = () =>
-      (fixture.nativeElement as HTMLElement).querySelector('.news-archive-item__counter-checkbox--readonly .checkbox--checked');
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '.news-archive-item__counter-checkbox--readonly .checkbox--checked',
+      );
 
     expect(checkedLabel()).toBeNull();
 

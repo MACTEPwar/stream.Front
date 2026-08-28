@@ -46,16 +46,27 @@
 }
 
 // Теги — левый НИЖНИЙ угол превью (по прямому запросу пользователя, раньше
-// был левый верхний).
+// был левый верхний). Без превью (`ЛЕН-Ф-03`, `stream.Front#132`) показывать
+// их всё равно нужно — `--inline`-вариант того же блока встаёт в начало
+// `.__body`, не оверлеем поверх картинки, которой в этом случае нет.
 .news-archive-item__tags {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
   display: flex;
   gap: 8px;
-  max-width: calc(100% - 16px);
+  max-width: 100%;
   height: 24px;
   overflow: hidden;
+
+  &--overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    max-width: calc(100% - 16px);
+  }
+
+  &--inline {
+    flex: 0 0 auto;
+    padding: 8px 8px 0;
+  }
 }
 
 .news-archive-item__body {
@@ -63,6 +74,15 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-width: 250px;
+
+  // Новость без обложки занимает строку целиком текстом, а не оставляет
+  // пустой прямоугольник на месте превью (`ЛЕН-Ф-03`) — сама ширина уже
+  // берётся автоматически (`.__picture` не рендерится вовсе), модификатор
+  // нужен только чтобы убрать `min-width`, унаследованный на случай, когда
+  // рядом есть 175px превью.
+  &--full {
+    min-width: 0;
+  }
 }
 
 .news-archive-item__text {

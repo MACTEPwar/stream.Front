@@ -1,0 +1,81 @@
+<div class="cover-picker">
+  <div class="cover-picker__options">
+    <label class="cover-picker__option">
+      <input
+        type="radio"
+        [name]="radioGroupName"
+        [checked]="value().type === 'none'"
+        (change)="onTypeSelect('none')"
+      />
+      Нет обложки
+    </label>
+
+    @if (hasImages()) {
+      <label class="cover-picker__option">
+        <input
+          type="radio"
+          [name]="radioGroupName"
+          [checked]="value().type === 'image'"
+          (change)="onTypeSelect('image')"
+        />
+        Одно из изображений
+      </label>
+    }
+
+    <label class="cover-picker__option">
+      <input
+        type="radio"
+        [name]="radioGroupName"
+        [checked]="value().type === 'custom'"
+        (change)="onTypeSelect('custom')"
+      />
+      Своя
+    </label>
+  </div>
+
+  @if (value().type === 'image' && hasImages()) {
+    <div class="cover-picker__gallery">
+      @for (url of imageUrls(); track url; let index = $index, count = $count) {
+        <button
+          type="button"
+          class="cover-picker__thumb"
+          [class.cover-picker__thumb--selected]="isImageSelected(url)"
+          [attr.aria-pressed]="isImageSelected(url)"
+          [attr.aria-label]="'Изображение ' + (index + 1) + ' из ' + count"
+          (click)="onImageSelect(url)"
+        >
+          <img [src]="previewUrl(url)" alt="" />
+        </button>
+      }
+    </div>
+  }
+
+  @if (value().type === 'custom') {
+    <div class="cover-picker__custom">
+      @if (customPreviewUrl(); as preview) {
+        <div class="cover-picker__custom-preview">
+          <img [src]="preview" alt="" />
+        </div>
+      }
+
+      <label class="cover-picker__upload-label">
+        Загрузить файл
+        <input
+          type="file"
+          accept="image/*"
+          [disabled]="isUploading()"
+          (change)="onFileSelected($event)"
+        />
+      </label>
+
+      <div class="cover-picker__link-row">
+        <app-text-field
+          placeholder="Ссылка на изображение"
+          [(value)]="linkInput"
+          (keyup.enter)="onAddLinkClick()"
+        />
+        <app-button text="Добавить" (click)="onAddLinkClick()" />
+      </div>
+    </div>
+  }
+</div>

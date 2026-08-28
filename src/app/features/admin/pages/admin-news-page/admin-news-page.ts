@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { DrawerModule } from 'primeng/drawer';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { extractApiErrorMessage } from '@core/models/api-error.model';
 import { ModalService } from '@core/services/modal.service';
@@ -14,6 +13,7 @@ import { Badge } from '@shared/components/badge/badge';
 import { Button } from '@shared/components/button/button';
 import { ButtonGroup } from '@shared/components/button-group/button-group';
 import { ConfirmModal } from '@shared/components/confirm-modal/confirm-modal';
+import { CoverPicker, CoverPickerValue } from '@shared/components/cover-picker/cover-picker';
 import { Datepicker } from '@shared/components/datepicker/datepicker';
 import { ErrorMessage } from '@shared/components/error-message/error-message';
 import { MultiImagePicker } from '@shared/components/multi-image-picker/multi-image-picker';
@@ -22,6 +22,8 @@ import { TextField } from '@shared/components/text-field/text-field';
 import { AdminNews, AdminNewsTag } from '../../models/news.model';
 import { AdminNewsService } from '../../services/admin-news.service';
 import { AdminNewsTagService } from '../../services/admin-news-tag.service';
+
+const NO_COVER: CoverPickerValue = { type: 'none', url: null };
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -82,6 +84,16 @@ interface TagFilterOption {
  * страницы урлы не резолвятся повторно, иначе на backend улетел бы уже
  * абсолютный (склеенный с `apiUrl`) путь вместо исходного относительного.
  *
+ * **Обложка** (`cover`, `stream.Front#132`, поверх `streamer.API#80`) —
+ * `CoverPicker` (`shared/components/cover-picker`), взаимоисключающий выбор из
+ * трёх состояний (`ОБЛ-Ф-01`); заменил тумблер «Без фото», который раньше ни
+ * на что не влиял (`stream.Front#137` убрал сам тумблер, но выбора обложки
+ * тогда ещё не было — эта задача его добавляет). Валидация перед отправкой:
+ * состояние «одно из изображений» с адресом вне текущего `imageUrls()`
+ * (картинку убрали из набора, а обложку на другое состояние не переключили)
+ * блокируется тем же способом, что пустые заголовок/описание — сообщением и
+ * `return`, не полагаясь на серверный `400` от `assertCoverSurvivesNewImageSet()`.
+ *
  * Успех создания/редактирования — toast + закрытие drawer'а + перезагрузка
  * ТЕКУЩЕЙ страницы таблицы (не локальный патч строки — список сортируется/
  * фильтруется на backend, локальная замена не гарантировала бы то же место
@@ -94,10 +106,10 @@ interface TagFilterOption {
     TableModule,
     DrawerModule,
     MultiSelectModule,
-    ToggleSwitchModule,
     Badge,
     Button,
     ButtonGroup,
+    CoverPicker,
     Datepicker,
     ErrorMessage,
     MultiImagePicker,
@@ -135,6 +147,7 @@ export class AdminNewsPage {
   protected readonly publishedAt = signal<Date | null>(new Date());
   protected readonly selectedTagIds = signal<string[]>([]);
   protected readonly imageUrls = signal<string[]>([]);
+  protected readonly cover = signal<CoverPickerValue>(NO_COVER);
   protected readonly isSaving = signal(false);
 
   private isFirstSearchRun = true;
@@ -171,7 +184,10 @@ export class AdminNewsPage {
   }
 
   protected tagFilterOptions(): TagFilterOption[] {
-    return [{ label: 'Все теги', value: null }, ...this.tags().map((tag) => ({ label: tag.name, value: tag.id }))];
+    return [
+      { label: 'Все теги', value: null },
+      ...this.tags().map((tag) => ({ label: tag.name, value: tag.id })),
+    ];
   }
 
   protected onLazyLoad(event: TableLazyLoadEvent): void {
@@ -192,6 +208,7 @@ export class AdminNewsPage {
     this.publishedAt.set(new Date());
     this.selectedTagIds.set([]);
     this.imageUrls.set([]);
+    this.cover.set(NO_COVER);
     this.drawerVisible.set(true);
   }
 
@@ -207,6 +224,7 @@ export class AdminNewsPage {
         .sort((a, b) => a.order - b.order)
         .map((image) => image.url),
     );
+    this.cover.set({ type: item.cover.type, url: item.cover.url });
     this.drawerVisible.set(true);
   }
 
@@ -222,6 +240,15 @@ export class AdminNewsPage {
       return;
     }
 
+    const cover = this.cover();
+    if (cover.type === 'image' && !this.imageUrls().includes(cover.url ?? '')) {
+      this.notificationService.show(
+        'Обложка ссылается на изображение вне набора — выберите другое состояние обложки',
+        'error',
+      );
+      return;
+    }
+
     const publishedAt = this.publishedAt();
     const payload = {
       title,
@@ -229,11 +256,14 @@ export class AdminNewsPage {
       imageUrls: this.imageUrls(),
       tagIds: this.selectedTagIds(),
       publishedAt: publishedAt instanceof Date ? publishedAt.toISOString() : undefined,
+      cover: { type: cover.type, url: cover.url ?? undefined },
     };
 
     const id = this.editingNewsId();
     this.isSaving.set(true);
-    const request = id ? this.adminNewsService.update(id, payload) : this.adminNewsService.create(payload);
+    const request = id
+      ? this.adminNewsService.update(id, payload)
+      : this.adminNewsService.create(payload);
 
     request.subscribe({
       next: () => {

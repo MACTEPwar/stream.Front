@@ -92,7 +92,10 @@ describe('PinnedGridEditor', () => {
       providers: [
         {
           provide: AdminNewsService,
-          useValue: { updateImageFocalPoint: vi.fn().mockReturnValue(of({})) },
+          useValue: {
+            updateImageFocalPoint: vi.fn().mockReturnValue(of({})),
+            update: vi.fn().mockReturnValue(of({})),
+          },
         },
       ],
     });
@@ -522,7 +525,7 @@ describe('PinnedGridEditor', () => {
       expect(fixture.componentInstance['editingSlot']()?.newsId).toBe('news-1');
     });
 
-    it('обложка слота — обложка новости, редактор её не переопределяет (stream.Front#137)', () => {
+    it("обложка слота при размещении — обложка новости (stream.Front#137); менять её можно только через CoverPicker в drawer'е (stream.Front#132), не самим фактом закрепления", () => {
       const fixture = createEditor(
         [
           newsItem('news-1', {
@@ -643,6 +646,130 @@ describe('PinnedGridEditor', () => {
       fixture.componentInstance['onFocalPointChange']({ x: 90, y: 90 });
 
       expect(fixture.componentInstance['editingFocalPoint']()).toEqual({ x: 30, y: 40 });
+    });
+
+    describe("CoverPicker в drawer'е редактирования (stream.Front#132, РЕД-О-02)", () => {
+      it('показан вместе с предупреждением, что меняет обложку новости везде', () => {
+        const fixture = createEditor([newsItem('news-1')], [slot({ newsId: 'news-1' })]);
+
+        fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('app-cover-picker')).not.toBeNull();
+        expect(
+          fixture.nativeElement.querySelector('.pinned-grid-editor__cover-warning')?.textContent,
+        ).toContain('везде');
+      });
+
+      it('получает набор картинок редактируемой новости', () => {
+        const fixture = createEditor(
+          [newsItem('news-1', { imageUrls: ['/a.png', '/b.png'] })],
+          [slot({ newsId: 'news-1' })],
+        );
+
+        fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+
+        expect(fixture.componentInstance['editingNewsImages']()).toEqual(['/a.png', '/b.png']);
+      });
+
+      it('выбор конкретной обложки применяется сразу через AdminNewsService.update(), не по «Сохранить»', () => {
+        const fixture = createEditor(
+          [
+            newsItem('news-1', {
+              imageUrls: ['/a.png'],
+              cover: { type: 'none', url: null, focalPoint: null },
+            }),
+          ],
+          [slot({ newsId: 'news-1' })],
+        );
+        const adminNewsService = TestBed.inject(AdminNewsService);
+
+        fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+        fixture.componentInstance['onCoverPickerChange']('news-1', {
+          type: 'image',
+          url: '/a.png',
+        });
+
+        expect(adminNewsService.update).toHaveBeenCalledWith('news-1', {
+          cover: { type: 'image', url: '/a.png' },
+        });
+        expect(fixture.componentInstance['editingCoverValue']()).toEqual({
+          type: 'image',
+          url: '/a.png',
+        });
+        // Черновик стиля не тронут — обложка не копится в drawer'е до «Сохранить».
+        expect(fixture.componentInstance['draftStyle']()).toEqual(DEFAULT_CARD_STYLE);
+      });
+
+      it('тип выбран, но url ещё нет — держит его локально и НЕ отправляет запрос', () => {
+        const fixture = createEditor(
+          [newsItem('news-1', { imageUrls: ['/a.png'] })],
+          [slot({ newsId: 'news-1' })],
+        );
+        const adminNewsService = TestBed.inject(AdminNewsService);
+
+        fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+        fixture.componentInstance['onCoverPickerChange']('news-1', { type: 'image', url: null });
+
+        expect(adminNewsService.update).not.toHaveBeenCalled();
+        expect(fixture.componentInstance['editingCoverValue']()).toEqual({
+          type: 'image',
+          url: null,
+        });
+      });
+
+      it('ошибка сохранения откатывает обложку к предыдущей и показывает toast', () => {
+        TestBed.overrideProvider(AdminNewsService, {
+          useValue: {
+            updateImageFocalPoint: vi.fn().mockReturnValue(of({})),
+            update: vi.fn().mockReturnValue(throwError(() => new Error('boom'))),
+          },
+        });
+        const fixture = createEditor(
+          [
+            newsItem('news-1', {
+              imageUrls: ['/a.png'],
+              cover: { type: 'none', url: null, focalPoint: null },
+            }),
+          ],
+          [slot({ newsId: 'news-1' })],
+        );
+        const notificationService = TestBed.inject(NotificationService);
+        const showSpy = vi.spyOn(notificationService, 'show');
+
+        fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+        fixture.componentInstance['onCoverPickerChange']('news-1', {
+          type: 'image',
+          url: '/a.png',
+        });
+
+        expect(fixture.componentInstance['editingCoverValue']()).toEqual({
+          type: 'none',
+          url: null,
+        });
+        expect(showSpy).toHaveBeenCalledWith('Не удалось изменить обложку', 'error');
+      });
+
+      it('смена новости в форме редактирования сбрасывает незавершённый выбор типа обложки', () => {
+        const fixture = createEditor(
+          [newsItem('news-1', { imageUrls: ['/a.png'] }), newsItem('news-2')],
+          [slot({ newsId: 'news-1' })],
+        );
+
+        fixture.componentInstance['onEditStyleClick'](fixture.componentInstance['localSlots']()[0]);
+        fixture.componentInstance['onCoverPickerChange']('news-1', { type: 'custom', url: null });
+        expect(fixture.componentInstance['editingCoverValue']()).toEqual({
+          type: 'custom',
+          url: null,
+        });
+
+        fixture.componentInstance['onEditFormNewsChange']('news-1', 'news-2');
+
+        expect(fixture.componentInstance['editingCoverValue']()).toEqual({
+          type: 'none',
+          url: null,
+        });
+      });
     });
   });
 

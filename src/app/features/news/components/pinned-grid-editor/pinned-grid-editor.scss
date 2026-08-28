@@ -109,6 +109,29 @@ $handle-size: 10px;
   color: vars.$color-1e1e1e;
 }
 
+.pinned-grid-editor__cover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-14;
+  color: vars.$color-1e1e1e;
+}
+
+// Предупреждение `РЕД-О-02` — обложка свойство новости, не пина; изменение
+// здесь применяется сразу и везде, не по общему «Сохранить» стиля. Непрозрачность
+// 0.7, не привычные здесь 0.6 (`.__canvas-hint` и т.п., но те — светлый текст на
+// тёмном фоне страницы редактора) — этот текст сидит в СВЕТЛОМ `p-drawer`
+// (`--p-drawer-background: #fff` из `admin-table.drawer-vars`), и `$color-1e1e1e`
+// при 0.6 даёт контраст ~4.4:1 с белым — ниже AA (4.5:1) для обычного текста.
+.pinned-grid-editor__cover-warning {
+  margin: 0;
+  font-family: vars.$font-family-nunito-sans;
+  font-size: vars.$font-size-14;
+  color: vars.$color-1e1e1e;
+  opacity: 0.7;
+}
+
 // `.pinned-grid-editor__viewport` показывает РЕАЛЬНУЮ площадь под сетку
 // (`gridAreaSize()`, ts) — зеркало формул `news-page.scss`/`shell.scss`
 // (`@shared/utils/pinned-grid-geometry`), не условный 16:9-пресет (баг,

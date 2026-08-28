@@ -5,7 +5,11 @@ import { Badge } from '@shared/components/badge/badge';
 
 import { NewsItem } from '../../models/news.model';
 import { NewsTag } from '../../models/news-tag.model';
-import { CardImagePosition, FocalPoint, PinnedNewsCardStyle } from '../../models/pinned-news-slot.model';
+import {
+  CardImagePosition,
+  FocalPoint,
+  PinnedNewsCardStyle,
+} from '../../models/pinned-news-slot.model';
 import { formatCompactCount } from '../../utils/format-compact-count';
 import { hexToRgba } from '../../utils/hex-to-rgba';
 
@@ -65,13 +69,22 @@ export class NewsCard {
   protected readonly likeIconClass = computed(() =>
     this.item().likedByCurrentUser ? 'pi pi-heart-fill' : 'pi pi-heart',
   );
-  protected readonly dateLabel = computed(() => formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'));
+  protected readonly dateLabel = computed(() =>
+    formatDate(this.item().publishedAt, 'dd.MM.yyyy', 'en-US'),
+  );
 
-  protected readonly flexDirection = computed(() => FLEX_DIRECTION_BY_IMAGE_POSITION[this.cardStyle().imagePosition]);
-  protected readonly pictureFlexBasis = computed(() => `0 0 ${this.cardStyle().imageSizePercent}%`);
+  protected readonly flexDirection = computed(
+    () => FLEX_DIRECTION_BY_IMAGE_POSITION[this.cardStyle().imagePosition],
+  );
+  /** Без обложки место под картинку не резервируется вовсе — текст получает всю площадь карточки (`ЗАК-Ф-05`, `stream.Front#132`), а не серый прямоугольник заданной админом доли. */
+  protected readonly pictureFlexBasis = computed(() =>
+    this.item().imageUrl ? `0 0 ${this.cardStyle().imageSizePercent}%` : '0 0 0%',
+  );
   protected readonly imageObjectPosition = computed(() => {
     const focalPoint = this.focalPoint();
     return focalPoint ? `${focalPoint.x}% ${focalPoint.y}%` : '50% 50%';
   });
-  protected readonly dividerColor = computed(() => hexToRgba(this.cardStyle().textColor, DIVIDER_OPACITY));
+  protected readonly dividerColor = computed(() =>
+    hexToRgba(this.cardStyle().textColor, DIVIDER_OPACITY),
+  );
 }
