@@ -1,5 +1,5 @@
 import { formatDate } from '@angular/common';
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 
 import { ImageUrlService } from '@core/services/image-url.service';
 import { AdminNews } from '@features/admin/models/news.model';
@@ -62,15 +62,29 @@ export class NewsArchiveItem {
   readonly likeToggle = output<boolean>();
   readonly openDetail = output<void>();
 
+  private readonly failedImageUrl = signal<string | null>(null);
+
+  private readonly rawImageUrl = computed(() => {
+    const url = this.item().cover.url;
+    return url ? this.imageUrlService.resolve(url) : null;
+  });
+
   /**
    * Обложка новости (`ОБЛ`), не первая картинка набора (`stream.Front#132`,
    * `ОБЛ-О-05`, `ЛЕН-Ф-03`) — раньше строка ленты подменяла отсутствующую
    * обложку первым изображением, из-за чего «осознанно без обложки» было
-   * неотличимо от «ещё не выбрали».
+   * неотличимо от «ещё не выбрали». Битый url (`onImageError`, `ЛЕН-Ф-05`→
+   * `ЗАК-Ф-18`) ведёт себя как отсутствующий, тот же приём, что `NewsCard`.
    */
   protected readonly imageUrl = computed(() => {
-    const url = this.item().cover.url;
-    return url ? this.imageUrlService.resolve(url) : null;
+    const url = this.rawImageUrl();
+    return url && url !== this.failedImageUrl() ? url : null;
+  });
+
+  /** Кадрирование по точке фокуса обложки (`ЛЕН-Ф-05` → `ЗАК-Ф-10`), тот же приём, что `NewsCard.imageObjectPosition`. */
+  protected readonly imageObjectPosition = computed(() => {
+    const focalPoint = this.item().cover.focalPoint;
+    return focalPoint ? `${focalPoint.x}% ${focalPoint.y}%` : '50% 50%';
   });
 
   protected readonly isLiked = computed(() => !!this.item().likedByCurrentUser);
@@ -90,5 +104,9 @@ export class NewsArchiveItem {
 
   protected onOpenDetail(): void {
     this.openDetail.emit();
+  }
+
+  protected onImageError(): void {
+    this.failedImageUrl.set(this.rawImageUrl());
   }
 }

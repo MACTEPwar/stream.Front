@@ -1,20 +1,28 @@
 <article
   class="news-card"
+  [class.news-card--quilt]="isQuiltMode()"
   [style.flex-direction]="flexDirection()"
   [style.background]="cardStyle().backgroundColor"
   [style.color]="cardStyle().textColor"
 >
   <div class="news-card__picture" [style.flex]="pictureFlexBasis()">
-    @if (item().imageUrl; as imageUrl) {
-      <img [src]="imageUrl" alt="" [style.object-position]="imageObjectPosition()" />
+    @if (hasVisibleImage()) {
+      <img
+        [src]="item().imageUrl"
+        alt=""
+        [style.object-position]="imageObjectPosition()"
+        (error)="onImageError()"
+      />
     }
   </div>
 
-  <div class="news-card__body">
+  <div class="news-card__body" [style.background]="isQuiltMode() ? quiltScrimBackground() : null">
     <div class="news-card__content">
       <div class="news-card__text">
         <h3 class="news-card__heading">{{ item().title }}</h3>
-        <p class="news-card__excerpt">{{ item().excerpt }}</p>
+        @if (!isQuiltMode()) {
+          <p class="news-card__excerpt">{{ item().excerpt }}</p>
+        }
       </div>
 
       <div class="news-card__tags">

@@ -1,7 +1,12 @@
 <article class="news-archive-item">
   @if (imageUrl(); as url) {
     <button type="button" class="news-archive-item__picture" (click)="onOpenDetail()">
-      <img [src]="url" alt="" />
+      <img
+        [src]="url"
+        alt=""
+        [style.object-position]="imageObjectPosition()"
+        (error)="onImageError()"
+      />
 
       <div class="news-archive-item__tags news-archive-item__tags--overlay">
         @for (tag of item().tags; track tag.id) {

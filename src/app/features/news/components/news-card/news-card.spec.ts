@@ -164,4 +164,163 @@ describe('NewsCard', () => {
     const img = fixture.nativeElement.querySelector('.news-card__picture img') as HTMLElement;
     expect(img.style.objectPosition).toBe('20% 80%');
   });
+
+  it('изображение, не загрузившееся с ошибкой, ведёт себя как отсутствующее (ЗАК-Ф-18)', () => {
+    const fixture = createCard();
+    const img = fixture.nativeElement.querySelector('.news-card__picture img') as HTMLElement;
+
+    img.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    const picture = fixture.nativeElement.querySelector('.news-card__picture') as HTMLElement;
+    expect(picture.querySelector('img')).toBeNull();
+    expect(picture.style.flex).toBe('0 0 0%');
+  });
+
+  describe('режим подложки (ЗАК-Ф-12—ЗАК-Ф-15)', () => {
+    // jsdom не реализует ResizeObserver — news-card.ts это учитывает (`typeof
+    // ResizeObserver === 'undefined'` guard, режим подложки остаётся выключен
+    // по умолчанию, см. тест "без ResizeObserver" ниже). Подмена глобального
+    // ResizeObserver фейком и ручной триггер коллбэка — тот же общий приём,
+    // что в `section-title.spec.ts`, но с шириной И высотой сразу (порог
+    // считается по оси, зависящей от imagePosition).
+    class FakeResizeObserver {
+      static instances: FakeResizeObserver[] = [];
+      private readonly callback: ResizeObserverCallback;
+
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+        FakeResizeObserver.instances.push(this);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      observe(): void {}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      disconnect(): void {}
+
+      trigger(width: number, height: number): void {
+        this.callback(
+          [{ contentRect: { width, height } } as ResizeObserverEntry],
+          this as unknown as ResizeObserver,
+        );
+      }
+    }
+
+    let originalResizeObserver: typeof ResizeObserver | undefined;
+
+    beforeEach(() => {
+      originalResizeObserver = globalThis.ResizeObserver;
+      FakeResizeObserver.instances = [];
+      globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+    });
+
+    afterEach(() => {
+      globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+    });
+
+    it('без ResizeObserver в окружении — обычный вид по умолчанию', () => {
+      globalThis.ResizeObserver = undefined as unknown as typeof ResizeObserver;
+      const fixture = createCard();
+
+      const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
+      expect(article.classList).not.toContain('news-card--quilt');
+    });
+
+    it('пока обеим долям хватает минимума — обычный вид, доля картинки по imageSizePercent', () => {
+      const fixture = createCard();
+      // imagePosition: 'top' (DEFAULT_CARD_STYLE) → ось высоты. 50% — доля
+      // картинки. 400×400: картинка 200px (≥96), текст 200px (≥64).
+      FakeResizeObserver.instances[0]?.trigger(400, 400);
+      fixture.detectChanges();
+
+      const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
+      expect(article.classList).not.toContain('news-card--quilt');
+    });
+
+    it('доле картинки не хватает 96px — переход в режим подложки', () => {
+      const fixture = createCard();
+      // 50% от 180 = 90 < 96.
+      FakeResizeObserver.instances[0]?.trigger(400, 180);
+      fixture.detectChanges();
+
+      const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
+      expect(article.classList).toContain('news-card--quilt');
+    });
+
+    it('доле текста не хватает 64px — переход в режим подложки, даже если картинке хватает', () => {
+      const fixture = createCard();
+      fixture.componentInstance.cardStyle.set({ ...DEFAULT_CARD_STYLE, imageSizePercent: 90 });
+      // 90% от 400 = 360 (картинке хватает), 10% от 400 = 40 < 64 (тексту нет).
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(400, 400);
+      fixture.detectChanges();
+
+      const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
+      expect(article.classList).toContain('news-card--quilt');
+    });
+
+    it('порог считается по оси, которую делит imagePosition: left/right — ширина, а не высота', () => {
+      const fixture = createCard();
+      fixture.componentInstance.cardStyle.set({ ...DEFAULT_CARD_STYLE, imagePosition: 'left' });
+      fixture.detectChanges();
+      // Высота маленькая (не должна влиять), ширина большая (должна) — не подложка.
+      FakeResizeObserver.instances[0]?.trigger(400, 50);
+      fixture.detectChanges();
+
+      const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
+      expect(article.classList).not.toContain('news-card--quilt');
+    });
+
+    it('без изображения режим подложки не включается — уже покрыто отдельным сценарием "без обложки"', () => {
+      const fixture = createCard();
+      fixture.componentInstance.item.set({ ...ITEM, imageUrl: null });
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(50, 50);
+      fixture.detectChanges();
+
+      const article = fixture.nativeElement.querySelector('.news-card') as HTMLElement;
+      expect(article.classList).not.toContain('news-card--quilt');
+    });
+
+    it('в режиме подложки картинка растянута на всю карточку, а описание скрыто (заголовок — нет)', () => {
+      const fixture = createCard();
+      FakeResizeObserver.instances[0]?.trigger(400, 180);
+      fixture.detectChanges();
+
+      const picture = fixture.nativeElement.querySelector('.news-card__picture') as HTMLElement;
+      // `flex: none` — валидный shorthand для `0 0 auto`; jsdom сериализует
+      // `CSSStyleDeclaration` в развёрнутом виде, тот же эффект.
+      expect(picture.style.flex).toBe('0 0 auto');
+      expect(fixture.nativeElement.querySelector('.news-card__heading')?.textContent).toContain(
+        ITEM.title,
+      );
+      expect(fixture.nativeElement.querySelector('.news-card__excerpt')).toBeNull();
+    });
+
+    it('заголовок прижат к низу текстового блока — в плотной зоне градиента подложки, не у прозрачного края (a11y-review)', () => {
+      const fixture = createCard();
+      FakeResizeObserver.instances[0]?.trigger(400, 180);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.querySelector('.news-card__text') as HTMLElement;
+      expect(getComputedStyle(text).justifyContent).toBe('flex-end');
+    });
+
+    it('подложка под текст строится под цвет текста: тёмный текст → светлая подложка, светлый текст → тёмная', () => {
+      const fixture = createCard();
+      fixture.componentInstance.cardStyle.set({ ...DEFAULT_CARD_STYLE, textColor: '#1e1e1e' });
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(400, 180);
+      fixture.detectChanges();
+
+      let body = fixture.nativeElement.querySelector('.news-card__body') as HTMLElement;
+      expect(body.style.background).toContain('255, 255, 255');
+
+      fixture.componentInstance.cardStyle.set({ ...DEFAULT_CARD_STYLE, textColor: '#ffffff' });
+      fixture.detectChanges();
+
+      body = fixture.nativeElement.querySelector('.news-card__body') as HTMLElement;
+      expect(body.style.background).toContain('0, 0, 0');
+    });
+  });
 });

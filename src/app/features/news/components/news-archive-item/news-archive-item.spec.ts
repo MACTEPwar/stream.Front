@@ -170,4 +170,36 @@ describe('NewsArchiveItem', () => {
     host.querySelector<HTMLElement>('.news-archive-item__data')?.click();
     expect(fixture.componentInstance.openDetailCount()).toBe(2);
   });
+
+  it('кадрирует превью по точке фокуса обложки (ЛЕН-Ф-05 → ЗАК-Ф-10)', () => {
+    const fixture = createItem();
+    fixture.componentInstance.item.set({
+      ...ITEM,
+      cover: { type: 'image', url: '/uploads/cover.jpg', focalPoint: { x: 30, y: 70 } },
+    });
+    fixture.detectChanges();
+    const img = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>(
+      '.news-archive-item__picture img',
+    );
+
+    expect(img?.style.objectPosition).toBe('30% 70%');
+  });
+
+  it('без точки фокуса превью держит центр 50/50', () => {
+    const host = createItem().nativeElement as HTMLElement;
+    const img = host.querySelector<HTMLImageElement>('.news-archive-item__picture img');
+
+    expect(img?.style.objectPosition).toBe('50% 50%');
+  });
+
+  it('обложка, не загрузившаяся с ошибкой, ведёт себя как отсутствующая (ЛЕН-Ф-05 → ЗАК-Ф-18)', () => {
+    const fixture = createItem();
+    const host = fixture.nativeElement as HTMLElement;
+    const img = host.querySelector<HTMLImageElement>('.news-archive-item__picture img');
+
+    img?.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(host.querySelector('.news-archive-item__picture')).toBeNull();
+  });
 });
