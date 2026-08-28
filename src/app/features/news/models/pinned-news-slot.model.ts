@@ -1,3 +1,5 @@
+import { NewsCover } from '@features/admin/models/news.model';
+
 /**
  * Дефолтный размер сетки закреплённых новостей (`stream.Front#112`) — старт
  * для `PinnedGridConfig`. Сам размер сетки с `stream.Front#118` больше не
@@ -87,10 +89,49 @@ export interface PinnedNewsSlot {
   readonly colSpan: number;
   readonly rowSpan: number;
   readonly style: PinnedNewsCardStyle;
-  /** Обложка ЭТОГО пина (`stream.Front#118`, выбирается при добавлении карточки в `PinnedGridEditor`) — переопределяет `NewsItem.imageUrl` только для отображения в сетке; `null` — используется собственная картинка новости. */
-  readonly coverImageUrl: string | null;
-  /** Focal point картинки, применяемой в этом слоте (`pinned-grid-rework`) — `null` эквивалентен центру 50/50. Денормализовано с backend для рендера, реально принадлежит картинке (`AdminNewsImage`), правится через `AdminNewsService.updateImageFocalPoint()`, не через сохранение раскладки. */
-  readonly focalPoint: FocalPoint | null;
+  /**
+   * Обложка НОВОСТИ (`stream.Front#137`, поверх `streamer.API#80`) — та же,
+   * что показывает лента. Раньше здесь были `coverImageUrl` и `focalPoint`
+   * самого пина: обложка принадлежала закреплению и переопределяла картинку
+   * только внутри витрины, из-за чего одна новость выглядела по-разному в
+   * витрине и в ленте. Теперь обложка — свойство новости, у неё явное
+   * состояние, и слот её только показывает.
+   */
+  readonly cover: NewsCover;
+}
+
+/**
+ * Что принимает `PUT /admin/news/pinned-layout/:viewport` — строго уже, чем
+ * ответ `GET` (`stream.Front#137`). Обложка и точка фокуса принадлежат
+ * новости, а не раскладке, и сервер их здесь не ждёт: глобальный
+ * `ValidationPipe` работает с `forbidNonWhitelisted`, поэтому лишнее поле —
+ * не игнорируется, а даёт `400`. Отправлять прочитанный слот целиком нельзя,
+ * преобразование живёт в `PinnedGridService.updateLayout()`.
+ */
+export interface PinnedNewsPlacement {
+  readonly newsId: string;
+  readonly colStart: number;
+  readonly rowStart: number;
+  readonly colSpan: number;
+  readonly rowSpan: number;
+  readonly style: PinnedNewsCardStyle;
+}
+
+export interface PinnedGridLayoutUpdate {
+  readonly config: PinnedGridConfig;
+  readonly slots: readonly PinnedNewsPlacement[];
+}
+
+/** Слот, прочитанный с сервера, → то, что сервер принимает обратно. */
+export function toPinnedNewsPlacement(slot: PinnedNewsSlot): PinnedNewsPlacement {
+  return {
+    newsId: slot.newsId,
+    colStart: slot.colStart,
+    rowStart: slot.rowStart,
+    colSpan: slot.colSpan,
+    rowSpan: slot.rowSpan,
+    style: slot.style,
+  };
 }
 
 /**
@@ -117,12 +158,16 @@ export function validatePinnedNewsSlots(
 
     const colEnd = slot.colStart + slot.colSpan - 1;
     if (colEnd > columns) {
-      errors.push(`Слот «${slot.newsId}»: colSpan=${slot.colSpan} выходит за правый край сетки (до колонки ${colEnd})`);
+      errors.push(
+        `Слот «${slot.newsId}»: colSpan=${slot.colSpan} выходит за правый край сетки (до колонки ${colEnd})`,
+      );
     }
 
     const rowEnd = slot.rowStart + slot.rowSpan - 1;
     if (rowEnd > rows) {
-      errors.push(`Слот «${slot.newsId}»: rowSpan=${slot.rowSpan} выходит за нижний край сетки (до строки ${rowEnd})`);
+      errors.push(
+        `Слот «${slot.newsId}»: rowSpan=${slot.rowSpan} выходит за нижний край сетки (до строки ${rowEnd})`,
+      );
     }
 
     for (let col = Math.max(slot.colStart, 1); col <= Math.min(colEnd, columns); col++) {
@@ -130,7 +175,9 @@ export function validatePinnedNewsSlots(
         const cellKey = `${col}:${row}`;
         const occupant = occupiedBy.get(cellKey);
         if (occupant) {
-          errors.push(`Слоты «${occupant}» и «${slot.newsId}» пересекаются в ячейке [${col}, ${row}]`);
+          errors.push(
+            `Слоты «${occupant}» и «${slot.newsId}» пересекаются в ячейке [${col}, ${row}]`,
+          );
         } else {
           occupiedBy.set(cellKey, slot.newsId);
         }

@@ -17,7 +17,7 @@ function adminNews(overrides: Partial<AdminNews> = {}): AdminNews {
     viewedByCurrentUser: null,
     images: [],
     tags: [],
-    hasNoImage: false,
+    cover: { type: 'none', url: null, focalPoint: null },
     createdAt: '',
     updatedAt: '',
     ...overrides,
@@ -89,7 +89,7 @@ describe('NewsItemAdapterService', () => {
       expect(item.imageUrls).toEqual([]);
     });
 
-    it('сортирует картинки по order и резолвит их через ImageUrlService, imageUrl — первая', () => {
+    it('сортирует картинки по order и резолвит их через ImageUrlService', () => {
       const admin = adminNews({
         images: [
           { id: 'img-2', url: '/uploads/2.png', order: 2, focalX: null, focalY: null },
@@ -101,12 +101,42 @@ describe('NewsItemAdapterService', () => {
 
       expect(resolve).toHaveBeenCalledWith('/uploads/1.png');
       expect(resolve).toHaveBeenCalledWith('/uploads/2.png');
-      expect(item.imageUrl).toBe('resolved:/uploads/1.png');
       expect(item.imageUrls).toEqual(['resolved:/uploads/1.png', 'resolved:/uploads/2.png']);
       expect(item.images).toEqual([
         { id: 'img-1', url: 'resolved:/uploads/1.png', focalX: 30, focalY: 40 },
         { id: 'img-2', url: 'resolved:/uploads/2.png', focalX: null, focalY: null },
       ]);
+    });
+
+    it('imageUrl — ОБЛОЖКА новости, а не первая картинка набора (stream.Front#137)', () => {
+      const admin = adminNews({
+        images: [
+          { id: 'img-1', url: '/uploads/1.png', order: 1, focalX: null, focalY: null },
+          { id: 'img-2', url: '/uploads/2.png', order: 2, focalX: null, focalY: null },
+        ],
+        cover: { type: 'image', url: '/uploads/2.png', focalPoint: { x: 70, y: 30 } },
+      });
+
+      const item = service.toNewsItem(admin);
+
+      expect(item.imageUrl).toBe('resolved:/uploads/2.png');
+      expect(item.cover).toEqual({
+        type: 'image',
+        url: 'resolved:/uploads/2.png',
+        focalPoint: { x: 70, y: 30 },
+      });
+    });
+
+    it('без обложки картинки нет вовсе — первая её не подменяет (ОБЛ-О-05)', () => {
+      const admin = adminNews({
+        images: [{ id: 'img-1', url: '/uploads/1.png', order: 1, focalX: null, focalY: null }],
+        cover: { type: 'none', url: null, focalPoint: null },
+      });
+
+      const item = service.toNewsItem(admin);
+
+      expect(item.imageUrl).toBeNull();
+      expect(item.imageUrls).toEqual(['resolved:/uploads/1.png']);
     });
   });
 

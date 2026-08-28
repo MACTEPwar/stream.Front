@@ -20,7 +20,7 @@ function adminNews(id: string, overrides: Partial<AdminNews> = {}): AdminNews {
     viewedByCurrentUser: false,
     images: [],
     tags: [],
-    hasNoImage: false,
+    cover: { type: 'none', url: null, focalPoint: null },
     createdAt: '',
     updatedAt: '',
     ...overrides,
@@ -40,8 +40,7 @@ function pinnedLayout(newsId: string): PinnedGridLayout {
         colSpan: 1,
         rowSpan: 7,
         style: DEFAULT_CARD_STYLE,
-        coverImageUrl: null,
-        focalPoint: null,
+        cover: { type: 'none', url: null, focalPoint: null },
       },
     ],
   };
@@ -102,7 +101,9 @@ describe('AdminNewsPinnedPage', () => {
     expect(withoutImages?.imageUrls).toEqual([]);
 
     const withImages = news.find((item) => item.id === 'news-b');
-    expect(withImages?.imageUrl).toContain('/uploads/1.png');
+    // imageUrl — обложка новости, а не первая картинка набора
+    // (stream.Front#137); у этой фикстуры обложки нет
+    expect(withImages?.imageUrl).toBeNull();
     expect(withImages?.imageUrls.map((url) => url.split('/uploads/')[1])).toEqual(['1.png', '2.png']);
   });
 
@@ -125,8 +126,7 @@ describe('AdminNewsPinnedPage', () => {
           colSpan: 3,
           rowSpan: 12,
           style: DEFAULT_CARD_STYLE,
-          coverImageUrl: null,
-          focalPoint: null,
+          cover: { type: 'none', url: null, focalPoint: null },
         },
       ],
     };
@@ -159,8 +159,7 @@ describe('AdminNewsPinnedPage', () => {
           colSpan: 3,
           rowSpan: 12,
           style: DEFAULT_CARD_STYLE,
-          coverImageUrl: null,
-          focalPoint: null,
+          cover: { type: 'none', url: null, focalPoint: null },
         },
       ],
     };

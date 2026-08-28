@@ -16,8 +16,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     colSpan: 1,
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
-    coverImageUrl: null,
-    focalPoint: null,
+    cover: { type: 'none', url: null, focalPoint: null },
     ...overrides,
   };
 }

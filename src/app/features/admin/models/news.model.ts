@@ -41,7 +41,13 @@ export interface AdminNews {
   viewedByCurrentUser: boolean | null;
   images: AdminNewsImage[];
   tags: AdminNewsTag[];
-  hasNoImage: boolean;
+  /**
+   * Обложка новости (`stream.Front#137`, поверх `streamer.API#80`) — заменила
+   * булев `hasNoImage`. Флаг хранился, но ни на что не влиял; теперь состояние
+   * обложки записано явно, и «осознанно без обложки» отличимо от «ещё не
+   * выбрали» (`ОБЛ-Б-01`).
+   */
+  cover: NewsCover;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,8 +60,46 @@ export interface CreateNewsPayload {
   /** ISO-строка, опционально — по умолчанию backend подставляет текущее время. */
   publishedAt?: string;
   tagIds: string[];
-  /** Явная отметка "новость намеренно без фото" — не влияет на валидацию `imageUrls`. */
-  hasNoImage?: boolean;
+  /**
+   * Состояние обложки (`stream.Front#137`, поверх `streamer.API#80`). Не
+   * передано — сервер оставляет текущее. Интерфейс выбора из трёх состояний —
+   * задача `stream.Front#132`; пока форма новости обложку не задаёт.
+   */
+  cover?: NewsCoverInput;
+}
+
+/**
+ * Что принимает сервер при сохранении обложки: `url` нужен только для
+ * `image`/`custom`. Для `custom` это либо уже загруженный `/uploads/*`, либо
+ * внешняя ссылка — сервер скачает её к себе (`ОБЛ-Б-02`).
+ */
+export interface NewsCoverInput {
+  type: NewsCoverType;
+  url?: string | null;
+}
+
+/** Состояние обложки — зеркало `NewsCoverDto` бэкенда (`streamer.API#80`). */
+export type NewsCoverType = 'none' | 'image' | 'custom';
+
+/** Точка фокуса в процентах от размеров картинки; `null` — центр 50/50. */
+export interface NewsCoverFocalPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * Обложка в ответе сервера. `url` — `null` при `type: 'none'`: это осознанное
+ * состояние «обложки нет», а не «ещё не выбрали», и подставлять вместо неё
+ * первую картинку новости запрещено (`ОБЛ-О-05`, `ЗАК-О-06`).
+ *
+ * Живёт здесь, а не в моделях страницы «Новости»: обложка — часть контракта
+ * новости, и её читают обе фичи (`features/news` уже импортирует `AdminNews`
+ * отсюда).
+ */
+export interface NewsCover {
+  readonly type: NewsCoverType;
+  readonly url: string | null;
+  readonly focalPoint: NewsCoverFocalPoint | null;
 }
 
 export type UpdateNewsPayload = Partial<CreateNewsPayload>;

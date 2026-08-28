@@ -9,6 +9,7 @@ function newsItem(id: string): NewsItem {
     id,
     title: `Заголовок ${id}`,
     excerpt: 'Lorem ipsum dolor sit amet consectetur.',
+    cover: { type: 'none', url: null, focalPoint: null },
     imageUrl: null,
     imageUrls: [],
     images: [],
@@ -29,8 +30,7 @@ function slot(overrides: Partial<PinnedNewsSlot> = {}): PinnedNewsSlot {
     colSpan: 1,
     rowSpan: 1,
     style: DEFAULT_CARD_STYLE,
-    coverImageUrl: null,
-    focalPoint: null,
+    cover: { type: 'none', url: null, focalPoint: null },
     ...overrides,
   };
 }

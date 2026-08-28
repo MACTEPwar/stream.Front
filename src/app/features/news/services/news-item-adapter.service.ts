@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { ImageUrlService } from '@core/services/image-url.service';
-import { AdminNews, AdminNewsTag } from '@features/admin/models/news.model';
+import { AdminNews, AdminNewsTag, NewsCover } from '@features/admin/models/news.model';
 
 import { NewsItem } from '../models/news.model';
 import { NewsTag } from '../models/news-tag.model';
@@ -31,11 +31,20 @@ export class NewsItemAdapterService {
       focalY: image.focalY,
     }));
     const imageUrls = images.map((image) => image.url);
+    // Картинка новости — её ОБЛОЖКА, а не первая картинка набора
+    // (`stream.Front#137`, `ОБЛ-О-05`): «осознанно без обложки» — записанное
+    // состояние, и подменять его первым изображением значит делать его
+    // неотличимым от «ещё не выбрали».
+    const cover: NewsCover = {
+      ...admin.cover,
+      url: admin.cover.url === null ? null : this.imageUrlService.resolve(admin.cover.url),
+    };
     return {
       id: admin.id,
       title: admin.title,
       excerpt: admin.description,
-      imageUrl: imageUrls[0] ?? null,
+      cover,
+      imageUrl: cover.url,
       imageUrls,
       images,
       tagIds: admin.tags.map((tag) => tag.id),
