@@ -80,7 +80,7 @@ export class PinnedNewsGrid {
    * (`ЗАК-Ф-05`).
    */
   protected effectiveItem(entry: PinnedNewsGridEntry): NewsItem {
-    return { ...entry.item, imageUrl: entry.slot.cover.url };
+    return { ...entry.item, imageUrl: entry.item.cover.url };
   }
 
   protected focalPoint(entry: PinnedNewsGridEntry): FocalPoint | null {
