@@ -34,6 +34,7 @@
 
 .focal-point-picker__previews {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -41,6 +42,9 @@
   overflow: hidden;
   border-radius: 4px;
   background: #d9d9d9;
+  // Размер задаётся инлайн-стилем из `cropSamples()` (`ФОК-Ф-04`) — здесь
+  // только оформление, без фиксированных пропорций.
+  flex-shrink: 0;
 
   img {
     display: block;
@@ -48,19 +52,4 @@
     height: 100%;
     object-fit: cover;
   }
-}
-
-.focal-point-picker__preview--square {
-  width: 64px;
-  height: 64px;
-}
-
-.focal-point-picker__preview--wide {
-  width: 96px;
-  height: 54px;
-}
-
-.focal-point-picker__preview--tall {
-  width: 48px;
-  height: 64px;
 }

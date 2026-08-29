@@ -15,15 +15,16 @@
   </div>
 
   <div class="focal-point-picker__previews">
-    <div class="focal-point-picker__preview focal-point-picker__preview--square">
-      <img [src]="imageUrl()" alt="" [style.object-position]="objectPosition()" />
-    </div>
-    <div class="focal-point-picker__preview focal-point-picker__preview--wide">
-      <img [src]="imageUrl()" alt="" [style.object-position]="objectPosition()" />
-    </div>
-    <div class="focal-point-picker__preview focal-point-picker__preview--tall">
-      <img [src]="imageUrl()" alt="" [style.object-position]="objectPosition()" />
-    </div>
+    @for (sample of cropSamples(); track sample.label) {
+      <div
+        class="focal-point-picker__preview"
+        [style.width.px]="sample.widthPx"
+        [style.height.px]="sample.heightPx"
+        [title]="sample.label"
+      >
+        <img [src]="imageUrl()" alt="" [style.object-position]="objectPosition()" />
+      </div>
+    }
   </div>
 
   <app-button text="Сбросить в центр" size="small" severity="info" (click)="onReset()" />

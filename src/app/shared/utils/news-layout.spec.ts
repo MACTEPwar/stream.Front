@@ -1,7 +1,9 @@
 import {
+  NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX,
   NEWS_PAGE_GRID_REFERENCE_WIDTH_PX,
   NEWS_PAGE_SIDE_BY_SIDE_MIN_CONTENT_WIDTH_PX,
   isNewsArchiveBeside,
+  isNewsArchiveBesideForScreen,
   newsArchiveGap,
   newsArchiveWidth,
   newsGridWidth,
@@ -114,6 +116,27 @@ describe('news-layout', () => {
     it('ровно на пороге лента ещё сбоку', () => {
       expect(isNewsArchiveBeside(NEWS_PAGE_SIDE_BY_SIDE_MIN_CONTENT_WIDTH_PX)).toBe(true);
       expect(isNewsArchiveBeside(NEWS_PAGE_SIDE_BY_SIDE_MIN_CONTENT_WIDTH_PX - 1)).toBe(false);
+    });
+  });
+
+  describe('isNewsArchiveBesideForScreen — потолок ширины окна поверх порога из минимумов (по прямому запросу пользователя)', () => {
+    it('потолок — 1200px', () => {
+      expect(NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX).toBe(1200);
+    });
+
+    it('window ≤ 1200 — лента вниз, даже когда порог из минимумов ещё разрешил бы сбоку', () => {
+      // content=1080 (window 1200, паддинг 60×2) заведомо больше 960 —
+      // isNewsArchiveBeside() сам по себе сказал бы true.
+      expect(isNewsArchiveBeside(1080)).toBe(true);
+      expect(isNewsArchiveBesideForScreen(1200, 1080)).toBe(false);
+    });
+
+    it('window 1201 — уже сбоку', () => {
+      expect(isNewsArchiveBesideForScreen(1201, 1081)).toBe(true);
+    });
+
+    it('потолок не спасает узкий контент — обе проверки должны пройти', () => {
+      expect(isNewsArchiveBesideForScreen(1920, 900)).toBe(false);
     });
   });
 });

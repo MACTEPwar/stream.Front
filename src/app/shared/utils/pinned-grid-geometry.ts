@@ -6,8 +6,9 @@ import {
   BREAKPOINT_TABLET_MIN_WIDTH_PX,
 } from './breakpoints';
 import {
+  NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX,
   NEWS_PAGE_PADDING_PX,
-  isNewsArchiveBeside,
+  isNewsArchiveBesideForScreen,
   newsGridWidth,
   newsPageContentWidth,
 } from './news-layout';
@@ -87,7 +88,7 @@ export function computePinnedGridAreaSize(
   const viewport = resolvePinnedGridViewport(screenWidthPx, screenHeightPx);
   const contentWidth = newsPageContentWidth(screenWidthPx, viewport);
 
-  if (!isNewsArchiveBeside(contentWidth)) {
+  if (!isNewsArchiveBesideForScreen(screenWidthPx, contentWidth)) {
     return { width: contentWidth, height: null };
   }
 
@@ -97,27 +98,44 @@ export function computePinnedGridAreaSize(
   };
 }
 
-export interface ScreenSizePreset {
-  readonly key: string;
-  readonly label: string;
+/** Два состояния холста на раскладку (`РАБ-Ф-07`, `РАБ-Ф-08`, `specs/02-admin/05-pinned/spec.md`) — просторное (эталон) и тесное (самый узкий случай, в котором раскладка ещё показывается посетителю). Третьего не предусмотрено — выбор устройства и произвольный размер убраны (`РАБ-Ф-01`, `РАБ-Ф-02`). */
+export type PinnedGridCanvasDensity = 'reference' | 'tight';
+
+export interface PinnedGridCanvasScreen {
   readonly width: number;
   readonly height: number;
 }
 
 /**
- * Реальные размеры окна браузера для предпросмотра в `PinnedGridEditor` —
- * НЕ пресеты сетки/раскладки самой по себе (это `PinnedGridViewport`,
- * выводится из `width`+`height` через {@link resolvePinnedGridViewport}), а
- * размеры экрана посетителя, из которых уже вычисляется и то, какая
- * раскладка сейчас редактируется, и площадь под сетку.
+ * Экраны, между которыми витрина живёт у посетителя — источник для двух
+ * состояний холста редактора (`РАБ-Ф-07`, `РАБ-Ф-08`), НЕ произвольный выбор
+ * устройства (`РАБ-Ф-01`, `РАБ-Ф-02` — оба закрыты).
+ *
+ * `large.reference` — витрина при экране Full HD, тот же эталон, что и
+ * `NEWS_PAGE_GRID_REFERENCE_WIDTH_PX` (`news-layout.ts`).
+ * `large.tight` — на 1px уже потолка `NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX`
+ * (`news-layout.ts`): самый узкий экран, на котором лента у посетителя ЕЩЁ
+ * стоит сбоку — «её достаточная ширина 500» из спеки. Высота держится
+ * эталонной (Full HD) в обоих состояниях большой раскладки: сама по себе
+ * она не решает, встаёт ли лента сбоку, — это делает только ширина
+ * (`isNewsArchiveBesideForScreen`), поэтому менять её незачем.
+ *
+ * `small.reference` — типичная ширина телефона (`Принятые решения`,
+ * `specs/02-admin/05-pinned/spec.md`: макета под компактную раскладку нет,
+ * поэтому используется одно устоявшееся представительное значение, а не
+ * произвольный ввод). `small.tight` — минимальная поддерживаемая ширина
+ * проекта (та же величина, что и в `computePinnedGridAreaSize`-тестах).
  */
-export const SCREEN_SIZE_PRESETS: readonly ScreenSizePreset[] = [
-  { key: 'phone', label: 'Телефон (375×812)', width: 375, height: 812 },
-  { key: 'tablet-portrait', label: 'Планшет книжкой (810×1080)', width: 810, height: 1080 },
-  { key: 'tablet-landscape', label: 'Планшет альбомом (1180×820)', width: 1180, height: 820 },
-  { key: 'laptop', label: 'Ноутбук (1366×768)', width: 1366, height: 768 },
-  { key: 'desktop', label: 'Десктоп (1920×1080)', width: 1920, height: 1080 },
-];
-
-/** Значение `key` для произвольного размера, введённого вручную — не входит в {@link SCREEN_SIZE_PRESETS}. */
-export const CUSTOM_SCREEN_SIZE_KEY = 'custom';
+export const PINNED_GRID_CANVAS_SCREENS: Record<
+  PinnedGridViewport,
+  Record<PinnedGridCanvasDensity, PinnedGridCanvasScreen>
+> = {
+  large: {
+    reference: { width: 1920, height: 1080 },
+    tight: { width: NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX + 1, height: 1080 },
+  },
+  small: {
+    reference: { width: 375, height: 812 },
+    tight: { width: 320, height: 568 },
+  },
+};

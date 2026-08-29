@@ -40,50 +40,30 @@
       Подсветка сетки
     </label>
 
-    <label class="pinned-grid-editor__grid-size-field">
-      Экран
-      <app-select
-        class="pinned-grid-editor__viewport-select"
-        [options]="screenPresetOptions"
-        optionLabel="label"
-        optionValue="value"
-        [value]="screenPresetKey()"
-        (valueChange)="onScreenPresetChange($event)"
-      />
-    </label>
-
-    @if (screenPresetKey() === customScreenSizeKey) {
-      <label class="pinned-grid-editor__grid-size-field">
-        Ширина, px
-        <input
-          type="number"
-          min="1"
-          class="pinned-grid-editor__number-input"
-          [value]="customScreenWidth()"
-          (input)="onCustomScreenWidthInput($any($event.target).value)"
+    <span class="pinned-grid-editor__toggle-label">Раскладка</span>
+    <app-button-group>
+      @for (option of viewportToggleOptions; track option.value) {
+        <app-button
+          [text]="option.label"
+          [severity]="viewportPreset() === option.value ? undefined : 'info'"
+          size="small"
+          (click)="onViewportChange(option.value)"
         />
-      </label>
-      <label class="pinned-grid-editor__grid-size-field">
-        Высота, px
-        <input
-          type="number"
-          min="1"
-          class="pinned-grid-editor__number-input"
-          [value]="customScreenHeight()"
-          (input)="onCustomScreenHeightInput($any($event.target).value)"
+      }
+    </app-button-group>
+
+    <span class="pinned-grid-editor__toggle-label">Холст</span>
+    <app-button-group>
+      @for (option of densityToggleOptions; track option.value) {
+        <app-button
+          [text]="option.label"
+          [severity]="density() === option.value ? undefined : 'info'"
+          size="small"
+          (click)="onDensityChange(option.value)"
         />
-      </label>
-    }
+      }
+    </app-button-group>
 
-    <span class="pinned-grid-editor__resolved-viewport"
-      >Редактируется раскладка: {{ viewportPreset() }}</span
-    >
-
-    <app-button
-      [text]="previewMode() ? 'Закрыть предпросмотр' : 'Предпросмотр как посетитель'"
-      severity="info"
-      (click)="previewMode() ? onClosePreviewClick() : onOpenPreviewClick()"
-    />
     <app-button text="Сохранить" (click)="onSaveClick()" />
   </div>
 </div>
@@ -100,142 +80,136 @@
   </div>
 }
 
-@if (viewportPreset() === 'large' && unplacedForLarge().length > 0 && pendingNews() === null) {
-  <div class="pinned-grid-editor__unplaced-banner">
-    <div class="pinned-grid-editor__unplaced-text">
-      На раскладке «large» не хватило места для {{ unplacedForLarge().length }} закреплённых
-      новостей — они видны только на «small». Разместите вручную, когда освободится место:
-    </div>
-    <div class="pinned-grid-editor__unplaced-list">
-      @for (item of unplacedForLarge(); track item.id) {
-        <div class="pinned-grid-editor__unplaced-item">
-          <span>{{ item.title }}</span>
-          <app-button text="Разместить" size="small" (click)="onPlaceUnplacedClick(item.id)" />
+@if (pinnedNewsList().length > 0) {
+  <div class="pinned-grid-editor__placement-status">
+    <span class="pinned-grid-editor__placement-status-label">Закреплённые новости:</span>
+    @for (entry of pinnedNewsList(); track entry.newsId) {
+      <div class="pinned-grid-editor__placement-status-item">
+        <span>{{ entry.item.title }}</span>
+        @for (viewport of pinnedGridViewports; track viewport) {
+          <span
+            class="pinned-grid-editor__viewport-badge"
+            [class.pinned-grid-editor__viewport-badge--placed]="entry.placedIn.includes(viewport)"
+            >{{ viewport }}</span
+          >
+        }
+        @if (!entry.placedIn.includes(viewportPreset()) && pendingNews() === null) {
+          <app-button
+            text="Разместить здесь"
+            size="small"
+            (click)="onPlaceInCurrentViewportClick(entry.newsId)"
+          />
+        }
+      </div>
+    }
+  </div>
+}
+
+<p class="pinned-grid-editor__canvas-hint">
+  Холст: {{ screenSize().width }}×{{ screenSize().height }}.
+  @if (gridAreaSize().height === null) {
+    Ширина холста ниже точная, а высота — ориентировочная (для наглядности редактирования): на
+    реальной странице сетка растёт по объёму текста в карточках.
+  } @else {
+    Ширина и высота холста ниже соответствуют реальной странице.
+  }
+</p>
+
+<div class="pinned-grid-editor__viewport-wrapper">
+  <div
+    class="pinned-grid-editor__viewport"
+    [class.pinned-grid-editor__viewport--auto-height]="gridAreaSize().height === null"
+    [style.width.px]="gridAreaSize().width"
+    [style.height.px]="gridAreaSize().height"
+  >
+    <div
+      class="pinned-grid-editor__grid"
+      [style.grid-template-columns]="gridTemplateColumns()"
+      [style.grid-template-rows]="gridTemplateRows()"
+    >
+      @for (entry of entries(); track entry.slot.newsId) {
+        <div
+          class="pinned-grid-editor__card"
+          [class.pinned-grid-editor__card--invalid]="isDraggingInvalid(entry.slot.newsId)"
+          [class.pinned-grid-editor__card--editing]="editingNewsId() === entry.slot.newsId"
+          [style.grid-column]="gridColumn(displaySlot(entry.slot))"
+          [style.grid-row]="gridRow(displaySlot(entry.slot))"
+          (pointerdown)="onPointerDown($event, entry.slot, 'move')"
+        >
+          <app-news-card
+            #previewCard
+            class="pinned-grid-editor__preview"
+            [item]="entry.item"
+            [tags]="emptyTags"
+            [cardStyle]="previewStyle(entry.slot)"
+            [focalPoint]="entry.slot.cover.focalPoint"
+          />
+
+          @if (previewCard.quiltReason(); as reason) {
+            <span class="pinned-grid-editor__quilt-hint">{{ quiltReasonLabel(reason) }}</span>
+          }
+
+          <div class="pinned-grid-editor__card-controls" (pointerdown)="$event.stopPropagation()">
+            <app-button icon="pi pi-pencil" size="small" (click)="onEditStyleClick(entry.slot)" />
+            <app-button
+              icon="pi pi-times"
+              size="small"
+              severity="danger"
+              (click)="onRemoveSlot(entry.slot.newsId)"
+            />
+          </div>
+
+          <div
+            class="pinned-grid-editor__handle pinned-grid-editor__handle--col"
+            (pointerdown)="onPointerDown($event, entry.slot, 'col')"
+          ></div>
+          <div
+            class="pinned-grid-editor__handle pinned-grid-editor__handle--row"
+            (pointerdown)="onPointerDown($event, entry.slot, 'row')"
+          ></div>
         </div>
+      } @empty {
+        <p class="pinned-grid-editor__empty">Нет закреплённых новостей</p>
+      }
+
+      @if (gridHighlightEnabled()) {
+        @for (cell of cells(); track cell.col + '-' + cell.row) {
+          <div
+            class="pinned-grid-editor__highlight-cell"
+            [style.grid-column]="cellGridColumn(cell)"
+            [style.grid-row]="cellGridRow(cell)"
+          ></div>
+        }
+      }
+
+      @if (pendingNews()) {
+        @for (cell of cells(); track cell.col + '-' + cell.row) {
+          <div
+            class="pinned-grid-editor__placement-cell"
+            [class.pinned-grid-editor__placement-cell--free]="!isCellOccupied(cell)"
+            [style.grid-column]="cellGridColumn(cell)"
+            [style.grid-row]="cellGridRow(cell)"
+            (pointerdown)="onPlacementCellPointerDown(cell)"
+            (pointerenter)="onPlacementCellPointerEnter(cell)"
+          >
+            @if (!isCellOccupied(cell)) {
+              <i class="pi pi-plus" aria-hidden="true"></i>
+            }
+          </div>
+        }
+
+        @if (placementRect(); as rect) {
+          <div
+            class="pinned-grid-editor__placement-rect"
+            [class.pinned-grid-editor__placement-rect--invalid]="!placementValid()"
+            [style.grid-column]="placementRectGridColumn()"
+            [style.grid-row]="placementRectGridRow()"
+          ></div>
+        }
       }
     </div>
   </div>
-}
-
-@if (previewMode()) {
-  <div class="pinned-grid-editor__preview-banner">
-    Показана ПОСЛЕДНЯЯ СОХРАНЁННАЯ раскладка (страница «Новости» грузит её с сервера) — текущие
-    несохранённые правки здесь не видны. Нажмите «Сохранить», затем «Обновить предпросмотр».
-    <app-button text="Обновить предпросмотр" size="small" (click)="onRefreshPreviewClick()" />
-  </div>
-
-  <div class="pinned-grid-editor__viewport-wrapper">
-    <iframe
-      class="pinned-grid-editor__preview-iframe"
-      [style.width.px]="screenSize().width"
-      [style.height.px]="screenSize().height"
-      [src]="previewSrc()"
-      title="Предпросмотр страницы «Новости» как увидит посетитель"
-    ></iframe>
-  </div>
-} @else {
-  @if (gridAreaSize().height === null) {
-    <p class="pinned-grid-editor__canvas-hint">
-      Ширина холста ниже точная, а высота — ориентировочная (для наглядности редактирования): на
-      реальной странице сетка растёт по объёму текста в карточках.
-    </p>
-  } @else {
-    <p class="pinned-grid-editor__canvas-hint">
-      Ширина и высота холста ниже соответствуют реальной странице.
-    </p>
-  }
-
-  <div class="pinned-grid-editor__viewport-wrapper">
-    <div
-      class="pinned-grid-editor__viewport"
-      [class.pinned-grid-editor__viewport--auto-height]="gridAreaSize().height === null"
-      [style.width.px]="gridAreaSize().width"
-      [style.height.px]="gridAreaSize().height"
-    >
-      <div
-        class="pinned-grid-editor__grid"
-        [style.grid-template-columns]="gridTemplateColumns()"
-        [style.grid-template-rows]="gridTemplateRows()"
-      >
-        @for (entry of entries(); track entry.slot.newsId) {
-          <div
-            class="pinned-grid-editor__card"
-            [class.pinned-grid-editor__card--invalid]="isDraggingInvalid(entry.slot.newsId)"
-            [class.pinned-grid-editor__card--editing]="editingNewsId() === entry.slot.newsId"
-            [style.grid-column]="gridColumn(displaySlot(entry.slot))"
-            [style.grid-row]="gridRow(displaySlot(entry.slot))"
-            (pointerdown)="onPointerDown($event, entry.slot, 'move')"
-          >
-            <app-news-card
-              class="pinned-grid-editor__preview"
-              [item]="entry.item"
-              [tags]="emptyTags"
-              [cardStyle]="previewStyle(entry.slot)"
-              [focalPoint]="entry.slot.cover.focalPoint"
-            />
-
-            <div class="pinned-grid-editor__card-controls" (pointerdown)="$event.stopPropagation()">
-              <app-button icon="pi pi-pencil" size="small" (click)="onEditStyleClick(entry.slot)" />
-              <app-button
-                icon="pi pi-times"
-                size="small"
-                severity="danger"
-                (click)="onRemoveSlot(entry.slot.newsId)"
-              />
-            </div>
-
-            <div
-              class="pinned-grid-editor__handle pinned-grid-editor__handle--col"
-              (pointerdown)="onPointerDown($event, entry.slot, 'col')"
-            ></div>
-            <div
-              class="pinned-grid-editor__handle pinned-grid-editor__handle--row"
-              (pointerdown)="onPointerDown($event, entry.slot, 'row')"
-            ></div>
-          </div>
-        } @empty {
-          <p class="pinned-grid-editor__empty">Нет закреплённых новостей</p>
-        }
-
-        @if (gridHighlightEnabled()) {
-          @for (cell of cells(); track cell.col + '-' + cell.row) {
-            <div
-              class="pinned-grid-editor__highlight-cell"
-              [style.grid-column]="cellGridColumn(cell)"
-              [style.grid-row]="cellGridRow(cell)"
-            ></div>
-          }
-        }
-
-        @if (pendingNews()) {
-          @for (cell of cells(); track cell.col + '-' + cell.row) {
-            <div
-              class="pinned-grid-editor__placement-cell"
-              [class.pinned-grid-editor__placement-cell--free]="!isCellOccupied(cell)"
-              [style.grid-column]="cellGridColumn(cell)"
-              [style.grid-row]="cellGridRow(cell)"
-              (pointerdown)="onPlacementCellPointerDown(cell)"
-              (pointerenter)="onPlacementCellPointerEnter(cell)"
-            >
-              @if (!isCellOccupied(cell)) {
-                <i class="pi pi-plus" aria-hidden="true"></i>
-              }
-            </div>
-          }
-
-          @if (placementRect(); as rect) {
-            <div
-              class="pinned-grid-editor__placement-rect"
-              [class.pinned-grid-editor__placement-rect--invalid]="!placementValid()"
-              [style.grid-column]="placementRectGridColumn()"
-              [style.grid-row]="placementRectGridRow()"
-            ></div>
-          }
-        }
-      </div>
-    </div>
-  </div>
-}
+</div>
 
 <p-drawer
   [(visible)]="addDrawerVisible"
@@ -248,7 +222,7 @@
     <label>
       Новость
       <app-select
-        [options]="unusedNewsForAdd()"
+        [options]="newsForAdd()"
         optionLabel="title"
         optionValue="id"
         [filter]="true"
@@ -335,6 +309,7 @@
             <app-focal-point-picker
               [imageUrl]="focalImage.url"
               [point]="editingFocalPoint()"
+              [cropSamples]="editingCropSamples()"
               (pointCommit)="onFocalPointChange($event)"
             />
           </div>

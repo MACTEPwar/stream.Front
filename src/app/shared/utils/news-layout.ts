@@ -81,6 +81,35 @@ export function isNewsArchiveBeside(contentWidthPx: number): boolean {
 }
 
 /**
+ * Потолок ширины ОКНА, выше которого лента вообще имеет право стоять сбоку —
+ * по прямому запросу пользователя после визуальной проверки: на 1200px и
+ * уже витрине, зажатой между лентой на её минимуме (440) и зазором,
+ * оставалось ~530px — нечитаемо мало для главного содержимого страницы
+ * (`РАЗ-О-01`). Формально это отдельный порог поверх содержимого блоков, а
+ * не выведенный из их минимумов (`РАЗ-Ф-03` формально запрещает именно
+ * это) — сознательное исключение ради диапазона 1080..1200, где порог из
+ * минимумов (`isNewsArchiveBeside`) ещё держит ленту сбоку, а результат уже
+ * недостаточно широкий.
+ *
+ * Живёт здесь, а не только в `NewsPage`, — редактор витрины
+ * (`pinned-grid-geometry.ts`) обязан видеть ТУ ЖЕ границу: иначе холст
+ * редактора расходится с реальной страницей и врёт администратору о том, где
+ * лента уходит вниз (`Г-1`, `specs/02-admin/05-pinned/spec.md`).
+ */
+export const NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX = 1200;
+
+/** {@link isNewsArchiveBeside} плюс потолок {@link NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX} — версия для реального экрана, а не абстрактной доступной ширины. */
+export function isNewsArchiveBesideForScreen(
+  screenWidthPx: number,
+  contentWidthPx: number,
+): boolean {
+  return (
+    screenWidthPx > NEWS_PAGE_ARCHIVE_BESIDE_MAX_SCREEN_WIDTH_PX &&
+    isNewsArchiveBeside(contentWidthPx)
+  );
+}
+
+/**
  * Лента отдаёт ширину ПЕРВОЙ (`РАЗ-Ф-01`): пока витрина держит эталон, весь
  * дефицит вычитается отсюда — от 660 вниз до 440.
  */
