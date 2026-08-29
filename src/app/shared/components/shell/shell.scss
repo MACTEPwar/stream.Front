@@ -45,12 +45,30 @@
   background: transparent;
   color: vars.$color-ffffff;
   position: relative;
-  z-index: 1;
+  // Выше `.shell__menu-backdrop` (z-index: 1, ниже) — шапка (лого,
+  // переключатель) остаётся не затемнена и кликабельна, пока открыто
+  // компактное меню (`ШАП-Ф-02`, `ШАП-Ф-14`, stream.Front#144).
+  z-index: 2;
 
   @include bp.wide {
     max-width: bp.$content-max-width;
     margin: 0 auto;
   }
+}
+
+// Бренд-блок (лого, разделитель, переключатель-гамбургер) — `flex-shrink: 0`,
+// всегда слева (`ШАП-Ф-16`, stream.Front#146): переключатель теперь ОДНО
+// место в разметке для компактного И среднего видов (раньше, в #144, он был
+// прижат к правому краю строки `margin-left: auto` — единственным содержимым
+// компактной строки; в среднем виде это уже не так, справа от него в той же
+// строке остаются кнопка поддержки и область входа, `.shell__header-actions`
+// ниже, поэтому переключатель нельзя оставить "плавающим вправо" общей
+// логикой с ними — см. JSDoc Shell).
+.shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
 }
 
 .shell__logo {
@@ -66,6 +84,87 @@
 .shell__divider {
   color: vars.$color-ffffff;
   opacity: 0.4;
+}
+
+// Измеряемая область (`ШАП-Ф-15`, stream.Front#146) — `flex: 1 1 0%` даёт
+// браузеру честно посчитать "оставшееся после .shell__brand место", не
+// завязываясь на то, что внутри сейчас отрисовано (пусто/компактная область
+// входа+кнопка/вся строка) — измеряется ResizeObserver'ом на этом контейнере
+// (см. shell.ts). `min-width: 0` — снимает с flex-item дефолтный
+// `min-width: auto`, иначе широкое содержимое (когда оно ещё не сжалось до
+// среднего вида) распирало бы контейнер шире доступного места вместо того,
+// чтобы обрезаться `overflow: hidden` — тот же паттерн, что `.shell__content`
+// (`min-height: 0`) выше по файлу. `overflow: hidden` — безопасная сетка на
+// случай кадра до переключения вида (`АДП-Ф-10`, без горизонтальной
+// прокрутки страницы) и клипует невидимый слепок (`.shell__row-probe` ниже)
+// вне зависимости от его фактической (потенциально широкой) ширины.
+.shell__header-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+// Невидимый слепок самой широкой строки — ТОЛЬКО для измерения (`ШАП-Ф-15`,
+// см. JSDoc Shell). `position: absolute` без `right` — ширина считается
+// shrink-to-fit (`fit-content`), т.е. НЕ зависит от `.shell__header-actions`,
+// а отражает реальную потребность контента. `visibility: hidden` (не
+// `display: none`) — display:none элементы не измеряются ResizeObserver'ом
+// и не имеют геометрии вовсе; `pointer-events: none` — дополнительная
+// защита от кликов (наравне с `inert` в разметке, shell.html).
+.shell__row-probe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  white-space: nowrap;
+}
+
+.shell__row-probe-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+// Шрифт — тот же миксин, что `.shell__nav-link`/`.shell__admin-link` (не
+// общий класс, см. JSDoc Shell про то, почему у слепка свои классы) — правка
+// типографики навигации автоматически остаётся синхронной с измерением.
+.shell__row-probe-nav-item,
+.shell__row-probe-admin {
+  @include mixins.mainNav;
+}
+
+.shell__row-probe-account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shell__row-probe-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.shell__row-probe-avatar--placeholder {
+  display: block;
+  background: vars.$color-808080;
+}
+
+.shell__row-probe-account-name {
+  font-family: vars.$font-family-montserrat;
+  font-size: vars.$font-size-16;
+  font-weight: vars.$font-weight-500;
+  line-height: vars.$line-height-24;
 }
 
 .shell__nav {
@@ -128,6 +227,17 @@
   align-items: center;
   gap: 8px;
   color: inherit;
+
+  // Средний вид (`ШАП-Ф-16`, stream.Front#146) — только аватар, без имени
+  // (`:only-child` истинно ровно тогда, когда `.shell__account-name` не
+  // отрисован): 40px-аватар сам по себе меньше минимальной области нажатия
+  // (`АДП-Ф-14`), `min-width`/`min-height` 44px + центрирование добирают её
+  // без изменения видимого размера круга.
+  &:has(> :only-child) {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
 }
 
 .shell__account-avatar {
@@ -152,6 +262,112 @@
   font-size: vars.$font-size-16;
   font-weight: vars.$font-weight-500;
   line-height: vars.$line-height-24;
+}
+
+// Переключатель (`ШАП-Ф-02`, stream.Front#144; `ШАП-Ф-16`, stream.Front#146)
+// — 44×44 область нажатия (`АДП-Ф-14`) вокруг визуально меньшей (24px)
+// иконки. Ребёнок `.shell__brand` (не `margin-left: auto`, как было в #144,
+// когда он был единственным содержимым строки в компактном виде) — теперь
+// всегда стоит сразу после разделителя, слева, в обоих видах-с-гамбургером
+// (см. JSDoc Shell).
+.shell__menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.shell__menu-toggle-icon {
+  width: 24px;
+  height: 24px;
+}
+
+// Иконка входа (среднего вида, `ШАП-Ф-16`, stream.Front#146) — та же
+// 44×44-область нажатия, что у переключателя, вместо текстовой кнопки
+// «Войти» (места на неё в строке среднего вида нет).
+.shell__login-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.shell__login-icon {
+  width: 24px;
+  height: 24px;
+}
+
+// Панель — ребёнок `.shell__header` (у него уже `position: relative`),
+// `top: 100%` встаёт точно под строкой шапки без измерения её высоты в JS
+// (`ШАП-Ф-13`, см. shell.ts). Сплошной непрозрачный фон (не полупрозрачный/
+// блюр) — по принятому решению (specs/01-common/spec.md) панель обязана
+// читаться независимо от содержимого страницы под ней.
+.shell__menu-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+  background: vars.$color-0d004d;
+
+  // Пункты меню — вертикальным списком вместо строки; `align-items:
+  // flex-start` (не `stretch`, дефолт для flex-колонки) — держит каждую
+  // ссылку по ширине её текста, а не растягивает на всю ширину панели:
+  // NavActiveIndicator центрируется относительно `.shell__nav-link`
+  // (`left: 50%`, см. выше) и на десктопе это совпадает с центром текста
+  // ровно потому, что ссылка не шире своего содержимого — растянутая на
+  // всю ширину панели ссылка увела бы подложку от текста в сторону.
+  .shell__nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-right: 0;
+  }
+
+  // min-height 44px — область нажатия (`АДП-Ф-14`), `gap: 8px` между
+  // соседними пунктами (`.shell__nav`/группа кнопок ниже) — зазор
+  // (`АДП-Ф-15`). `.shell__nav-link`/`.shell__admin-link` — обычные `<a>`
+  // (inline по умолчанию), им нужен и `display`; `.shell__account-link` уже
+  // `display: flex; align-items: center` в базовом правиле выше — тут
+  // только высота.
+  .shell__nav-link,
+  .shell__admin-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .shell__account-link {
+    min-height: 44px;
+  }
+}
+
+// `position: fixed; inset: 0` — не измеряет высоту шапки: затемняет весь
+// экран, но визуально шапка (`z-index: 2` выше) остаётся поверх и
+// нетронутой (`ШАП-Ф-14`). Функциональную блокировку страницы под панелью
+// (`ШАП-Ф-10`) даёт `inert` на `.shell__content` (shell.html) — не этот
+// элемент.
+.shell__menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .shell__content {
