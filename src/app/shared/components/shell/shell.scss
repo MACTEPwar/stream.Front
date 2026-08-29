@@ -138,6 +138,13 @@
   position: relative;
   display: flex;
   align-items: center;
+  // Прижимает кнопку поддержки/область входа к правому краю строки в
+  // компактном/среднем виде (`ШАП-О-03`) — там `.shell__nav` с его
+  // `margin-right: auto` в этом контейнере нет (нав уходит в панель).
+  // В широком виде это no-op: `margin-right: auto` у `.shell__nav`
+  // (см. ниже) уже съедает всё свободное место до того, как
+  // `justify-content` успевает его перераспределить.
+  justify-content: flex-end;
   gap: 24px;
   flex: 1 1 0%;
   min-width: 0;
