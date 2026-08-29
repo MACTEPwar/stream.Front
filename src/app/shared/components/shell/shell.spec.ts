@@ -279,7 +279,9 @@ describe('Shell', () => {
       const el: HTMLElement = fixture.nativeElement;
       const supportButton = el.querySelector('.shell__support-icon-button');
       expect(supportButton).not.toBeNull();
-      expect(supportButton?.getAttribute('aria-label')).toBe('Поддержать');
+      expect(supportButton?.querySelector('button.button')?.getAttribute('aria-label')).toBe(
+        'Поддержать',
+      );
       expect(el.querySelector('.shell__login-icon-button')).not.toBeNull();
       expect(el.querySelector('.shell__menu-panel')).toBeNull();
     });
@@ -396,7 +398,7 @@ describe('Shell', () => {
       const el: HTMLElement = fixture.nativeElement;
       el.querySelector<HTMLButtonElement>('.shell__menu-toggle')?.click();
       fixture.detectChanges();
-      el.querySelector<HTMLButtonElement>('.shell__support-icon-button')?.click();
+      el.querySelector<HTMLButtonElement>('.shell__support-icon-button button.button')?.click();
       fixture.detectChanges();
 
       expect(el.querySelector('.shell__menu-panel')).not.toBeNull();
@@ -536,7 +538,7 @@ describe('Shell', () => {
       fixture.detectChanges();
 
       const el: HTMLElement = fixture.nativeElement;
-      el.querySelector<HTMLButtonElement>('.shell__login-icon-button')?.click();
+      el.querySelector<HTMLButtonElement>('.shell__login-icon-button button.button')?.click();
 
       expect(openSpy).toHaveBeenCalledWith(LoginModal);
     });

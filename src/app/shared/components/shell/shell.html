@@ -33,34 +33,89 @@
       @if (isCompact() || isMedium()) {
         <!-- Кнопка поддержки и область входа независимы от панели (ШАП-О-03,
              ШАП-Ф-16/-17) — клик по ним не должен закрывать панель, если она открыта.
-             Иконка, не декоративный Button с текстом (см. JSDoc Shell, stream.Front#148) —
-             на минимальной поддерживаемой ширине (320px, «Принятые решения») ему просто
-             физически нет места рядом с логотипом и остальной строкой; тот же приём, что
-             уже применён ниже для входа (`.shell__login-icon-button`). -->
-        <button type="button" class="shell__support-icon-button" aria-label="Поддержать">
-          <img src="/icons/button-support-icon.svg" alt="" class="shell__support-icon" />
-        </button>
+             Текст/иконка переключаются адаптивно (showCompactActionText(), shell.ts) —
+             по прямому запросу пользователя (было жёстко icon-only, stream.Front#148,
+             см. PROJECT_MAP.md); слепок для измерения natural-ширины текстового
+             варианта — ниже, #actionsTextProbe. -->
+        <div class="shell__actions-text-probe" #actionsTextProbeEl aria-hidden="true" inert>
+          <ng-container [ngTemplateOutlet]="actionsTextProbe" />
+        </div>
 
-        @if (authService.isAuthenticated()) {
-          <a routerLink="/account" class="shell__account-link" aria-label="Личный кабинет">
-            @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
-              <img [src]="resolveAvatarUrl(avatarUrl)" alt="" class="shell__account-avatar" />
-            } @else {
-              <span
-                class="shell__account-avatar shell__account-avatar--placeholder"
-                aria-hidden="true"
-              ></span>
-            }
-          </a>
-        } @else {
-          <button
-            type="button"
-            class="shell__login-icon-button"
-            aria-label="Войти"
-            (click)="onLoginClick()"
+        @if (showCompactActionText()) {
+          <app-decorative-button
+            text="Поддержать"
+            width="content-compact"
+            class="shell__support-button"
           >
-            <img src="/icons/login-icon.svg" alt="" class="shell__login-icon" />
-          </button>
+            <img icon src="/icons/button-support-icon.svg" alt="" />
+          </app-decorative-button>
+
+          @if (authService.isAuthenticated()) {
+            <a routerLink="/account" class="shell__account-link" aria-label="Личный кабинет">
+              @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
+                <img [src]="resolveAvatarUrl(avatarUrl)" alt="" class="shell__account-avatar" />
+              } @else {
+                <span
+                  class="shell__account-avatar shell__account-avatar--placeholder"
+                  aria-hidden="true"
+                ></span>
+              }
+              <span class="shell__account-name">{{ authService.currentUser()?.name }}</span>
+            </a>
+          } @else {
+            <app-decorative-button
+              text="Войти"
+              type="secondary"
+              width="content-compact"
+              class="shell__auth-button"
+              (click)="onLoginClick()"
+            />
+          }
+        } @else {
+          <!-- Декоративный Button (app-decorative-button, stream.Front#39) в icon-only
+               режиме (без text(), см. decorative-button.ts) — по прямому запросу
+               пользователя, вместо обычного плоского <button> с иконкой: та же
+               декоративная рамка/блики, что и на широком виде, просто без текста.
+               width() — COMPACT_ACTION_BUTTON_WIDTH_PX (shell.ts), НЕ "content"
+               (там фиксированный запас под иконку+текст, ~141px на инстанс —
+               на 320px два таких инстанса физически не помещаются рядом с
+               переключателем+лого даже без текста, измерено вручную Playwright,
+               stream.Front#148); COMPACT_ACTION_BUTTON_WIDTH_PX выбран чуть выше
+               геометрического минимума кнопки (MIN_WIDTH_PX в decorative-button.ts,
+               ~72px — ниже него растягиваемые блоки SVG инвертируются). Оставшийся
+               дефицит места на 320px закрыт ужатыми паддингами/зазорами шапки и
+               уменьшенным лого (shell.scss, тот же комментарий про 320px).
+               ariaLabel() — доступное имя вместо отсутствующего видимого текста. -->
+          <app-decorative-button
+            [width]="compactActionButtonWidth"
+            [ariaLabel]="'Поддержать'"
+            class="shell__support-icon-button"
+          >
+            <img icon src="/icons/button-support-icon.svg" alt="" />
+          </app-decorative-button>
+
+          @if (authService.isAuthenticated()) {
+            <a routerLink="/account" class="shell__account-link" aria-label="Личный кабинет">
+              @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
+                <img [src]="resolveAvatarUrl(avatarUrl)" alt="" class="shell__account-avatar" />
+              } @else {
+                <span
+                  class="shell__account-avatar shell__account-avatar--placeholder"
+                  aria-hidden="true"
+                ></span>
+              }
+            </a>
+          } @else {
+            <app-decorative-button
+              type="secondary"
+              [width]="compactActionButtonWidth"
+              [ariaLabel]="'Войти'"
+              class="shell__login-icon-button"
+              (click)="onLoginClick()"
+            >
+              <img icon src="/icons/login-icon.svg" alt="" />
+            </app-decorative-button>
+          }
         }
       } @else {
         <ng-container [ngTemplateOutlet]="shellActions" />
@@ -108,6 +163,42 @@
 
 <ng-template #adminLinkItem>
   <a routerLink="/admin" class="shell__admin-link" (click)="onMenuItemClick()">Панель управления</a>
+</ng-template>
+
+<!--
+  Невидимый слепок текстового варианта кнопок «Поддержать»/«Войти» (без нава —
+  тот в компактном/среднем виде всегда уходит в панель) — ТОЛЬКО для измерения
+  natural-ширины (showCompactActionText(), shell.ts). Тот же приём, что
+  #wideRowProbe ниже: переиспользует классы .shell__row-probe-* (общие
+  миксины/переменные типографики с настоящей разметкой, не буквальное
+  дублирование), контейнер — .shell__row-probe (shell.scss), сам div — в
+  разметке выше (#actionsTextProbeEl).
+-->
+<ng-template #actionsTextProbe>
+  <app-decorative-button text="Поддержать" width="content-compact" class="shell__row-probe-support">
+    <img icon src="/icons/button-support-icon.svg" alt="" />
+  </app-decorative-button>
+
+  @if (authService.isAuthenticated()) {
+    <span class="shell__row-probe-account">
+      @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
+        <img [src]="resolveAvatarUrl(avatarUrl)" alt="" class="shell__row-probe-avatar" />
+      } @else {
+        <span
+          class="shell__row-probe-avatar shell__row-probe-avatar--placeholder"
+          aria-hidden="true"
+        ></span>
+      }
+      <span class="shell__row-probe-account-name">{{ authService.currentUser()?.name }}</span>
+    </span>
+  } @else {
+    <app-decorative-button
+      text="Войти"
+      type="secondary"
+      width="content-compact"
+      class="shell__row-probe-support"
+    />
+  }
 </ng-template>
 
 <ng-template #shellActions>

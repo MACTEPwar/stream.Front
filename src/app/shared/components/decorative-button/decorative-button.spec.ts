@@ -1,13 +1,22 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { DecorativeButton, DecorativeButtonType, DecorativeButtonWidthMode } from './decorative-button';
+import {
+  DecorativeButton,
+  DecorativeButtonType,
+  DecorativeButtonWidthMode,
+} from './decorative-button';
 
 @Component({
   selector: 'app-decorative-button-host',
   imports: [DecorativeButton],
   template: `
-    <app-decorative-button [text]="text()" [width]="width()" [type]="type()">
+    <app-decorative-button
+      [text]="text()"
+      [width]="width()"
+      [type]="type()"
+      [ariaLabel]="ariaLabel()"
+    >
       @if (withIcon()) {
         <svg icon viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" /></svg>
       }
@@ -15,10 +24,11 @@ import { DecorativeButton, DecorativeButtonType, DecorativeButtonWidthMode } fro
   `,
 })
 class DecorativeButtonHost {
-  readonly text = signal('Поддержать');
+  readonly text = signal<string | undefined>('Поддержать');
   readonly withIcon = signal(false);
   readonly width = signal<number | DecorativeButtonWidthMode | undefined>(undefined);
   readonly type = signal<DecorativeButtonType>('primary');
+  readonly ariaLabel = signal<string | undefined>(undefined);
 }
 
 // Каждый инстанс DecorativeButton получает свой -{{uid}} суффикс на все id/url(#...) (см.
@@ -57,6 +67,27 @@ describe('DecorativeButton', () => {
     expect(el.querySelector('.button__icon svg[icon]')).not.toBeNull();
   });
 
+  it('icon-only (text() не задан) — .button__text вообще не рендерится, доступное имя берётся из ariaLabel()', () => {
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
+    fixture.componentInstance.text.set(undefined);
+    fixture.componentInstance.withIcon.set(true);
+    fixture.componentInstance.ariaLabel.set('Поддержать');
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.button__text')).toBeNull();
+    expect(el.querySelector('.button__icon svg[icon]')).not.toBeNull();
+    expect(el.querySelector('button.button')?.getAttribute('aria-label')).toBe('Поддержать');
+  });
+
+  it('с текстом (без ariaLabel()) — aria-label на кнопке не проставляется, доступное имя даёт видимый текст', () => {
+    const fixture = TestBed.createComponent(DecorativeButtonHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('button.button')?.hasAttribute('aria-label')).toBe(false);
+  });
+
   it('без иконки — слот .button__icon пуст и убран из раскладки (display: none), текст один по центру', () => {
     const fixture = TestBed.createComponent(DecorativeButtonHost);
     fixture.detectChanges();
@@ -82,7 +113,9 @@ describe('DecorativeButton', () => {
 
     const inner = el.querySelector('.button__content-inner') as HTMLElement;
     expect(getComputedStyle(inner).gap).toBe('8px');
-    expect(getComputedStyle(el.querySelector('.button__icon') as HTMLElement).display).not.toBe('none');
+    expect(getComputedStyle(el.querySelector('.button__icon') as HTMLElement).display).not.toBe(
+      'none',
+    );
   });
 
   it('меняет текст на разной длине без ошибок рендера (короткий/длинный)', () => {
@@ -173,7 +206,9 @@ describe('DecorativeButton', () => {
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
     const frameLeftTip = svg.querySelector('path[clip-path^="url(#clip-frame-left_2821_998"]');
     const frameMidLeft = svg.querySelector('path[clip-path^="url(#clip-frame-mid-left_2821_998"]');
-    const frameMidRight = svg.querySelector('path[clip-path^="url(#clip-frame-mid-right_2821_998"]');
+    const frameMidRight = svg.querySelector(
+      'path[clip-path^="url(#clip-frame-mid-right_2821_998"]',
+    );
     const frameRightTip = svg.querySelector('path[clip-path^="url(#clip-frame-right_2821_998"]');
 
     expect(frameLeftTip?.getAttribute('transform')).toBeNull();
@@ -188,7 +223,9 @@ describe('DecorativeButton', () => {
     // glow's own mid-left scale differs (its corner sits at 28.1421, not 30.0527) — the two
     // layers must not accidentally share the same clip-path/transform.
     const glowMidLeft = svg.querySelector('path[clip-path^="url(#clip-mid-left_2821_998"]');
-    expect(glowMidLeft?.getAttribute('transform')).not.toBe(frameMidLeft?.getAttribute('transform'));
+    expect(glowMidLeft?.getAttribute('transform')).not.toBe(
+      frameMidLeft?.getAttribute('transform'),
+    );
   });
 
   it('рамка использует свой собственный clip-frame-mid-center (не общий с glow) — нужен под точечный фикс шва', () => {
@@ -248,10 +285,12 @@ describe('DecorativeButton', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    expect(svg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.getAttribute('fill')).toBe('#F4E9AE');
-    expect(svg.querySelector('path[clip-path^="url(#clip-body-left_2821_998"]')?.getAttribute('fill')).toBe(
-      '#EEC68C',
-    );
+    expect(
+      svg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.getAttribute('fill'),
+    ).toBe('#F4E9AE');
+    expect(
+      svg.querySelector('path[clip-path^="url(#clip-body-left_2821_998"]')?.getAttribute('fill'),
+    ).toBe('#EEC68C');
     const text: HTMLElement = fixture.nativeElement.querySelector('.button__text');
     // jsdom нормализует hex в rgb() при чтении обратно из style
     expect(text.style.background).toContain('rgb(119, 83, 28)');
@@ -263,10 +302,12 @@ describe('DecorativeButton', () => {
     fixture.detectChanges();
 
     const svg: SVGSVGElement = fixture.nativeElement.querySelector('svg.button__svg');
-    expect(svg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.getAttribute('fill')).toBe('#8383F3');
-    expect(svg.querySelector('path[clip-path^="url(#clip-body-left_2821_998"]')?.getAttribute('fill')).toBe(
-      '#3F3FAF',
-    );
+    expect(
+      svg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.getAttribute('fill'),
+    ).toBe('#8383F3');
+    expect(
+      svg.querySelector('path[clip-path^="url(#clip-body-left_2821_998"]')?.getAttribute('fill'),
+    ).toBe('#3F3FAF');
     const bodyTintStops = svg.querySelectorAll('[id^="paint1_radial_2821_998"] stop');
     expect(bodyTintStops[0].getAttribute('stop-color')).toBe('#26267B');
     expect(bodyTintStops[1].getAttribute('stop-color')).toBe('#7171D5');
@@ -281,13 +322,15 @@ describe('DecorativeButton', () => {
     // decorative-button.html), а переключение stroke на отдельный статичный градиент.
     const frameTip = svg.querySelector('path[clip-path^="url(#clip-frame-left_2821_998"]');
     expect(frameTip?.getAttribute('stroke')).toContain('paint4_radial_2821_998_secondary');
-    const secondaryFrameStops = svg.querySelectorAll('[id^="paint4_radial_2821_998_secondary"] stop');
+    const secondaryFrameStops = svg.querySelectorAll(
+      '[id^="paint4_radial_2821_998_secondary"] stop',
+    );
     expect(secondaryFrameStops[0].getAttribute('stop-color')).toBe('#DCDCFC');
     expect(secondaryFrameStops[1].getAttribute('stop-color')).toBe('#F0F0FF');
     // "начинается с paint4_radial_2821_998" тоже поймал бы *_secondary — исключаем явно
-    const primaryFrameGradient = Array.from(svg.querySelectorAll('[id^="paint4_radial_2821_998"]')).find(
-      (el) => !el.id.includes('_secondary'),
-    );
+    const primaryFrameGradient = Array.from(
+      svg.querySelectorAll('[id^="paint4_radial_2821_998"]'),
+    ).find((el) => !el.id.includes('_secondary'));
     const primaryFrameStops = primaryFrameGradient?.querySelectorAll('stop') ?? [];
     expect(primaryFrameStops[0]?.getAttribute('stop-color')).toBe('#F7ECB2');
     const sparkles = svg.querySelectorAll('path[fill="#F0F0FF"]');
@@ -315,9 +358,12 @@ describe('DecorativeButton', () => {
     document.body.appendChild(secondaryFixture.nativeElement);
 
     const primarySvg: SVGSVGElement = primaryFixture.nativeElement.querySelector('svg.button__svg');
-    const secondarySvg: SVGSVGElement = secondaryFixture.nativeElement.querySelector('svg.button__svg');
+    const secondarySvg: SVGSVGElement =
+      secondaryFixture.nativeElement.querySelector('svg.button__svg');
 
-    const primaryGlowId = primarySvg.querySelector('path[clip-path^="url(#clip-left_2821_998"]')?.id;
+    const primaryGlowId = primarySvg.querySelector(
+      'path[clip-path^="url(#clip-left_2821_998"]',
+    )?.id;
     const secondaryGlowId = secondarySvg
       .querySelector('g[filter^="url(#filter0_i_2821_998"]')
       ?.getAttribute('filter');

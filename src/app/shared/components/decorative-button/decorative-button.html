@@ -14,7 +14,14 @@
   концы и центральный зазор под гем — фиксированного размера, растягиваются
   только плоские середины.
 -->
-<button type="button" class="button" #buttonEl [style.width]="widthStyle()">
+<button
+  type="button"
+  class="button"
+  [class.button--compact]="isCompactText()"
+  #buttonEl
+  [style.width]="widthStyle()"
+  [attr.aria-label]="ariaLabel()"
+>
   <svg
     class="button__svg"
     [attr.width]="viewBoxWidth()"
@@ -145,7 +152,15 @@
         shape-rendering="geometricPrecision"
       />
     </g>
-    <mask [attr.id]="'mask0_2821_998-' + uid" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="8" y="4" width="304" height="40">
+    <mask
+      [attr.id]="'mask0_2821_998-' + uid"
+      style="mask-type: alpha"
+      maskUnits="userSpaceOnUse"
+      x="8"
+      y="4"
+      width="304"
+      height="40"
+    >
       <path
         d="M22.9626 6.94761C24.8395 5.06082 27.391 4 30.0523 4H289.948C292.609 4 295.16 5.06082 297.037 6.94761L310.492 20.4738C312.433 22.4243 312.433 25.5757 310.492 27.5262L297.037 41.0524C295.16 42.9392 292.609 44 289.948 44H30.0523C27.391 44 24.8395 42.9392 22.9626 41.0524L9.50763 27.5262C7.56743 25.5757 7.56743 22.4243 9.50763 20.4738L22.9626 6.94761Z"
         fill="white"
@@ -199,7 +214,10 @@
       d="M312.414 17.4142C311.633 16.6332 310.367 16.6332 309.586 17.4142L304.414 22.5857C303.633 23.3668 303.633 24.6331 304.414 25.4141L309.586 30.5856C310.367 31.3667 311.633 31.3667 312.414 30.5856L317.586 25.4141C318.367 24.6331 318.367 23.3668 317.586 22.5857L312.414 17.4142Z"
       [attr.fill]="sparkleFill()"
     />
-    <g [attr.filter]="'url(#filter3_d_2821_998-' + uid + ')'" [attr.transform]="centerShiftTransform()">
+    <g
+      [attr.filter]="'url(#filter3_d_2821_998-' + uid + ')'"
+      [attr.transform]="centerShiftTransform()"
+    >
       <rect
         x="160"
         y="37"
@@ -423,7 +441,12 @@
         <feComposite in2="hardAlpha" operator="out" />
         <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
         <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2821_998" />
-        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2821_998" result="shape" />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_2821_998"
+          result="shape"
+        />
       </filter>
       <filter
         [attr.id]="'filter3_d_2821_998-' + uid"
@@ -446,7 +469,12 @@
         <feComposite in2="hardAlpha" operator="out" />
         <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
         <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2821_998" />
-        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2821_998" result="shape" />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_2821_998"
+          result="shape"
+        />
       </filter>
       <filter
         [attr.id]="'filter5_d_2821_998-' + uid"
@@ -469,7 +497,12 @@
         <feComposite in2="hardAlpha" operator="out" />
         <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
         <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2821_998" />
-        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2821_998" result="shape" />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_2821_998"
+          result="shape"
+        />
       </filter>
       <radialGradient
         [attr.id]="'paint0_radial_2821_998-' + uid"
@@ -493,7 +526,14 @@
         <stop [attr.stop-color]="bodyTintStart()" />
         <stop offset="1" [attr.stop-color]="bodyTintEnd()" stop-opacity="0" />
       </radialGradient>
-      <linearGradient [attr.id]="'paint2_linear_2821_998-' + uid" x1="160" y1="5" x2="160" y2="45" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        [attr.id]="'paint2_linear_2821_998-' + uid"
+        x1="160"
+        y1="5"
+        x2="160"
+        y2="45"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop stop-color="white" stop-opacity="0" />
         <stop offset="1" stop-color="white" />
       </linearGradient>
@@ -549,6 +589,10 @@
     его из flex-раскладки целиком (иначе gap оставил бы пустой зазор) —
     тогда текст просто по центру всей кнопки, без иконки в расчёте вообще
     (и то же самое схлопывание отражается в measuredContentInnerWidthPx).
+    Та же симметрия в обратную сторону: `text()` необязателен (icon-only,
+    stream.Front#148) — `@if` НЕ рендерит `.button__text` вовсе, а не оставляет
+    пустой текстовый узел (иначе `.button__icon:empty` продолжал бы работать,
+    но пустой узел рядом с иконкой всё равно участвовал бы в gap/измерении).
     Текст — живой (раньше был зашит как path с градиентной заливкой
     paint3_linear_2821_998, убран вместе с path); typography — компонент
     "Button" из Figma (Montserrat Bold 18/24, letter-spacing 8%); фон
@@ -565,7 +609,9 @@
       <span class="button__icon" [style.width.px]="iconWidthPx" [style.height.px]="iconHeightPx">
         <ng-content select="[icon]" />
       </span>
-      <span class="button__text" [style.backgroundImage]="textGradient()">{{ text() }}</span>
+      @if (text(); as t) {
+        <span class="button__text" [style.backgroundImage]="textGradient()">{{ t }}</span>
+      }
     </div>
   </div>
 </button>

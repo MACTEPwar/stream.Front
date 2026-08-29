@@ -27,6 +27,17 @@ import { NavActiveIndicator } from '../nav-active-indicator/nav-active-indicator
 /** Совпадает с дефолтом `NavActiveIndicator.width()` — до первого измерения ResizeObserver'ом (или в jsdom-тестах). */
 const DEFAULT_NAV_INDICATOR_WIDTH = 91;
 
+/**
+ * Ширина icon-only декоративных кнопок поддержки/входа в компактном/среднем
+ * виде (`.shell__support-icon-button`/`.shell__login-icon-button`, shell.html,
+ * stream.Front#148) — чуть выше геометрического минимума DecorativeButton
+ * (`MIN_WIDTH_PX` в decorative-button.ts, ~72px: ниже него растягиваемые
+ * блоки SVG инвертируются). На минимальной поддерживаемой ширине (320px)
+ * это тесно даже вдвоём — см. ужатые паддинги/зазоры шапки и лого
+ * (shell.scss, комментарий про 320px у `.shell__header`).
+ */
+const COMPACT_ACTION_BUTTON_WIDTH_PX = 78;
+
 interface NavItem {
   readonly path: string;
   readonly label: string;
@@ -171,6 +182,8 @@ export class Shell {
   private readonly breakpointObserver = inject(BreakpointObserver);
   protected readonly authService = inject(AuthService);
 
+  protected readonly compactActionButtonWidth = COMPACT_ACTION_BUTTON_WIDTH_PX;
+
   protected readonly navItems: readonly NavItem[] = [
     { path: '/main', label: 'Главная', exact: true },
     { path: '/news', label: 'Новости', exact: false },
@@ -190,11 +203,39 @@ export class Shell {
 
   private readonly headerActionsEl = viewChild<ElementRef<HTMLDivElement>>('headerActionsEl');
   private readonly rowProbeEl = viewChild<ElementRef<HTMLDivElement>>('rowProbeEl');
+  private readonly actionsTextProbeEl = viewChild<ElementRef<HTMLDivElement>>('actionsTextProbeEl');
   protected readonly measuredActionsWidthPx = signal(0);
   protected readonly measuredWideRowWidthPx = signal(0);
+  protected readonly measuredActionsTextWidthPx = signal(0);
   /** `ШАП-Ф-15` — измерение, не порог ширины экрана; см. JSDoc класса. */
   protected readonly isMedium = computed(
     () => this.measuredWideRowWidthPx() > this.measuredActionsWidthPx(),
+  );
+  /**
+   * Показывать ли текст на кнопках «Поддержать»/«Войти» вместо icon-only в
+   * компактном/среднем виде — по прямому запросу пользователя (было жёстко
+   * icon-only всегда, `stream.Front#148`, см. PROJECT_MAP.md: «если для
+   * среднего вида впоследствии захотят текстовую кнопку — нужен отдельный
+   * design-input»). Тот же приём измерения, что и у `isMedium`: сравнивает
+   * реально доступное место (`measuredActionsWidthPx`, уже существующий
+   * сигнал) с natural-шириной текстового варианта (`measuredActionsTextWidthPx`,
+   * слепок `.shell__actions-text-probe`/`#actionsTextProbeEl` в shell.html,
+   * шаблон `#actionsTextProbe`, СВОЙ класс — не `.shell__row-probe`, тот
+   * держит статичный 24px-зазор широкого вида, здесь нужен тот же
+   * сжимающийся на `bp.small` зазор, что у `.shell__header-actions`,
+   * см. shell.scss) — не отдельный
+   * захардкоженный порог (`АДП-Ф-03`). На истинно узких экранах (~320px,
+   * «Принятые решения») текстовый вариант заведомо не влезает — падает на
+   * icon-only без явной проверки ширины, значение получается из того же
+   * сравнения. `> 0` с обеих сторон — безопасный дефолт до первого
+   * измерения/в jsdom (ResizeObserver недоступен): без него `0 <= 0` дало бы
+   * `true` и мигание текстом до реального измерения.
+   */
+  protected readonly showCompactActionText = computed(
+    () =>
+      this.measuredActionsTextWidthPx() > 0 &&
+      this.measuredActionsWidthPx() > 0 &&
+      this.measuredActionsTextWidthPx() <= this.measuredActionsWidthPx(),
   );
 
   protected readonly isMenuOpen = signal(false);
@@ -264,6 +305,19 @@ export class Shell {
       if (!el || typeof ResizeObserver === 'undefined') return;
       const observer = new ResizeObserver(([entry]) =>
         this.measuredWideRowWidthPx.set(entry.contentRect.width),
+      );
+      observer.observe(el);
+      onCleanup(() => observer.disconnect());
+    });
+
+    // Natural-ширина текстового варианта кнопок «Поддержать»/«Войти» (без
+    // нава) — `.shell__actions-text-probe` в shell.html, тот же приём, что
+    // rowProbeEl выше. Используется в showCompactActionText().
+    effect((onCleanup) => {
+      const el = this.actionsTextProbeEl()?.nativeElement;
+      if (!el || typeof ResizeObserver === 'undefined') return;
+      const observer = new ResizeObserver(([entry]) =>
+        this.measuredActionsTextWidthPx.set(entry.contentRect.width),
       );
       observer.observe(el);
       onCleanup(() => observer.disconnect());
