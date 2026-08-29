@@ -237,6 +237,20 @@
   background: vars.$color-808080;
 }
 
+// Фиксированный слепок области входа/аватара в #actionsTextProbe (shell.html)
+// — та часть в компактном/среднем виде ВСЕГДА icon-only и не зависит от
+// showCompactActionText(), поэтому не нуждается в измерении реального
+// текста: 44×44 — тот же min-tap-target, что у аватара через
+// `:has(:only-child)` ниже (`.shell__account-link`), это ВЕРХНЯЯ граница из
+// двух реальных вариантов (гость через compactActionButtonWidth меряется
+// отдельным инстансом DecorativeButton в actionsTextProbe, не этим классом).
+.shell__row-probe-account-icon-only {
+  display: block;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+}
+
 .shell__row-probe-account-name {
   font-family: vars.$font-family-montserrat;
   font-size: vars.$font-size-16;
