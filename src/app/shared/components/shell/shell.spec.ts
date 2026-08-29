@@ -286,16 +286,15 @@ describe('Shell', () => {
       expect(el.querySelector('.shell__menu-panel')).toBeNull();
     });
 
-    it('переключатель стоит перед логотипом в разметке (ШАП-Ф-02)', () => {
+    it('лого не рендерится в компактном виде — в .shell__brand остаётся только переключатель (ШАП-Ф-02)', () => {
       const fixture = TestBed.createComponent(ShellHost);
       fixture.detectChanges();
       toCompact();
       fixture.detectChanges();
 
       const el: HTMLElement = fixture.nativeElement;
-      const toggle = el.querySelector('.shell__menu-toggle');
-      const logo = el.querySelector('.shell__logo');
-      expect(toggle?.compareDocumentPosition(logo!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(el.querySelector('.shell__menu-toggle')).not.toBeNull();
+      expect(el.querySelector('.shell__logo')).toBeNull();
     });
 
     it('клик по переключателю открывает панель ТОЛЬКО с навигацией — без кнопки поддержки и области входа (ШАП-Ф-03)', () => {
@@ -493,10 +492,7 @@ describe('Shell', () => {
       expect(el.querySelector('.shell__account-link')).toBeNull();
       expect(el.querySelector('.shell__menu-panel')).toBeNull();
       expect(el.querySelector('.shell__divider')).toBeNull();
-
-      const toggle = el.querySelector('.shell__menu-toggle');
-      const logo = el.querySelector('.shell__logo');
-      expect(toggle?.compareDocumentPosition(logo!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(el.querySelector('.shell__logo')).toBeNull();
     });
 
     it('помещается (по умолчанию): переключателя и иконки входа нет, строка навигации на месте', () => {
