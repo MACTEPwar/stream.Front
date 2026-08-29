@@ -1,5 +1,5 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { Component } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
@@ -27,7 +27,32 @@ const mockUser: CurrentUser = {
   imports: [Shell],
   template: `<app-shell><p id="projected">Контент страницы</p></app-shell>`,
 })
-class ShellHost {}
+class ShellHost {
+  readonly shell = viewChild.required(Shell);
+}
+
+/**
+ * `ResizeObserver` недоступен в jsdom (см. JSDoc `Shell`) — измеренные
+ * ширины приводятся к нужному соотношению напрямую через каст, тем же
+ * приёмом, что и `currentUserSignal` у `AuthService` в тестах выше.
+ */
+function setMeasuredWidths(
+  fixture: ReturnType<typeof TestBed.createComponent<ShellHost>>,
+  {
+    actionsWidthPx,
+    wideRowWidthPx,
+  }: {
+    actionsWidthPx: number;
+    wideRowWidthPx: number;
+  },
+): void {
+  const shell = fixture.componentInstance.shell() as unknown as {
+    measuredActionsWidthPx: { set: (n: number) => void };
+    measuredWideRowWidthPx: { set: (n: number) => void };
+  };
+  shell.measuredActionsWidthPx.set(actionsWidthPx);
+  shell.measuredWideRowWidthPx.set(wideRowWidthPx);
+}
 
 describe('Shell', () => {
   let breakpointState$: Subject<BreakpointState>;
@@ -411,6 +436,145 @@ describe('Shell', () => {
 
       expect(el.querySelector('.shell__menu-panel')).toBeNull();
       expect(el.querySelector('.shell__menu-backdrop')).toBeNull();
+      expect(el.querySelector('.shell__menu-toggle')).toBeNull();
+      expect(el.querySelector('.shell__nav')).not.toBeNull();
+      expect(document.body.style.overflow).toBe('');
+    });
+  });
+
+  describe('средний вид (ШАП-Ф-15—ШАП-Ф-18, stream.Front#146)', () => {
+    it('не помещается: переключатель+кнопка поддержки+иконка входа (гость) видны в строке, нав в строке нет', () => {
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      setMeasuredWidths(fixture, { actionsWidthPx: 200, wideRowWidthPx: 800 });
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.shell__menu-toggle')).not.toBeNull();
+      expect(el.querySelector('.shell__nav')).toBeNull();
+      expect(el.querySelector('.shell__support-button')).not.toBeNull();
+      expect(el.querySelector('.shell__login-icon-button')).not.toBeNull();
+      expect(el.querySelector('.shell__account-link')).toBeNull();
+      expect(el.querySelector('.shell__menu-panel')).toBeNull();
+    });
+
+    it('помещается (по умолчанию): переключателя и иконки входа нет, строка навигации на месте', () => {
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.shell__menu-toggle')).toBeNull();
+      expect(el.querySelector('.shell__login-icon-button')).toBeNull();
+      expect(el.querySelector('.shell__nav')).not.toBeNull();
+    });
+
+    it('клик по переключателю открывает панель ТОЛЬКО с навигацией — без кнопки поддержки и области входа (ШАП-Ф-17)', () => {
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      setMeasuredWidths(fixture, { actionsWidthPx: 200, wideRowWidthPx: 800 });
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      el.querySelector<HTMLButtonElement>('.shell__menu-toggle')?.click();
+      fixture.detectChanges();
+
+      const panel = el.querySelector('.shell__menu-panel');
+      expect(panel).not.toBeNull();
+      expect(panel?.querySelectorAll('.shell__nav-link').length).toBe(5);
+      expect(panel?.querySelector('.shell__support-button')).toBeNull();
+      expect(panel?.querySelector('.shell__auth-button')).toBeNull();
+      expect(panel?.querySelector('.shell__account-link')).toBeNull();
+      expect(el.querySelector('.shell__menu-backdrop')).not.toBeNull();
+    });
+
+    it('гость: клик по иконке входа открывает LoginModal', () => {
+      const modalService = TestBed.inject(ModalService);
+      const openSpy = vi.spyOn(modalService, 'open');
+
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      setMeasuredWidths(fixture, { actionsWidthPx: 200, wideRowWidthPx: 800 });
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      el.querySelector<HTMLButtonElement>('.shell__login-icon-button')?.click();
+
+      expect(openSpy).toHaveBeenCalledWith(LoginModal);
+    });
+
+    it('залогинен: в строке аватар БЕЗ имени', () => {
+      const authService = TestBed.inject(AuthService);
+      (
+        authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }
+      ).currentUserSignal.set(mockUser);
+
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      setMeasuredWidths(fixture, { actionsWidthPx: 200, wideRowWidthPx: 800 });
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const accountLink = el.querySelector('.shell__account-link');
+      expect(accountLink).not.toBeNull();
+      expect(accountLink?.querySelector('.shell__account-avatar')).not.toBeNull();
+      expect(accountLink?.querySelector('.shell__account-name')).toBeNull();
+      expect(el.querySelector('.shell__login-icon-button')).toBeNull();
+    });
+
+    it('ADMIN: ссылка «Панель управления» — в панели, не в строке', () => {
+      const authService = TestBed.inject(AuthService);
+      (
+        authService as unknown as { currentUserSignal: { set: (u: CurrentUser) => void } }
+      ).currentUserSignal.set({ ...mockUser, role: 'ADMIN' });
+
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      setMeasuredWidths(fixture, { actionsWidthPx: 200, wideRowWidthPx: 800 });
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.shell__admin-link')).toBeNull();
+
+      el.querySelector<HTMLButtonElement>('.shell__menu-toggle')?.click();
+      fixture.detectChanges();
+
+      const panel = el.querySelector('.shell__menu-panel');
+      const adminLink = panel?.querySelector('.shell__admin-link');
+      expect(adminLink).not.toBeNull();
+      expect(adminLink?.getAttribute('href')).toBe('/admin');
+    });
+
+    it('компактная раскладка страницы побеждает средний вид, даже если контент не помещается (ШАП-Ф-07)', () => {
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      breakpointState$.next({ matches: true, breakpoints: { [SMALL_QUERY]: true } });
+      setMeasuredWidths(fixture, { actionsWidthPx: 200, wideRowWidthPx: 800 });
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      el.querySelector<HTMLButtonElement>('.shell__menu-toggle')?.click();
+      fixture.detectChanges();
+
+      const panel = el.querySelector('.shell__menu-panel');
+      expect(panel?.querySelector('.shell__support-button')).not.toBeNull();
+      expect(panel?.querySelector('.shell__auth-button')).not.toBeNull();
+    });
+
+    it('живой обратный переход: контент снова помещается — открытая панель закрывается, строка навигации возвращается', () => {
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      setMeasuredWidths(fixture, { actionsWidthPx: 200, wideRowWidthPx: 800 });
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      el.querySelector<HTMLButtonElement>('.shell__menu-toggle')?.click();
+      fixture.detectChanges();
+      expect(el.querySelector('.shell__menu-panel')).not.toBeNull();
+
+      setMeasuredWidths(fixture, { actionsWidthPx: 800, wideRowWidthPx: 200 });
+      fixture.detectChanges();
+
+      expect(el.querySelector('.shell__menu-panel')).toBeNull();
       expect(el.querySelector('.shell__menu-toggle')).toBeNull();
       expect(el.querySelector('.shell__nav')).not.toBeNull();
       expect(document.body.style.overflow).toBe('');
