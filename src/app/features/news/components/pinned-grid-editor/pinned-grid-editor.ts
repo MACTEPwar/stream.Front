@@ -59,14 +59,18 @@ import { NewsCard } from '../news-card/news-card';
 const GRID_GAP_PX = 20;
 
 /**
- * Минимальная высота строки сетки РЕДАКТОРА на `small` (баг «лишний скролл,
- * странный вид» — пустые `1fr`-строки при `height: auto` контейнера
- * схлопывались в 0, редактировать было нечем). На реальной странице
- * (`pinned-news-grid.scss`) высота строк там НЕ фиксирована — растёт по
- * контенту карточек, поэтому это число значимо только внутри редактора,
- * ничего не зеркалит из `news-page.scss`.
+ * Практическая оценка высоты строки на `small` для {@link cellAspectRatioFor}
+ * (образцы кадрирования, `ФОК-Ф-04`) — САМА сетка холста этот пол больше НЕ
+ * применяет (баг, найденный пользователем: `minmax(160px, 1fr)` в
+ * `height: auto`-контейнере растягивал строки редактора далеко за пределы
+ * того, что реально получится на странице — 1240px вместо настоящих ~350px
+ * на измеренном примере). `gridTemplateRows()` теперь зеркалит
+ * `PinnedNewsGrid` дословно — голый `1fr`, без минимума; здесь константа
+ * остаётся ТОЛЬКО как приближение для расчёта пропорций образцов
+ * кадрирования, где реальную (заранее неизвестную, зависящую от контента)
+ * высоту строки взять неоткуда.
  */
-const EDITOR_SMALL_MIN_ROW_HEIGHT_PX = 160;
+const EDITOR_SMALL_ROW_HEIGHT_ESTIMATE_PX = 160;
 
 type DragKind = 'move' | 'col' | 'row';
 
@@ -472,20 +476,18 @@ export class PinnedGridEditor {
   );
 
   /**
-   * На `large` (`gridAreaSize().height` — число) строки обязаны честно
-   * делить фиксированную высоту холста — голый `1fr`. На `small`
-   * (`height === null`, холст `height: auto`) голый `1fr` схлопывает пустые
-   * строки в 0 — `minmax(EDITOR_SMALL_MIN_ROW_HEIGHT_PX, 1fr)` даёт им
-   * видимый пол, оставляя рост по контенту (как на реальной странице) —
-   * итоговая высота холста складывается браузером из суммы этих полов, а не
-   * задаётся здесь пиксельно.
+   * Голый `1fr` всегда — точное зеркало `PinnedNewsGrid.gridTemplateRows()`
+   * (реальная страница), на `large`, и на `small` тоже (баг, найденный
+   * пользователем: искусственный пол `minmax(160px, 1fr)` растягивал
+   * карточки редактора в разы больше реальных — 1240px вместо ~350px на
+   * измеренном примере). На `small` (`gridAreaSize().height === null`, холст
+   * `height: auto`) браузер резолвит `1fr` тем же способом, что и у
+   * посетителя — по контенту самой высокой ячейки строки, без отдельной
+   * логики здесь.
    */
-  protected readonly gridTemplateRows = computed(() => {
-    const { rows } = this.localGridConfig();
-    return this.gridAreaSize().height === null
-      ? `repeat(${rows}, minmax(${EDITOR_SMALL_MIN_ROW_HEIGHT_PX}px, 1fr))`
-      : `repeat(${rows}, 1fr)`;
-  });
+  protected readonly gridTemplateRows = computed(
+    () => `repeat(${this.localGridConfig().rows}, 1fr)`,
+  );
 
   protected readonly cells = computed<GridCell[]>(() => {
     const { columns, rows } = this.localGridConfig();
@@ -565,9 +567,10 @@ export class PinnedGridEditor {
    * Соотношение сторон (ширина/высота) реальной ячейки `newsId` в `viewport`
    * на ЭТАЛОННОМ экране этой раскладки — `null`, если новость там не
    * размещена (`editingCropSamples`, `ФОК-Ф-04`). На `small` высота холста
-   * не фиксирована (`gridAreaSize().height === null`), поэтому строка берёт
-   * тот же практический пол, что и сам холст редактора
-   * (`EDITOR_SMALL_MIN_ROW_HEIGHT_PX`) — по нему считаются его же строки.
+   * не фиксирована (`gridAreaSize().height === null`, реальная высота
+   * строки зависит от контента и заранее не известна) — берётся приближённая
+   * оценка (`EDITOR_SMALL_ROW_HEIGHT_ESTIMATE_PX`), только для этого расчёта
+   * пропорций, не для самого рендера холста.
    */
   private cellAspectRatioFor(viewport: PinnedGridViewport, newsId: string): number | null {
     const layout = this.localLayouts()[viewport];
@@ -581,7 +584,7 @@ export class PinnedGridEditor {
     const rowHeightPx =
       area.height !== null
         ? (area.height - GRID_GAP_PX * (rows - 1)) / rows
-        : EDITOR_SMALL_MIN_ROW_HEIGHT_PX;
+        : EDITOR_SMALL_ROW_HEIGHT_ESTIMATE_PX;
     const colWidthPx = (area.width - GRID_GAP_PX * (columns - 1)) / columns;
     const cellWidthPx = colWidthPx * slot.colSpan + GRID_GAP_PX * (slot.colSpan - 1);
     const cellHeightPx = rowHeightPx * slot.rowSpan + GRID_GAP_PX * (slot.rowSpan - 1);

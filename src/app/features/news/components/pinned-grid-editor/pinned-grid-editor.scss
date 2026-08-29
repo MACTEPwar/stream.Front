@@ -197,13 +197,18 @@ $handle-size: 10px;
 // `middle`/`small` (`--auto-height`) это поведение переопределено ниже —
 // строки должны расти по контенту, как на реальной странице, а не сжиматься
 // в 0.
+// Без padding — намеренно (баг, найденный пользователем: холст в редакторе
+// выглядел заметно уже реальной страницы). `.pinned-news-grid` (реальная
+// страница, `pinned-news-grid.scss`) не имеет собственного отступа на этом
+// уровне — паддинг страницы уже учтён в `gridAreaSize()`
+// (`pinned-grid-geometry.ts`); свой отдельный `padding` здесь ДВАЖДЫ вычитал
+// бы одно и то же место, делая ячейки у́же, чем они окажутся у посетителя.
 .pinned-grid-editor__grid {
   position: relative;
   display: grid;
   gap: $grid-gap;
   flex: 1;
   min-height: 0;
-  padding: $grid-gap;
 }
 
 // Тот же приём, что `pinned-news-grid.scss` (`$empty-min-height`) — только

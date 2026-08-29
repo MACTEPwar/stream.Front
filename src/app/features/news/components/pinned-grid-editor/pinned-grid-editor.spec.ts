@@ -932,19 +932,19 @@ describe('PinnedGridEditor', () => {
     });
   });
 
-  describe('строки холста редактора на small (баг «лишний скролл, странный вид» — пустые 1fr-строки схлопывались в 0)', () => {
-    it('на small (высота холста не фиксирована) строки получают минимальный видимый пол через minmax', () => {
+  describe('строки холста редактора — голый 1fr всегда, точное зеркало PinnedNewsGrid (баг, найденный пользователем: minmax(160px, 1fr) растягивал карточки на small в разы больше реальных)', () => {
+    it('на small (высота холста не фиксирована) — тот же голый 1fr, что и на large, без искусственного пола', () => {
       const fixture = createEditor([], []);
 
       fixture.componentInstance['onViewportChange']('small');
 
       expect(fixture.componentInstance['gridAreaSize']().height).toBeNull();
       expect(fixture.componentInstance['gridTemplateRows']()).toBe(
-        `repeat(${fixture.componentInstance['localGridConfig']().rows}, minmax(160px, 1fr))`,
+        `repeat(${fixture.componentInstance['localGridConfig']().rows}, 1fr)`,
       );
     });
 
-    it('на large (высота холста фиксирована) строки честно делят её — голый 1fr, без пола', () => {
+    it('на large (высота холста фиксирована) строки честно делят её — голый 1fr', () => {
       const fixture = createEditor([], []);
 
       expect(fixture.componentInstance['gridAreaSize']().height).not.toBeNull();
