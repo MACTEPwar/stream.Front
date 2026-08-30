@@ -185,6 +185,14 @@ describe('Shell', () => {
     expect(logoImg?.getAttribute('alt')).toBe('Belochka');
   });
 
+  it('на широком виде рендерит разделитель между лого и строкой навигации', () => {
+    const fixture = TestBed.createComponent(ShellHost);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.shell__divider')).not.toBeNull();
+  });
+
   it('рендерит nav-ссылки на все 5 разделов сайта', () => {
     const fixture = TestBed.createComponent(ShellHost);
     fixture.detectChanges();
@@ -259,9 +267,37 @@ describe('Shell', () => {
       expect(el.querySelector('.shell__menu-toggle')).not.toBeNull();
       expect(el.querySelector('.shell__nav')).toBeNull();
       expect(el.querySelector('.shell__menu-panel')).toBeNull();
+      expect(el.querySelector('.shell__divider')).toBeNull();
     });
 
-    it('клик по переключателю открывает панель с навигацией, кнопкой поддержки и входом (ШАП-Ф-03)', () => {
+    it('на компактной раскладке кнопка поддержки и область входа остаются в строке, не уходят в панель (ШАП-О-03)', () => {
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      toCompact();
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const supportButton = el.querySelector('.shell__support-icon-button');
+      expect(supportButton).not.toBeNull();
+      expect(supportButton?.querySelector('button.button')?.getAttribute('aria-label')).toBe(
+        'Поддержать',
+      );
+      expect(el.querySelector('.shell__login-icon-button')).not.toBeNull();
+      expect(el.querySelector('.shell__menu-panel')).toBeNull();
+    });
+
+    it('лого не рендерится в компактном виде — в .shell__brand остаётся только переключатель (ШАП-Ф-02)', () => {
+      const fixture = TestBed.createComponent(ShellHost);
+      fixture.detectChanges();
+      toCompact();
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.shell__menu-toggle')).not.toBeNull();
+      expect(el.querySelector('.shell__logo')).toBeNull();
+    });
+
+    it('клик по переключателю открывает панель ТОЛЬКО с навигацией — без кнопки поддержки и области входа (ШАП-Ф-03)', () => {
       const fixture = TestBed.createComponent(ShellHost);
       fixture.detectChanges();
       toCompact();
@@ -274,8 +310,9 @@ describe('Shell', () => {
       const panel = el.querySelector('.shell__menu-panel');
       expect(panel).not.toBeNull();
       expect(panel?.querySelectorAll('.shell__nav-link').length).toBe(5);
-      expect(panel?.querySelector('.shell__support-button')).not.toBeNull();
-      expect(panel?.querySelector('.shell__auth-button')).not.toBeNull();
+      expect(panel?.querySelector('.shell__support-icon-button')).toBeNull();
+      expect(panel?.querySelector('.shell__auth-button')).toBeNull();
+      expect(panel?.querySelector('.shell__account-link')).toBeNull();
       expect(el.querySelector('.shell__menu-backdrop')).not.toBeNull();
       expect(el.querySelector('.shell__menu-toggle')?.getAttribute('aria-expanded')).toBe('true');
     });
@@ -351,7 +388,7 @@ describe('Shell', () => {
       expect(el.querySelector('.shell__menu-panel')).toBeNull();
     });
 
-    it('клик по кнопке поддержки внутри панели закрывает её', () => {
+    it('клик по кнопке поддержки в строке не закрывает открытую панель (кнопка независима от панели, ШАП-О-03)', () => {
       const fixture = TestBed.createComponent(ShellHost);
       fixture.detectChanges();
       toCompact();
@@ -360,12 +397,10 @@ describe('Shell', () => {
       const el: HTMLElement = fixture.nativeElement;
       el.querySelector<HTMLButtonElement>('.shell__menu-toggle')?.click();
       fixture.detectChanges();
-      el.querySelector<HTMLButtonElement>(
-        '.shell__menu-panel .shell__support-button button.button',
-      )?.click();
+      el.querySelector<HTMLButtonElement>('.shell__support-icon-button button.button')?.click();
       fixture.detectChanges();
 
-      expect(el.querySelector('.shell__menu-panel')).toBeNull();
+      expect(el.querySelector('.shell__menu-panel')).not.toBeNull();
     });
 
     it('пока меню открыто, страница не прокручивается (ШАП-Ф-12), после закрытия — снова', () => {
@@ -452,10 +487,12 @@ describe('Shell', () => {
       const el: HTMLElement = fixture.nativeElement;
       expect(el.querySelector('.shell__menu-toggle')).not.toBeNull();
       expect(el.querySelector('.shell__nav')).toBeNull();
-      expect(el.querySelector('.shell__support-button')).not.toBeNull();
+      expect(el.querySelector('.shell__support-icon-button')).not.toBeNull();
       expect(el.querySelector('.shell__login-icon-button')).not.toBeNull();
       expect(el.querySelector('.shell__account-link')).toBeNull();
       expect(el.querySelector('.shell__menu-panel')).toBeNull();
+      expect(el.querySelector('.shell__divider')).toBeNull();
+      expect(el.querySelector('.shell__logo')).toBeNull();
     });
 
     it('помещается (по умолчанию): переключателя и иконки входа нет, строка навигации на месте', () => {
@@ -481,7 +518,7 @@ describe('Shell', () => {
       const panel = el.querySelector('.shell__menu-panel');
       expect(panel).not.toBeNull();
       expect(panel?.querySelectorAll('.shell__nav-link').length).toBe(5);
-      expect(panel?.querySelector('.shell__support-button')).toBeNull();
+      expect(panel?.querySelector('.shell__support-icon-button')).toBeNull();
       expect(panel?.querySelector('.shell__auth-button')).toBeNull();
       expect(panel?.querySelector('.shell__account-link')).toBeNull();
       expect(el.querySelector('.shell__menu-backdrop')).not.toBeNull();
@@ -497,7 +534,7 @@ describe('Shell', () => {
       fixture.detectChanges();
 
       const el: HTMLElement = fixture.nativeElement;
-      el.querySelector<HTMLButtonElement>('.shell__login-icon-button')?.click();
+      el.querySelector<HTMLButtonElement>('.shell__login-icon-button button.button')?.click();
 
       expect(openSpy).toHaveBeenCalledWith(LoginModal);
     });
@@ -552,12 +589,14 @@ describe('Shell', () => {
       fixture.detectChanges();
 
       const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.shell__support-icon-button')).not.toBeNull();
+
       el.querySelector<HTMLButtonElement>('.shell__menu-toggle')?.click();
       fixture.detectChanges();
 
       const panel = el.querySelector('.shell__menu-panel');
-      expect(panel?.querySelector('.shell__support-button')).not.toBeNull();
-      expect(panel?.querySelector('.shell__auth-button')).not.toBeNull();
+      expect(panel?.querySelector('.shell__support-icon-button')).toBeNull();
+      expect(panel?.querySelector('.shell__auth-button')).toBeNull();
     });
 
     it('живой обратный переход: контент снова помещается — открытая панель закрывается, строка навигации возвращается', () => {

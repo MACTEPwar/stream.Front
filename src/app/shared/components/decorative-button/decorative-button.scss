@@ -60,10 +60,15 @@ $svg-height: 48px;
   display: none;
 }
 
+// object-fit: contain — слот фиксирован под аспект 44×38 (button-support-icon.svg,
+// иконка кнопки «Поддержать»); icon-only-кнопки (stream.Front#148) проецируют
+// в тот же слот квадратные иконки (login-icon.svg, 24×24) — без contain они бы
+// растянулись под неквадратный бокс, теряя пропорции.
 .button__icon > * {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 // Текст — живой оверлей поверх SVG (раньше был зашит как path с градиентной
@@ -84,4 +89,25 @@ $svg-height: 48px;
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+}
+
+// width="content-compact" (decorative-button.ts, по прямому запросу
+// пользователя) — тот же живой текст-оверлей, что и обычный "content", но
+// меньше: полноразмерный шрифт (18px, letter-spacing 8%) в паре с 50px
+// полем с каждой стороны не даёт кнопке уместиться в компактной/средней
+// строке шапки на реальном телефоне (Shell, shell.ts) — измерено вручную.
+// Геометрия SVG-рамки (высота, скруглённые/острые концы) не меняется —
+// уже её ужимает CONTENT_COMPACT_PADDING_PX в widthPx(). `gap: 8px` — тот
+// же зазор, что и в широком виде (базовое, неспецифичное правило у
+// `.button__content-inner` выше); был `4px`, но по прямому запросу
+// пользователя иконка и текст визуально "пересекались" — убрана
+// компактная переопределение, вернулся дефолт.
+.button--compact .button__content-inner {
+  gap: 8px;
+}
+
+.button--compact .button__text {
+  font-size: vars.$font-size-14;
+  line-height: 18px;
+  letter-spacing: 0.04em;
 }

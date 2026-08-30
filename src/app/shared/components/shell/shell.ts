@@ -27,6 +27,17 @@ import { NavActiveIndicator } from '../nav-active-indicator/nav-active-indicator
 /** Совпадает с дефолтом `NavActiveIndicator.width()` — до первого измерения ResizeObserver'ом (или в jsdom-тестах). */
 const DEFAULT_NAV_INDICATOR_WIDTH = 91;
 
+/**
+ * Ширина icon-only декоративных кнопок поддержки/входа в компактном/среднем
+ * виде (`.shell__support-icon-button`/`.shell__login-icon-button`, shell.html,
+ * stream.Front#148) — чуть выше геометрического минимума DecorativeButton
+ * (`MIN_WIDTH_PX` в decorative-button.ts, ~72px: ниже него растягиваемые
+ * блоки SVG инвертируются). На минимальной поддерживаемой ширине (320px)
+ * это тесно даже вдвоём — см. ужатые паддинги/зазоры шапки и лого
+ * (shell.scss, комментарий про 320px у `.shell__header`).
+ */
+const COMPACT_ACTION_BUTTON_WIDTH_PX = 78;
+
 interface NavItem {
   readonly path: string;
   readonly label: string;
@@ -79,8 +90,9 @@ interface NavItem {
  *    бренд-блока (`.shell__header-actions`, `flex: 1 1 0%` — сам факт того,
  *    что это flex-item с `flex-basis: 0%`, даёт браузеру честно посчитать
  *    "оставшееся" место, не завязываясь на то, что внутри сейчас отрисовано:
- *    пусто (компактный вид), компактная область входа+кнопка (средний) или
- *    вся строка (широкий) — контейнер всегда один и тот же по смыслу).
+ *    компактная область входа+кнопка (компактный и средний виды, идентичны,
+ *    `ШАП-Ф-16`) или вся строка (широкий) — контейнер всегда один и тот же
+ *    по смыслу).
  * 2. `measuredWideRowWidthPx` — сколько места ЗАНЯЛ БЫ полный широкий состав
  *    (5 пунктов меню + кнопка поддержки + [ссылка «Панель управления»] +
  *    область входа), если бы его не сжимали. Меряется на `.shell__row-probe`
@@ -121,26 +133,35 @@ interface NavItem {
  * `isCompact()` раньше `isMedium()` везде). Порядок: `isCompact()` → полный
  * компактный вид; иначе `isMedium()` → средний вид; иначе — широкий.
  *
- * **Разметка строки шапки** — `.shell__brand` (лого, разделитель,
- * переключатель `.shell__menu-toggle` — теперь ОДНО место в разметке для
- * обоих видов-с-гамбургером, а не два разных, как было бы при сохранении
- * прежнего "переключатель прижат вправо" в компактном виде: `ШАП-Ф-16`
- * прямо требует лого+переключатель слева в среднем виде, и для единообразия
- * тот же переключатель теперь везде слева, а не только в среднем) и
- * `.shell__header-actions` (всё остальное — измеряемая область, `flex: 1`).
+ * **Разметка строки шапки** (`ШАП-Ф-02`, `ШАП-Ф-16`, `stream.Front#148`) —
+ * `.shell__brand` (переключатель `.shell__menu-toggle`; лого и разделитель
+ * `.shell__divider` — ТОЛЬКО в широком виде, `!isCompact() && !isMedium()`,
+ * по прямому запросу пользователя: лого убрано из компактного/среднего
+ * вида целиком — не просто визуально скрыто, а не рендерится, — чтобы
+ * освободить бюджет ширины под текстовый вариант кнопки поддержки
+ * (`showCompactActionText` ниже) на более узких экранах; пользователь
+ * планирует позже завести компактную иконку бренда взамен, до тех пор в
+ * этих видах в `.shell__brand` остаётся только переключатель; в компактном
+ * и среднем виде переключатель ОДНО место в разметке — не два разных, как
+ * было бы при сохранении прежнего "переключатель прижат вправо" в
+ * компактном виде из #144) и `.shell__header-actions` (кнопка поддержки +
+ * компактная область входа в компактном/среднем виде, весь `shellActions` —
+ * в широком; измеряемая область, `flex: 1`). Компактный и средний вид
+ * идентичны по составу и порядку строки — единственное отличие между
+ * ними — чем вызван переход (`ШАП-Ф-16`).
  * Панель (`.shell__menu-panel`) — по-прежнему ребёнок `.shell__header`
  * (`position: absolute; top: 100%`), рендерится при
- * `(isCompact() || isMedium()) && isMenuOpen()`; её СОДЕРЖИМОЕ отличается —
- * `isCompact()` даёт полный `shellActions` (нав + кнопка поддержки + область
- * входа + [админ-ссылка], `ШАП-О-03`), иначе (средний) — только нав и
- * админ-ссылка (`ШАП-Ф-17`, кнопка поддержки/область входа уже видны в
- * строке, `ШАП-Ф-16`). Список навигации (`#navListItems`) и админ-ссылка
- * (`#adminLinkItem`) — общие `<ng-template>`, переиспользуются `shellActions`
- * и средней панелью; поскольку строка и панель никогда не показывают нав
- * одновременно (см. правило приоритета выше и то, что панель вообще
- * рендерится только когда строка нав не показывает), `#navLinkText`
- * инстанцируется по-прежнему ровно один раз одновременно — тот же инвариант,
- * что был важен уже в `stream.Front#144`.
+ * `(isCompact() || isMedium()) && isMenuOpen()`; её содержимое ОДНО и то же
+ * для обоих видов — только нав и, при роли администратора, админ-ссылка
+ * (`ШАП-О-03`, `ШАП-Ф-03`, `ШАП-Ф-17`) — кнопка поддержки и область входа
+ * уже видны в строке (`ШАП-Ф-16`) и в панель не уходят ни при каком виде.
+ * Список навигации (`#navListItems`) и админ-ссылка (`#adminLinkItem`) —
+ * общие `<ng-template>`, переиспользуются `shellActions` (широкий вид, в
+ * строке) и панелью (компактный/средний вид); поскольку строка и панель
+ * никогда не показывают нав одновременно (см. правило приоритета выше и то,
+ * что панель вообще рендерится только когда строка нав не показывает),
+ * `#navLinkText` инстанцируется по-прежнему ровно один раз одновременно —
+ * тот же инвариант, что был важен уже в `stream.Front#144`.
  *
  * Пока меню открыто (`isCompact() || isMedium()`), прокрутка страницы
  * заблокирована на `document.body` — `ШАП-Ф-12`/`ШАП-Ф-18`; выход из ОБОИХ
@@ -167,6 +188,8 @@ export class Shell {
   private readonly breakpointObserver = inject(BreakpointObserver);
   protected readonly authService = inject(AuthService);
 
+  protected readonly compactActionButtonWidth = COMPACT_ACTION_BUTTON_WIDTH_PX;
+
   protected readonly navItems: readonly NavItem[] = [
     { path: '/main', label: 'Главная', exact: true },
     { path: '/news', label: 'Новости', exact: false },
@@ -186,11 +209,45 @@ export class Shell {
 
   private readonly headerActionsEl = viewChild<ElementRef<HTMLDivElement>>('headerActionsEl');
   private readonly rowProbeEl = viewChild<ElementRef<HTMLDivElement>>('rowProbeEl');
+  private readonly actionsTextProbeEl = viewChild<ElementRef<HTMLDivElement>>('actionsTextProbeEl');
   protected readonly measuredActionsWidthPx = signal(0);
   protected readonly measuredWideRowWidthPx = signal(0);
+  protected readonly measuredActionsTextWidthPx = signal(0);
   /** `ШАП-Ф-15` — измерение, не порог ширины экрана; см. JSDoc класса. */
   protected readonly isMedium = computed(
     () => this.measuredWideRowWidthPx() > this.measuredActionsWidthPx(),
+  );
+  /**
+   * Показывать ли текст на кнопке «Поддержать» вместо icon-only в
+   * компактном/среднем виде — по прямому запросу пользователя (было жёстко
+   * icon-only всегда, `stream.Front#148`, см. PROJECT_MAP.md: «если для
+   * среднего вида впоследствии захотят текстовую кнопку — нужен отдельный
+   * design-input»). Область входа/аватара в это решение НЕ входит — по
+   * повторному прямому запросу пользователя она в компактном/среднем виде
+   * ВСЕГДА icon-only, фиксированной ширины (`compactActionButtonWidth` для
+   * гостя, 44×44 min-tap-target для аватара), независимо от того, влезает
+   * ли текст «Войти» — упрощает и само измерение: `measuredActionsTextWidthPx`
+   * (слепок `.shell__actions-text-probe`/`#actionsTextProbeEl` в shell.html,
+   * шаблон `#actionsTextProbe`) меряет natural-ширину ТОЛЬКО «Поддержать»
+   * плюс фиксированный слепок области входа — второе слагаемое той же
+   * суммы, не отдельная реактивная величина. Тот же приём измерения, что и
+   * у `isMedium`: сравнивает реально доступное место (`measuredActionsWidthPx`,
+   * уже существующий сигнал) с этой суммой — СВОЙ класс у слепка, не
+   * `.shell__row-probe` (тот держит статичный 24px-зазор широкого вида,
+   * здесь нужен тот же сжимающийся на `bp.small` зазор, что у
+   * `.shell__header-actions`, см. shell.scss) — не отдельный
+   * захардкоженный порог (`АДП-Ф-03`). На истинно узких экранах текстовый
+   * вариант заведомо не влезает — падает на icon-only без явной проверки
+   * ширины, значение получается из того же сравнения. `> 0` с обеих
+   * сторон — безопасный дефолт до первого измерения/в jsdom (ResizeObserver
+   * недоступен): без него `0 <= 0` дало бы `true` и мигание текстом до
+   * реального измерения.
+   */
+  protected readonly showCompactActionText = computed(
+    () =>
+      this.measuredActionsTextWidthPx() > 0 &&
+      this.measuredActionsWidthPx() > 0 &&
+      this.measuredActionsTextWidthPx() <= this.measuredActionsWidthPx(),
   );
 
   protected readonly isMenuOpen = signal(false);
@@ -260,6 +317,20 @@ export class Shell {
       if (!el || typeof ResizeObserver === 'undefined') return;
       const observer = new ResizeObserver(([entry]) =>
         this.measuredWideRowWidthPx.set(entry.contentRect.width),
+      );
+      observer.observe(el);
+      onCleanup(() => observer.disconnect());
+    });
+
+    // Natural-ширина текстового варианта «Поддержать» + фиксированный слепок
+    // области входа/аватара (без нава) — `.shell__actions-text-probe` в
+    // shell.html, тот же приём, что rowProbeEl выше. Используется в
+    // showCompactActionText().
+    effect((onCleanup) => {
+      const el = this.actionsTextProbeEl()?.nativeElement;
+      if (!el || typeof ResizeObserver === 'undefined') return;
+      const observer = new ResizeObserver(([entry]) =>
+        this.measuredActionsTextWidthPx.set(entry.contentRect.width),
       );
       observer.observe(el);
       onCleanup(() => observer.disconnect());
