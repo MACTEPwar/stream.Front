@@ -606,7 +606,11 @@
   -->
   <div class="button__content">
     <div class="button__content-inner" #contentInner>
-      <span class="button__icon" [style.width.px]="iconWidthPx" [style.height.px]="iconHeightPx">
+      <span
+        class="button__icon"
+        [style.width.px]="iconWidthPx()"
+        [style.height.px]="iconHeightPx()"
+      >
         <ng-content select="[icon]" />
       </span>
       @if (text(); as t) {

@@ -39,9 +39,25 @@ const CONTENT_PADDING_PX = 50;
  * тот же приём, что у 320px-минимума, см. PROJECT_MAP.md). Компактный
  * режим — та же 9-slice-геометрия (см. widthPx ниже), просто с более
  * тесным полем и уменьшенным шрифтом (`.button--compact`,
- * decorative-button.scss) — высота (48px) не меняется.
+ * decorative-button.scss) — высота (48px) не меняется. `24px` (было
+ * `16px`) — по повторному прямому запросу пользователя: иконка+текст
+ * визуально "пересекались" с острыми концами рамки, добавлено ещё поля
+ * (см. PROJECT_MAP.md).
  */
-const CONTENT_COMPACT_PADDING_PX = 16;
+const CONTENT_COMPACT_PADDING_PX = 24;
+
+/**
+ * Высота иконки в режиме `content-compact` — по прямому запросу
+ * пользователя: полноразмерная иконка (38 unit ≈ 35.75px, тот же размер,
+ * что и в широком виде) визуально "слишком большая" рядом с уменьшенным
+ * компактным текстом (14px, line-height 18px, `.button--compact
+ * .button__text`, decorative-button.scss) — почти вдвое выше строки
+ * текста. `20px` — «чуть-чуть больше высоты текста», ширина считается по
+ * тому же соотношению сторон, что у полноразмерной иконки (44:38), чтобы
+ * не исказить пропорции произвольной спроецированной картинки.
+ */
+const COMPACT_ICON_HEIGHT_PX = 20;
+const COMPACT_ICON_WIDTH_PX = COMPACT_ICON_HEIGHT_PX * (44 / 38);
 
 // Все id/url(#...) внутри главного SVG (decorative-button.html) захардкожены как в исходнике
 // (_2821_998), к каждому добавляется -{{uid}} — иначе несколько <app-decorative-button> на
@@ -293,8 +309,14 @@ export class DecorativeButton {
   // (x=160) and shift by half the extra width, same as the outer gap block.
   protected readonly centerShiftTransform = computed(() => `translate(${this.extra() / 2} 0)`);
 
-  // Icon's native size (fixed, never stretches) — PX_PER_UNIT is width-independent, so these are
-  // true constants. Positioning itself is handled by the .button__content flex layout (decorative-button.scss).
-  protected readonly iconWidthPx = 44 * PX_PER_UNIT;
-  protected readonly iconHeightPx = 38 * PX_PER_UNIT;
+  // Icon's native size — PX_PER_UNIT is width-independent, so the full-size constant never
+  // changes. `content-compact` (isCompactText()) swaps it for the smaller COMPACT_ICON_*
+  // constants (по прямому запросу пользователя — see их JSDoc выше). Positioning itself is
+  // handled by the .button__content flex layout (decorative-button.scss).
+  protected readonly iconWidthPx = computed(() =>
+    this.isCompactText() ? COMPACT_ICON_WIDTH_PX : 44 * PX_PER_UNIT,
+  );
+  protected readonly iconHeightPx = computed(() =>
+    this.isCompactText() ? COMPACT_ICON_HEIGHT_PX : 38 * PX_PER_UNIT,
+  );
 }
