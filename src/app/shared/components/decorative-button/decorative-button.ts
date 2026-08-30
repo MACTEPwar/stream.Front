@@ -1,4 +1,13 @@
-import { Component, ElementRef, computed, effect, input, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  ViewEncapsulation,
+  computed,
+  effect,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 const VIEWBOX_HEIGHT = 51;
 const RENDER_HEIGHT_PX = 48;
@@ -118,6 +127,19 @@ export type DecorativeButtonType = 'primary' | 'secondary';
   imports: [],
   templateUrl: './decorative-button.html',
   styleUrl: './decorative-button.scss',
+  // `.button__icon > *` (decorative-button.scss) должен дотягиваться до
+  // спроецированной иконки (`<ng-content select="[icon]" />`) — та несёт
+  // атрибут-скоуп родительского шаблона (места использования: shell.html и
+  // т.п.), а не DecorativeButton, обычный скоупнутый селектор до неё не
+  // достаёт (тот же приём/причина, что у `ButtonGroup`, см. button-group.ts).
+  // Найдено предметно: у `login-icon.svg` (24×24, заметно меньше слота
+  // 44×38 — в отличие от `button-support-icon.svg`, где несовпадение
+  // маскировалось близостью размеров) `object-fit: contain`/`width: 100%`/
+  // `height: 100%` не применялись вовсе — иконка рендерилась в своём
+  // натуральном 24×24 и прижималась к левому верхнему углу слота, а не
+  // центрировалась (по прямому запросу пользователя — «иконку на входе
+  // сделай посредине по вертикали и горизонтали»).
+  encapsulation: ViewEncapsulation.None,
 })
 export class DecorativeButton {
   protected readonly uid = `btn${nextButtonUid++}`;
