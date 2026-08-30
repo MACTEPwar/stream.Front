@@ -48,6 +48,7 @@
           <app-decorative-button
             text="Поддержать"
             width="content-compact"
+            iconSize="compact"
             class="shell__support-button"
           >
             <img icon src="/icons/button-support-icon.svg" alt="" />
@@ -64,10 +65,15 @@
                stream.Front#148); COMPACT_ACTION_BUTTON_WIDTH_PX выбран чуть выше
                геометрического минимума кнопки (MIN_WIDTH_PX в decorative-button.ts,
                ~72px — ниже него растягиваемые блоки SVG инвертируются).
-               ariaLabel() — доступное имя вместо отсутствующего видимого текста. -->
+               ariaLabel() — доступное имя вместо отсутствующего видимого текста.
+               iconSize="compact" — та же компактная иконка, что и у текстового
+               варианта выше и у «Войти» ниже: без этого при истинно узких экранах
+               (оба icon-only одновременно) иконки «Поддержать»/«Войти» выглядели
+               бы разного размера рядом друг с другом. -->
           <app-decorative-button
             [width]="compactActionButtonWidth"
             [ariaLabel]="'Поддержать'"
+            iconSize="compact"
             class="shell__support-icon-button"
           >
             <img icon src="/icons/button-support-icon.svg" alt="" />
@@ -79,7 +85,13 @@
              адаптивном тексте: фиксированная ширина (compactActionButtonWidth
              для гостя, 44×44 min-tap-target для аватара) упрощает и измерение
              (#actionsTextProbe меряет только натуральную ширину текста
-             «Поддержать», это фиксированное место просто прибавляется к ней). -->
+             «Поддержать», это фиксированное место просто прибавляется к ней).
+             iconSize="compact" на кнопке «Войти» — по повторному прямому запросу
+             пользователя: полноразмерная иконка выглядела «слишком большой»,
+             ориентир — высота компактного текста «Поддержать» (decorative-button.ts,
+             COMPACT_ICON_HEIGHT_PX). Аватар (авторизованный) не трогается —
+             у него отдельный, уже устоявшийся размер (40px), общий со всеми
+             остальными местами приложения, где показывается аватар. -->
         @if (authService.isAuthenticated()) {
           <a routerLink="/account" class="shell__account-link" aria-label="Личный кабинет">
             @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
@@ -96,6 +108,7 @@
             type="secondary"
             [width]="compactActionButtonWidth"
             [ariaLabel]="'Войти'"
+            iconSize="compact"
             class="shell__login-icon-button"
             (click)="onLoginClick()"
           >
@@ -165,7 +178,12 @@
   контейнера, чтобы сумма отражала ТУ ЖЕ геометрию, что и реальная строка.
 -->
 <ng-template #actionsTextProbe>
-  <app-decorative-button text="Поддержать" width="content-compact" class="shell__row-probe-support">
+  <app-decorative-button
+    text="Поддержать"
+    width="content-compact"
+    iconSize="compact"
+    class="shell__row-probe-support"
+  >
     <img icon src="/icons/button-support-icon.svg" alt="" />
   </app-decorative-button>
 

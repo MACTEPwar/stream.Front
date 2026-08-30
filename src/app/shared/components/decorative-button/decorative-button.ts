@@ -47,14 +47,19 @@ const CONTENT_PADDING_PX = 50;
 const CONTENT_COMPACT_PADDING_PX = 24;
 
 /**
- * Высота иконки в режиме `content-compact` — по прямому запросу
+ * Высота иконки при `iconSize()==='compact'` — по прямому запросу
  * пользователя: полноразмерная иконка (38 unit ≈ 35.75px, тот же размер,
- * что и в широком виде) визуально "слишком большая" рядом с уменьшенным
- * компактным текстом (14px, line-height 18px, `.button--compact
+ * что и в широком виде) визуально "слишком большая" рядом/вместо
+ * компактного текста (14px, line-height 18px, `.button--compact
  * .button__text`, decorative-button.scss) — почти вдвое выше строки
- * текста. `20px` — «чуть-чуть больше высоты текста», ширина считается по
- * тому же соотношению сторон, что у полноразмерной иконки (44:38), чтобы
- * не исказить пропорции произвольной спроецированной картинки.
+ * текста. Применяется в двух разных местах компактной/средней строки шапки
+ * (`Shell`, shell.ts) — у текстового `content-compact` кнопки «Поддержать»
+ * (рядом со своим же текстом) и у icon-only кнопки «Войти» с фиксированной
+ * числовой шириной (по прямому запросу пользователя — та же цель:
+ * ориентир на высоту текста «Поддержать», хотя у самой «Войти» текста
+ * рядом нет). `20px` — «чуть-чуть больше высоты текста», ширина считается
+ * по тому же соотношению сторон, что у полноразмерной иконки (44:38),
+ * чтобы не исказить пропорции произвольной спроецированной картинки.
  */
 const COMPACT_ICON_HEIGHT_PX = 20;
 const COMPACT_ICON_WIDTH_PX = COMPACT_ICON_HEIGHT_PX * (44 / 38);
@@ -165,6 +170,17 @@ export class DecorativeButton {
   readonly type = input<DecorativeButtonType>('primary');
   /** Доступное имя кнопки, когда `text()` не задан (icon-only, stream.Front#148) — см. JSDoc класса. */
   readonly ariaLabel = input<string>();
+  /**
+   * Размер иконки — независим от `width()` (по прямому запросу пользователя:
+   * компактная иконка нужна и у `content-compact` кнопки «Поддержать», и у
+   * icon-only кнопки «Войти» с фиксированной числовой шириной — привязка
+   * только к режиму ширины `content-compact` не покрыла бы второй случай).
+   * `'default'` — полноразмерная (44×38 unit, как в макете); `'compact'` —
+   * `COMPACT_ICON_WIDTH_PX`/`COMPACT_ICON_HEIGHT_PX` (20px высотой — «чуть
+   * больше высоты компактного текста», `.button--compact .button__text`,
+   * decorative-button.scss, 18px line-height).
+   */
+  readonly iconSize = input<'default' | 'compact'>('default');
 
   // 'secondary' — тот же 1:1 SVG (см. Frame 68_2, приложен пользователем). В самом
   // экспорте отличаются только 4 цвета (glow/база тела/тон тела/текст) — рамка,
@@ -310,13 +326,15 @@ export class DecorativeButton {
   protected readonly centerShiftTransform = computed(() => `translate(${this.extra() / 2} 0)`);
 
   // Icon's native size — PX_PER_UNIT is width-independent, so the full-size constant never
-  // changes. `content-compact` (isCompactText()) swaps it for the smaller COMPACT_ICON_*
-  // constants (по прямому запросу пользователя — see их JSDoc выше). Positioning itself is
-  // handled by the .button__content flex layout (decorative-button.scss).
+  // changes. `iconSize()==='compact'` swaps it for the smaller COMPACT_ICON_* constants (по
+  // прямому запросу пользователя — see их JSDoc выше); НЕ завязано на width()/isCompactText() —
+  // тот же компактный размер нужен и у icon-only кнопок с фиксированной числовой шириной
+  // (`.shell__login-icon-button`, shell.html), не только у `content-compact`. Positioning
+  // itself is handled by the .button__content flex layout (decorative-button.scss).
   protected readonly iconWidthPx = computed(() =>
-    this.isCompactText() ? COMPACT_ICON_WIDTH_PX : 44 * PX_PER_UNIT,
+    this.iconSize() === 'compact' ? COMPACT_ICON_WIDTH_PX : 44 * PX_PER_UNIT,
   );
   protected readonly iconHeightPx = computed(() =>
-    this.isCompactText() ? COMPACT_ICON_HEIGHT_PX : 38 * PX_PER_UNIT,
+    this.iconSize() === 'compact' ? COMPACT_ICON_HEIGHT_PX : 38 * PX_PER_UNIT,
   );
 }
