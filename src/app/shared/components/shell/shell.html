@@ -1,37 +1,38 @@
 <div class="shell">
   <header class="shell__header">
-    <div class="shell__brand">
-      @if (isCompact() || isMedium()) {
-        <button
-          type="button"
-          class="shell__menu-toggle"
-          [attr.aria-expanded]="isMenuOpen()"
-          aria-controls="shell-menu-panel"
-          [attr.aria-label]="isMenuOpen() ? 'Закрыть меню' : 'Открыть меню'"
-          (click)="onMenuToggleClick()"
-        >
-          <img
-            [src]="isMenuOpen() ? '/icons/menu-close-icon.svg' : '/icons/menu-open-icon.svg'"
-            alt=""
-            class="shell__menu-toggle-icon"
-          />
-        </button>
-      }
-      @if (!isCompact() && !isMedium()) {
-        <a routerLink="/main" class="shell__logo">
-          <img src="/images/Logo.png" alt="Belochka" />
-        </a>
-        <span class="shell__divider" aria-hidden="true">|</span>
-      }
-    </div>
-
-    <div class="shell__header-actions" #headerActionsEl>
-      <div class="shell__row-probe" #rowProbeEl aria-hidden="true" inert>
-        <ng-container [ngTemplateOutlet]="wideRowProbe" />
+    <div class="shell__header-row">
+      <div class="shell__brand">
+        @if (isCompact() || isMedium()) {
+          <button
+            type="button"
+            class="shell__menu-toggle"
+            [attr.aria-expanded]="isMenuOpen()"
+            aria-controls="shell-menu-panel"
+            [attr.aria-label]="isMenuOpen() ? 'Закрыть меню' : 'Открыть меню'"
+            (click)="onMenuToggleClick()"
+          >
+            <img
+              [src]="isMenuOpen() ? '/icons/menu-close-icon.svg' : '/icons/menu-open-icon.svg'"
+              alt=""
+              class="shell__menu-toggle-icon"
+            />
+          </button>
+        }
+        @if (!isCompact() && !isMedium()) {
+          <a routerLink="/main" class="shell__logo">
+            <img src="/images/Logo.png" alt="Belochka" />
+          </a>
+          <span class="shell__divider" aria-hidden="true">|</span>
+        }
       </div>
 
-      @if (isCompact() || isMedium()) {
-        <!-- Кнопка поддержки и область входа независимы от панели (ШАП-О-03,
+      <div class="shell__header-actions" #headerActionsEl>
+        <div class="shell__row-probe" #rowProbeEl aria-hidden="true" inert>
+          <ng-container [ngTemplateOutlet]="wideRowProbe" />
+        </div>
+
+        @if (isCompact() || isMedium()) {
+          <!-- Кнопка поддержки и область входа независимы от панели (ШАП-О-03,
              ШАП-Ф-16/-17) — клик по ним не должен закрывать панель, если она открыта.
              Только «Поддержать» переключается адаптивно текст/иконка
              (showCompactActionText(), shell.ts) — по прямому запросу пользователя
@@ -40,21 +41,21 @@
              входа/аватар оставлена ТОЛЬКО иконкой всегда — см. PROJECT_MAP.md);
              слепок для измерения natural-ширины текстового варианта — ниже,
              #actionsTextProbe. -->
-        <div class="shell__actions-text-probe" #actionsTextProbeEl aria-hidden="true" inert>
-          <ng-container [ngTemplateOutlet]="actionsTextProbe" />
-        </div>
+          <div class="shell__actions-text-probe" #actionsTextProbeEl aria-hidden="true" inert>
+            <ng-container [ngTemplateOutlet]="actionsTextProbe" />
+          </div>
 
-        @if (showCompactActionText()) {
-          <app-decorative-button
-            text="Поддержать"
-            width="content-compact"
-            iconSize="compact"
-            class="shell__support-button"
-          >
-            <img icon src="/icons/button-support-icon.svg" alt="" />
-          </app-decorative-button>
-        } @else {
-          <!-- Декоративный Button (app-decorative-button, stream.Front#39) в icon-only
+          @if (showCompactActionText()) {
+            <app-decorative-button
+              text="Поддержать"
+              width="content-compact"
+              iconSize="compact"
+              class="shell__support-button"
+            >
+              <img icon src="/icons/button-support-icon.svg" alt="" />
+            </app-decorative-button>
+          } @else {
+            <!-- Декоративный Button (app-decorative-button, stream.Front#39) в icon-only
                режиме (без text(), см. decorative-button.ts) — по прямому запросу
                пользователя, вместо обычного плоского <button> с иконкой: та же
                декоративная рамка/блики, что и на широком виде, просто без текста.
@@ -70,17 +71,17 @@
                варианта выше и у «Войти» ниже: без этого при истинно узких экранах
                (оба icon-only одновременно) иконки «Поддержать»/«Войти» выглядели
                бы разного размера рядом друг с другом. -->
-          <app-decorative-button
-            [width]="compactActionButtonWidth"
-            [ariaLabel]="'Поддержать'"
-            iconSize="compact"
-            class="shell__support-icon-button"
-          >
-            <img icon src="/icons/button-support-icon.svg" alt="" />
-          </app-decorative-button>
-        }
+            <app-decorative-button
+              [width]="compactActionButtonWidth"
+              [ariaLabel]="'Поддержать'"
+              iconSize="compact"
+              class="shell__support-icon-button"
+            >
+              <img icon src="/icons/button-support-icon.svg" alt="" />
+            </app-decorative-button>
+          }
 
-        <!-- Область входа/аватара — ВСЕГДА только иконка (по прямому запросу
+          <!-- Область входа/аватара — ВСЕГДА только иконка (по прямому запросу
              пользователя), в отличие от «Поддержать» выше не участвует в
              адаптивном тексте: фиксированная ширина (compactActionButtonWidth
              для гостя, 44×44 min-tap-target для аватара) упрощает и измерение
@@ -92,32 +93,33 @@
              COMPACT_ICON_HEIGHT_PX). Аватар (авторизованный) не трогается —
              у него отдельный, уже устоявшийся размер (40px), общий со всеми
              остальными местами приложения, где показывается аватар. -->
-        @if (authService.isAuthenticated()) {
-          <a routerLink="/account" class="shell__account-link" aria-label="Личный кабинет">
-            @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
-              <img [src]="resolveAvatarUrl(avatarUrl)" alt="" class="shell__account-avatar" />
-            } @else {
-              <span
-                class="shell__account-avatar shell__account-avatar--placeholder"
-                aria-hidden="true"
-              ></span>
-            }
-          </a>
+          @if (authService.isAuthenticated()) {
+            <a routerLink="/account" class="shell__account-link" aria-label="Личный кабинет">
+              @if (authService.currentUser()?.avatarUrl; as avatarUrl) {
+                <img [src]="resolveAvatarUrl(avatarUrl)" alt="" class="shell__account-avatar" />
+              } @else {
+                <span
+                  class="shell__account-avatar shell__account-avatar--placeholder"
+                  aria-hidden="true"
+                ></span>
+              }
+            </a>
+          } @else {
+            <app-decorative-button
+              type="secondary"
+              [width]="compactActionButtonWidth"
+              [ariaLabel]="'Войти'"
+              iconSize="compact"
+              class="shell__login-icon-button"
+              (click)="onLoginClick()"
+            >
+              <img icon src="/icons/login-icon.svg" alt="" />
+            </app-decorative-button>
+          }
         } @else {
-          <app-decorative-button
-            type="secondary"
-            [width]="compactActionButtonWidth"
-            [ariaLabel]="'Войти'"
-            iconSize="compact"
-            class="shell__login-icon-button"
-            (click)="onLoginClick()"
-          >
-            <img icon src="/icons/login-icon.svg" alt="" />
-          </app-decorative-button>
+          <ng-container [ngTemplateOutlet]="shellActions" />
         }
-      } @else {
-        <ng-container [ngTemplateOutlet]="shellActions" />
-      }
+      </div>
     </div>
 
     @if ((isCompact() || isMedium()) && isMenuOpen()) {
