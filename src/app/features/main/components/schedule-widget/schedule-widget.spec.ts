@@ -95,7 +95,7 @@ describe('ScheduleWidget', () => {
     expect(tuesdaySegments[2].textContent).toBe('21:00');
   });
 
-  it('компактная раскладка — колонки дня/времени уже (32px/48px вместо 48px/56px на широкой), по прямому запросу пользователя высвободить место среднему сегменту', async () => {
+  it('компактная раскладка — колонки дня/времени уже (26px/44px вместо 48px/56px на широкой) и текст в них по центру, по прямому запросу пользователя высвободить место среднему сегменту', async () => {
     breakpointState$.next(breakpointState(true));
     await fixture.whenStable();
     httpMock.expectOne(`${environment.apiUrl}/schedule`).flush(mockSchedule);
@@ -105,8 +105,10 @@ describe('ScheduleWidget', () => {
     const mondaySegments = el
       .querySelectorAll('app-list-item')[0]
       .querySelectorAll('.day-row__segment');
-    expect(mondaySegments[0].getAttribute('style')).toContain('width: 32px');
-    expect(mondaySegments[2].getAttribute('style')).toContain('width: 48px');
+    expect(mondaySegments[0].getAttribute('style')).toContain('width: 26px');
+    expect(mondaySegments[0].getAttribute('style')).toContain('text-align: center');
+    expect(mondaySegments[2].getAttribute('style')).toContain('width: 44px');
+    expect(mondaySegments[2].getAttribute('style')).toContain('text-align: center');
   });
 
   it('широкая раскладка — колонки дня/времени остаются 48px/56px (не регрессирует существующий вид)', async () => {
@@ -119,7 +121,9 @@ describe('ScheduleWidget', () => {
       .querySelectorAll('app-list-item')[0]
       .querySelectorAll('.day-row__segment');
     expect(mondaySegments[0].getAttribute('style')).toContain('width: 48px');
+    expect(mondaySegments[0].getAttribute('style')).toContain('text-align: right');
     expect(mondaySegments[2].getAttribute('style')).toContain('width: 56px');
+    expect(mondaySegments[2].getAttribute('style')).toContain('text-align: right');
   });
 
   it('при ошибке запроса — показывает app-error-message вместо списка', async () => {
