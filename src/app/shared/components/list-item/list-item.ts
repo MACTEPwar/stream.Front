@@ -92,8 +92,17 @@ const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_SEGMENT_
 // внутреннюю), а не унаследованный из Schedule.svg асимметричный (там левый/
 // правый/центральный зазоры были все разными, т.к. в исходнике никогда не
 // было больше одной внутренней границы). Ширины хватает, чтобы вместить сам
-// орнамент-разделитель (38px) плюс отступ по ~8px с каждой стороны.
-const BOUNDARY_GAP = 54;
+// орнамент-разделитель (38px) плюс отступ по ~8px с каждой стороны. Значение
+// для широкой раскладки (644px, ResizeObserver даёт ровно DEFAULT_ROW_WIDTH_PX
+// — см. boundaryGap() ниже).
+const BOUNDARY_GAP_WIDE = 54;
+
+// На компактной ширине (по прямому запросу пользователя — "мало текста,
+// много пустоты") тот же отступ съедал у Schedule (3 сегмента, 2 границы)
+// почти всё доступное место — среднему сегменту оставалось ~13px. Сужен до
+// минимума, при котором орнамент-разделитель (38px) ещё не обрезается (+1px
+// с каждой стороны, а не полноценные ~8px десктопного паддинга).
+const BOUNDARY_GAP_COMPACT = 40;
 
 // Ширина строки ДО реального измерения (первый рендер, либо ResizeObserver
 // недоступен — напр. jsdom в юнит-тестах) — совпадает с исходным дизайном
@@ -241,6 +250,15 @@ export class ListItem {
    */
   protected readonly rowWidthPx = signal(DEFAULT_ROW_WIDTH_PX);
 
+  // Компактной ширину считаем по тому же признаку, что уже отличает "сжатую"
+  // строку от широкой (list-item.scss, `@include bp.small { width: 100% }`)
+  // — на широкой раскладке CSS всегда даёт ровно 644px, ResizeObserver не
+  // сможет измерить меньше; второй источник правды не заводим.
+  private readonly isCompact = computed(() => this.rowWidthPx() < DEFAULT_ROW_WIDTH_PX);
+  private readonly boundaryGap = computed(() =>
+    this.isCompact() ? BOUNDARY_GAP_COMPACT : BOUNDARY_GAP_WIDE,
+  );
+
   constructor() {
     effect((onCleanup) => {
       const el = this.rowEl()?.nativeElement;
@@ -289,7 +307,7 @@ export class ListItem {
     const segments = this.segments();
     if (segments.length < 2) return segments.map(() => 0);
 
-    const gapTotal = (segments.length - 1) * BOUNDARY_GAP;
+    const gapTotal = (segments.length - 1) * this.boundaryGap();
     const available = this.endTextRight() - START_TEXT_LEFT - gapTotal;
 
     let fixedTotal = 0;
@@ -356,7 +374,7 @@ export class ListItem {
     for (const width of widths) {
       const boxWidth = width ?? 0;
       boxes.push({ x: cursor, width: boxWidth });
-      cursor += boxWidth + BOUNDARY_GAP;
+      cursor += boxWidth + this.boundaryGap();
     }
     return boxes;
   });
@@ -377,7 +395,7 @@ export class ListItem {
     const rowWidth = this.rowWidthPx();
     return Array.from({ length: count - 1 }, (_, i) => {
       const box = boxes[i];
-      const rawX = (box?.x ?? 0) + (box?.width ?? 0) + BOUNDARY_GAP / 2;
+      const rawX = (box?.x ?? 0) + (box?.width ?? 0) + this.boundaryGap() / 2;
       const x = mirrored ? rowWidth - rawX : rawX;
       return { x, type: dividers[i] ?? 'left' };
     });
@@ -500,7 +518,7 @@ export class ListItem {
   // ними (индексы 1..N-2) — «центральная», по одной на каждый, N-2 штук.
   // Бокс каждой центральной подложки — ровно бокс её сегмента (segmentBoxes()),
   // тот же самый, что и у текста — единая геометрия, никакого отдельного
-  // зазора от разделителя не считается (уже заложен в BOUNDARY_GAP при
+  // зазора от разделителя не считается (уже заложен в boundaryGap() при
   // построении самих боксов). При N=1 — soloBox() (см. segmentBoxes()),
   // при N<=2 центральных нет вовсе (0..N-2 сегментов между начальным/
   // конечным, пусто, когда их не больше 2).

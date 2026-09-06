@@ -1,8 +1,6 @@
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { By } from '@angular/platform-browser';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
 
 import { MarqueeText } from './marquee-text.directive';
 
@@ -48,23 +46,14 @@ function stubScrollWidth(span: HTMLElement, width: number): void {
 
 describe('MarqueeText', () => {
   let originalResizeObserver: typeof ResizeObserver | undefined;
-  let reduceMotion$: Subject<BreakpointState>;
 
   beforeEach(() => {
     originalResizeObserver = globalThis.ResizeObserver;
     globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
     FakeResizeObserver.instances = [];
-    reduceMotion$ = new Subject<BreakpointState>();
 
     TestBed.configureTestingModule({
       imports: [MarqueeTextHost],
-      providers: [
-        // jsdom не реализует `matchMedia`, от которого зависит реальный
-        // `BreakpointObserver` (тот же приём, что modal-host.spec.ts) —
-        // начальное синхронное `false` (motion разрешён), конкретные тесты
-        // переключают через reduceMotion$.
-        { provide: BreakpointObserver, useValue: { observe: () => reduceMotion$.asObservable() } },
-      ],
     });
   });
 
@@ -133,10 +122,8 @@ describe('MarqueeText', () => {
     expect(innerSpan.style.display).toBe('inline');
   });
 
-  it('prefers-reduced-motion: reduce — анимация не запускается, даже если текст не помещается (движение отключается, а не просто ускоряется — ДСТ-Ф-05)', () => {
+  it('игнорирует prefers-reduced-motion — по прямому запросу пользователя строка едет всегда, даже при системной настройке "уменьшить движение" (сознательное отступление от ДСТ-Ф-05 именно для этой директивы)', () => {
     const fixture = TestBed.createComponent(MarqueeTextHost);
-    fixture.detectChanges();
-    reduceMotion$.next({ matches: true, breakpoints: {} });
     fixture.detectChanges();
 
     const hostSpan = getHostSpan(fixture);
@@ -145,8 +132,8 @@ describe('MarqueeText', () => {
     FakeResizeObserver.instances[0]?.trigger(100);
     fixture.detectChanges();
 
-    expect(hostSpan.style.textOverflow).toBe('');
-    expect(innerSpan.style.display).toBe('inline');
+    expect(hostSpan.style.textOverflow).toBe('clip');
+    expect(innerSpan.style.display).toBe('inline-block');
   });
 
   it('изменение текста пересчитывает overflow (новый, более длинный текст — запускает анимацию)', () => {

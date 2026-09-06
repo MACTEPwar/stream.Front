@@ -24,6 +24,9 @@ const LAST_BASELINE = 56;
 const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_BASELINE;
 const END_TEXT_RIGHT = RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_BASELINE;
 const BOUNDARY_GAP = 54;
+// Компактный gap (list-item.ts, BOUNDARY_GAP_COMPACT) — включается, когда
+// реально измеренная ширина строки меньше DEFAULT_ROW_WIDTH_PX (644).
+const BOUNDARY_GAP_COMPACT = 40;
 const LEFT_ORNAMENT_CENTER_X = 115.75 + 38 / 2;
 const RIGHT_ORNAMENT_CENTER_X = 543.75 - 38 / 2;
 
@@ -877,8 +880,10 @@ describe('ListItem', () => {
       const match = /translate\(([-\d.]+) 0\)/.exec(transform);
       const actualCenterX = Number(match?.[1]) + LEFT_ORNAMENT_CENTER_X;
 
+      // Ширина строки (500) < DEFAULT_ROW_WIDTH_PX — компонент переключается
+      // на BOUNDARY_GAP_COMPACT (list-item.ts, boundaryGap()), не на "широкий" 54.
       const boxes = computeSegmentBoxes(['60px', 1, '60px']);
-      const rawDividerX = boxes[0].x + boxes[0].width + BOUNDARY_GAP / 2;
+      const rawDividerX = boxes[0].x + boxes[0].width + BOUNDARY_GAP_COMPACT / 2;
       expect(actualCenterX).toBeCloseTo(500 - rawDividerX, 5);
     });
 

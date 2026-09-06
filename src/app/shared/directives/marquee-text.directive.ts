@@ -1,4 +1,3 @@
-import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   Directive,
   ElementRef,
@@ -11,8 +10,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 
 const TICK_MS = 50; // тот же шаг, что у List (её loader-бегун) — общий устоявшийся тик анимации в проекте.
 const SPEED_PX_PER_SEC = 40; // подобрано на глаз — комфортная скорость чтения бегущей строки.
@@ -36,12 +33,11 @@ const OVERFLOW_THRESHOLD_PX = 2; // не запускать анимацию н�
  * `overflowPx()` (тот же принцип, что `List.runnerProgress` — не
  * накопительный сдвиг за тик, дрейф float-сложения шагов не накапливается).
  *
- * `prefers-reduced-motion: reduce` (`ДСТ-Ф-05`, `specs/01-common/spec.md`) —
- * анимация вообще не запускается (не просто ускоряется/лишается пауз),
- * остаётся статичный `text-overflow: ellipsis` хоста, как и без этой
- * директивы. Тот же `BreakpointObserver`, что `MainCarousel.isCompact`/
- * `ModalHost.isSmallViewport` — CDK одинаково оборачивает `matchMedia` для
- * любого валидного медиа-запроса, не только по ширине.
+ * `prefers-reduced-motion: reduce` (`ДСТ-Ф-05`, `specs/01-common/spec.md`)
+ * сознательно ИГНОРИРУЕТСЯ здесь — по прямому запросу пользователя строка
+ * должна ехать в любом случае, а не оставаться статичной с многоточием.
+ * Это осознанное отступление от ДСТ-Ф-05 именно для этой строки, а не
+ * дефолтное поведение проекта — см. обсуждение в PR.
  *
  * Реализация — обёртка исходного текста в СОЗДАННЫЙ директивой внутренний
  * `<span>` (`Renderer2` — у директивы нет своего шаблона): хост остаётся
@@ -64,20 +60,11 @@ export class MarqueeText implements OnInit, OnDestroy {
   private readonly renderer = inject(Renderer2);
   private readonly innerEl = this.renderer.createElement('span') as HTMLSpanElement;
 
-  private readonly reduceMotion = toSignal(
-    inject(BreakpointObserver)
-      .observe('(prefers-reduced-motion: reduce)')
-      .pipe(map((state) => state.matches)),
-    { initialValue: false },
-  );
-
   private readonly hostWidthPx = signal(0);
   private readonly innerScrollWidthPx = signal(0);
 
   private readonly overflowPx = computed(() => this.innerScrollWidthPx() - this.hostWidthPx());
-  private readonly shouldAnimate = computed(
-    () => this.overflowPx() > OVERFLOW_THRESHOLD_PX && !this.reduceMotion(),
-  );
+  private readonly shouldAnimate = computed(() => this.overflowPx() > OVERFLOW_THRESHOLD_PX);
 
   private readonly travelMs = computed(
     () => (Math.max(0, this.overflowPx()) / SPEED_PX_PER_SEC) * 1000,
