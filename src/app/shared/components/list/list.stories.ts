@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { moduleMetadata } from '@storybook/angular-vite';
+import { componentWrapperDecorator, moduleMetadata } from '@storybook/angular-vite';
 
 import { List, ListItemData } from './list';
 
@@ -135,5 +135,41 @@ export const Loading: Story = {
     settings: { gap: 8 },
     loading: true,
     loaderSettings: { itemsCount: 5 },
+  },
+};
+
+// Компактный бар MainCarousel (stream.Front#150, реальная ширина ~300–360px)
+// — обёртка задаёт фиксированную узкую ширину, ListItem измеряет её сам
+// (ResizeObserver на .day-row) и растягивает главное тело/декор под неё, не
+// под захардкоженные 644px. Длинный текст в среднем сегменте демонстрирует
+// автопрокрутку (MarqueeText) — короткие сегменты (день/время) не скроллятся.
+export const CompactBar: Story = {
+  name: 'Компактный бар MainCarousel (узкий контейнер, stream.Front#150)',
+  decorators: [componentWrapperDecorator((story) => `<div style="width: 320px">${story}</div>`)],
+  args: {
+    items: [
+      {
+        id: 1,
+        segments: [
+          { text: 'Пн', width: '48px', align: 'right' },
+          {
+            text: 'Очень длинное название стрима, которое не помещается',
+            width: 1,
+            align: 'center',
+          },
+          { text: '20:00', width: '56px', align: 'right' },
+        ],
+        dividers: ['left', 'right'],
+      },
+      {
+        id: 2,
+        segments: [
+          { text: 'Оченьдлинныйник.Здесь', width: 1, align: 'center' },
+          { text: '79,816₴', width: '90px', align: 'right' },
+        ],
+        direction: 'right',
+      },
+    ],
+    settings: { gap: 8 },
   },
 };
