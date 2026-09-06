@@ -5,6 +5,7 @@
     <app-error-message />
   } @else {
     <app-list
+      class="schedule-widget__list"
       [items]="items()"
       [settings]="{ gap: 8 }"
       [loading]="isLoading()"
