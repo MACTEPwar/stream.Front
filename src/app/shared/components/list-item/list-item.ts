@@ -82,11 +82,23 @@ const SOLO_CENTER_SUBPLATE_WIDTH = 320;
 // друг под друга системами координат — расходились в размере и позиции.
 // Теперь используется ОДНА система: все текстовые/декоративные боксы
 // считаются последовательно (segmentBoxes() ниже) от одного и того же
-// левого края (START_TEXT_LEFT, ФИКСИРОВАННОГО — левая сторона не зависит
-// от ширины строки) до одного и того же правого (endTextRight(), см. ниже —
-// в отличие от START_TEXT_LEFT это уже РЕАКТИВНОЕ значение, растущее/
-// убывающее вместе с реально измеренной шириной строки).
-const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_SEGMENT_BASELINE_WIDTH_PX;
+// левого края (startTextLeft(), см. ниже) до одного и того же правого
+// (endTextRight(), см. ниже).
+//
+// На широкой раскладке — 56.75 (формула ниже, выведена под BASELINE-ширину
+// первого сегмента 48px, см. FIRST_SEGMENT_BASELINE_WIDTH_PX). На
+// компактной этот отступ не масштабируется вместе с шириной строки САМ ПО
+// СЕБЕ (в отличие от endTextRight()) — при узком дне/времени (26px,
+// ScheduleWidget, `stream.Front#150`) он оставался ровно тем же 56.75px,
+// вне зависимости от того, насколько сузили сам сегмент, из-за чего текст
+// на компактной ширине начинался с непропорционально большим отступом от
+// левого края (по прямому запросу пользователя — "чтобы начинался прям
+// сначала, как в HD"). START_TEXT_LEFT_COMPACT — тот же принцип, что
+// BOUNDARY_GAP_COMPACT: отдельное меньшее значение, включается тем же
+// признаком (isCompact()), а не пересчитывается непрерывно.
+const START_TEXT_LEFT_WIDE =
+  SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_SEGMENT_BASELINE_WIDTH_PX;
+const START_TEXT_LEFT_COMPACT = 32;
 
 // Зазор между соседними боксами — единый на любую границу (крайнюю или
 // внутреннюю), а не унаследованный из Schedule.svg асимметричный (там левый/
@@ -204,7 +216,7 @@ export interface ListItemSegment {
  *
  * Раскладка сегментов — абсолютным позиционированием (`segmentBoxes()`),
  * единая последовательная система координат для ВСЕХ сегментов сразу (от
- * `START_TEXT_LEFT` до `endTextRight()`) — по прямому запросу пользователя
+ * `startTextLeft()` до `endTextRight()`) — по прямому запросу пользователя
  * ("текст и подложка должны соответствовать"). Раньше текст и декор жили в
  * двух независимо подобранных системах координат (CSS `flex`/`inset`/`gap`
  * против координат из Schedule.svg) и расходились в размере/позиции —
@@ -258,6 +270,9 @@ export class ListItem {
   private readonly boundaryGap = computed(() =>
     this.isCompact() ? BOUNDARY_GAP_COMPACT : BOUNDARY_GAP_WIDE,
   );
+  private readonly startTextLeft = computed(() =>
+    this.isCompact() ? START_TEXT_LEFT_COMPACT : START_TEXT_LEFT_WIDE,
+  );
 
   constructor() {
     effect((onCleanup) => {
@@ -288,8 +303,9 @@ export class ListItem {
   // Правый край доступного сегментам пространства — РЕАКТИВНОЕ зеркало
   // прежней константы END_TEXT_RIGHT (598.75 при ширине 644, совпадает
   // 1:1: 644 − 0.25 − 101 + 56 = 598.75), но растёт/убывает вместе с
-  // rowWidthPx(). START_TEXT_LEFT (см. выше) — ПО-ПРЕЖНЕМУ константа: левый
-  // край строки никогда не двигается.
+  // rowWidthPx(), НЕПРЕРЫВНО. startTextLeft() (см. выше) — левый край строки
+  // не пересчитывается непрерывно вместе с шириной, но переключается между
+  // двумя значениями по isCompact() (тот же принцип, что boundaryGap()).
   protected readonly endTextRight = computed(() => {
     const rightEdgeX = this.rowWidthPx() - (DEFAULT_ROW_WIDTH_PX - STATIC_RIGHT_EDGE_X);
     return rightEdgeX - RIGHT_SUBPLATE_WIDTH + LAST_SEGMENT_BASELINE_WIDTH_PX;
@@ -301,14 +317,14 @@ export class ListItem {
   // пропорционально своим числам (та же арифметика, что настоящий CSS
   // `flex-grow` — по прямому уточнению пользователя обычно "резиновый"
   // сегмент только один, но формула корректна и для нескольких). Доступное
-  // место считается от START_TEXT_LEFT до endTextRight(), той же единой
+  // место считается от startTextLeft() до endTextRight(), той же единой
   // системы координат, что и у самих подложек — не отдельного CSS-инсета.
   protected readonly segmentWidthsPx = computed(() => {
     const segments = this.segments();
     if (segments.length < 2) return segments.map(() => 0);
 
     const gapTotal = (segments.length - 1) * this.boundaryGap();
-    const available = this.endTextRight() - START_TEXT_LEFT - gapTotal;
+    const available = this.endTextRight() - this.startTextLeft() - gapTotal;
 
     let fixedTotal = 0;
     let flexTotal = 0;
@@ -333,7 +349,7 @@ export class ListItem {
 
   // Единственный сегмент (N=1) — та же ЦЕНТРАЛЬНАЯ подложка, что и раньше
   // (SOLO_CENTER_SUBPLATE_X/WIDTH — исходные, "натуральные" координаты из
-  // /kit), НО зажатая в доступное строке пространство (START_TEXT_LEFT..
+  // /kit), НО зажатая в доступное строке пространство (startTextLeft()..
   // endTextRight()): на дефолтной (644, ещё не измеренной) ширине доступного
   // места хватает с запасом — клэмп ничего не меняет, отдаёт буквально
   // 169.75/320 (используется юнит-тестами). На реально узком компактном баре
@@ -347,17 +363,17 @@ export class ListItem {
     const clampedRight = Math.min(naturalRight, availableRight);
     const x = Math.min(
       SOLO_CENTER_SUBPLATE_X,
-      Math.max(START_TEXT_LEFT, clampedRight - SOLO_CENTER_SUBPLATE_WIDTH),
+      Math.max(this.startTextLeft(), clampedRight - SOLO_CENTER_SUBPLATE_WIDTH),
     );
     return { x, width: Math.max(0, clampedRight - x) };
   });
 
   // Бокс (x/width) каждого сегмента — единственный источник истины и для
-  // текста, и для подложки: последовательно, от START_TEXT_LEFT, ширина
+  // текста, и для подложки: последовательно, от startTextLeft(), ширина
   // каждого — ровно его "логическая" ширина (segmentWidthsPx()), без
   // поправок по роли. Крайние боксы автоматически стыкуются своим ПРАВЫМ
   // (первый) / ЛЕВЫМ (последний) краем с реальным краем подложки при любой
-  // ширине — это гарантирует сама формула START_TEXT_LEFT/endTextRight()
+  // ширине — это гарантирует сама формула startTextLeft()/endTextRight()
   // (обе выведены так, что box.x±box.width всегда алгебраически совпадает
   // с SUBPLATE_ANCHOR_X+SUBPLATE_BODY_WIDTH+firstSegmentShiftPx() и
   // симметричным выражением справа — см. firstSegmentShiftPx()/
@@ -370,7 +386,7 @@ export class ListItem {
     }
     const widths = this.segmentWidthsPx();
     const boxes: { x: number; width: number }[] = [];
-    let cursor = START_TEXT_LEFT;
+    let cursor = this.startTextLeft();
     for (const width of widths) {
       const boxWidth = width ?? 0;
       boxes.push({ x: cursor, width: boxWidth });

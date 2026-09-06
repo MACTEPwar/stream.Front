@@ -22,6 +22,10 @@ const LAST_BASELINE = 56;
 // же принципу, что и anchoredScale() ниже: считать ожидаемые значения ТОЙ
 // ЖЕ формулой, не хардкодить округлённые вручную десятичные.
 const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_BASELINE;
+// Компактный левый край (list-item.ts, START_TEXT_LEFT_COMPACT) — включается
+// тем же признаком, что и BOUNDARY_GAP_COMPACT (реально измеренная ширина
+// строки меньше DEFAULT_ROW_WIDTH_PX).
+const START_TEXT_LEFT_COMPACT = 32;
 const END_TEXT_RIGHT = RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_BASELINE;
 const BOUNDARY_GAP = 54;
 // Компактный gap (list-item.ts, BOUNDARY_GAP_COMPACT) — включается, когда
@@ -49,9 +53,13 @@ function anchoredScale(anchor: number, scale: number): string {
 
 function computeSegmentBoxes(
   widths: (number | string | undefined)[],
+  options: { startTextLeft?: number; gap?: number; endTextRight?: number } = {},
 ): { x: number; width: number }[] {
-  const gapTotal = (widths.length - 1) * BOUNDARY_GAP;
-  const available = END_TEXT_RIGHT - START_TEXT_LEFT - gapTotal;
+  const startTextLeft = options.startTextLeft ?? START_TEXT_LEFT;
+  const gap = options.gap ?? BOUNDARY_GAP;
+  const endTextRight = options.endTextRight ?? END_TEXT_RIGHT;
+  const gapTotal = (widths.length - 1) * gap;
+  const available = endTextRight - startTextLeft - gapTotal;
   let fixedTotal = 0;
   let flexTotal = 0;
   const parsed = widths.map((width) => {
@@ -73,11 +81,11 @@ function computeSegmentBoxes(
   );
 
   const boxes: { x: number; width: number }[] = [];
-  let cursor = START_TEXT_LEFT;
+  let cursor = startTextLeft;
   for (const width of logicalWidths) {
     const boxWidth = width ?? 0;
     boxes.push({ x: cursor, width: boxWidth });
-    cursor += boxWidth + BOUNDARY_GAP;
+    cursor += boxWidth + gap;
   }
   return boxes;
 }
@@ -880,9 +888,13 @@ describe('ListItem', () => {
       const match = /translate\(([-\d.]+) 0\)/.exec(transform);
       const actualCenterX = Number(match?.[1]) + LEFT_ORNAMENT_CENTER_X;
 
-      // Ширина строки (500) < DEFAULT_ROW_WIDTH_PX — компонент переключается
-      // на BOUNDARY_GAP_COMPACT (list-item.ts, boundaryGap()), не на "широкий" 54.
-      const boxes = computeSegmentBoxes(['60px', 1, '60px']);
+      // Ширина строки (500) < DEFAULT_ROW_WIDTH_PX — компонент переключается на
+      // BOUNDARY_GAP_COMPACT/START_TEXT_LEFT_COMPACT (list-item.ts, boundaryGap()/
+      // startTextLeft()), не на "широкие" значения.
+      const boxes = computeSegmentBoxes(['60px', 1, '60px'], {
+        startTextLeft: START_TEXT_LEFT_COMPACT,
+        gap: BOUNDARY_GAP_COMPACT,
+      });
       const rawDividerX = boxes[0].x + boxes[0].width + BOUNDARY_GAP_COMPACT / 2;
       expect(actualCenterX).toBeCloseTo(500 - rawDividerX, 5);
     });
@@ -899,8 +911,10 @@ describe('ListItem', () => {
       const x = Number(centerRect?.getAttribute('x'));
       const width = Number(centerRect?.getAttribute('width'));
 
+      // Ширина строки (300) < DEFAULT_ROW_WIDTH_PX — soloBox() зажимается в
+      // startTextLeft() компактного значения (32), не широкого (56.75).
       expect(width).toBeGreaterThan(0);
-      expect(x).toBeGreaterThanOrEqual(START_TEXT_LEFT);
+      expect(x).toBeGreaterThanOrEqual(START_TEXT_LEFT_COMPACT);
       expect(x + width).toBeLessThanOrEqual(endTextRightAt(300) + 1e-9);
       // Реально уже "натуральных" 169.75/320 — клэмп подействовал (регрессия:
       // раньше подложка стояла на этих координатах безусловно и заезжала за
