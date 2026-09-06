@@ -1,9 +1,37 @@
 @use 'variables' as vars;
+@use 'breakpoints' as bp;
 
 // Оценочно по скриншотам реального макета — точных значений отступов
 // в Figma-экспорте нет (абсолютные координаты экспортером не отдаются).
 $content-offset: 64px;
 $transition-duration: 0.4s;
+
+// Высота таймлайна внизу экрана (`.main-carousel__segment` ниже) — вынесена
+// в переменную, чтобы нижний компактный бар (`--compact-bottom`) не наезжал
+// на него, не задваивая магическое число.
+$timeline-height: 10px;
+
+// Высота компактной шапки (`Shell`, `bp.small`) — НЕ измеряется в рантайме,
+// а взята из `shell.scss`/`decorative-button.scss` (`stream.Front#150`):
+// `.shell__header` даёт `padding: 12px 6px` (12px сверху/снизу), а самый
+// высокий ребёнок `.shell__header-row` в компактном виде — декоративная
+// кнопка (`decorative-button.scss`, `$svg-height: 48px`, высота не зависит
+// от `iconSize`/текстового варианта). 12 + 48 + 12 = 72px. Держится
+// синхронной с `shell.scss` вручную, тем же приёмом, что и
+// `_breakpoints.scss`/`breakpoints.ts`.
+$compact-header-height: 72px;
+
+// Зазор между компактным баром виджета и соседом (шапкой сверху/таймлайном
+// снизу) — решение этой задачи, не Figma-величина (макетов компактной
+// главной нет, см. JSDoc `MainCarousel`).
+$compact-bar-gap: 16px;
+
+// Подложка компактного бара (`СЛД-Ф-08`) — единственное место в проекте, где
+// она реализована: на широкой раскладке бар остаётся без подложки (как и
+// сейчас), добавление её сюда — только компактный случай, чтобы не создавать
+// визуальную регрессию на `large` (`Г-1`).
+$compact-bar-background: rgba(vars.$color-0d004d, 0.55);
+$compact-bar-blur: 12px;
 
 .main-carousel {
   position: fixed;
@@ -11,6 +39,12 @@ $transition-duration: 0.4s;
   z-index: 0;
   overflow: hidden;
   background: radial-gradient(circle, vars.$color-1e00b2 0%, vars.$color-0d004d 100%);
+  // Позволяет браузеру нативно обрабатывать вертикальный скролл (если он
+  // появится, `АДП-Ф-18`) на touch-устройствах, оставляя горизонтальный жест
+  // JS-обработчикам свайпа (`onSwipeStart`, main-carousel.ts) — без этого
+  // touch-браузер мог бы попытаться сам проскроллить/отбросить жест ещё до
+  // того, как JS успеет определить его направление.
+  touch-action: pan-y;
 }
 
 .main-carousel__slide {
@@ -124,6 +158,52 @@ $transition-duration: 0.4s;
   transform: translateX(-100%);
 }
 
+// Компактная раскладка (`СЛД-Ф-10`, `СЛД-Ф-11`) — бар растянут на всю ширину
+// экрана и прижат к верхнему/нижнему краю вместо угла. `--compact-top`/
+// `--compact-bottom` — модификаторы, ОТДЕЛЬНЫЕ от угловых (`--bottom-left`/
+// `--bottom-right` выше): позиция в компактной раскладке не соответствует
+// исходному углу 1:1 (см. таблицу позиций, `specs/03-main/spec.md`) —
+// «Расписание» (bottom-right на широкой) и «Топ донатеров» (bottom-left на
+// широкой) оба переезжают в ОДНУ и ту же верхнюю позицию, а «Соц. сети»
+// (bottom-left) остаётся внизу — угловые классы не могут выразить это сами
+// по себе. Идут ПОСЛЕ угловых правил выше в исходном коде — та же
+// специфичность, побеждают порядком объявления.
+@include bp.small {
+  .main-carousel__content--compact-top,
+  .main-carousel__content--compact-bottom {
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 12px 24px;
+    background: $compact-bar-background;
+    backdrop-filter: blur($compact-bar-blur);
+    -webkit-backdrop-filter: blur($compact-bar-blur);
+    box-sizing: border-box;
+  }
+
+  .main-carousel__content--compact-top {
+    top: $compact-header-height + $compact-bar-gap;
+    bottom: auto;
+  }
+
+  .main-carousel__content--compact-bottom {
+    bottom: $timeline-height + $compact-bar-gap;
+    top: auto;
+  }
+
+  // Уезжает по горизонтали в сторону своего компактного края собственной
+  // (уже full-width) ширины — тот же приём, что и на широкой раскладке
+  // (`.main-carousel__slide:not(.main-carousel__slide--active) …` выше),
+  // просто с полной шириной экрана вместо ширины по содержимому.
+  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--compact-top {
+    transform: translateX(-100%);
+  }
+
+  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--compact-bottom {
+    transform: translateX(100%);
+  }
+}
+
 .main-carousel__arrow {
   position: absolute;
   top: 50%;
@@ -135,6 +215,12 @@ $transition-duration: 0.4s;
   background: transparent;
   cursor: pointer;
   z-index: 1;
+
+  // На компактной раскладке навигация — свайп, не стрелки (`СЛД-Ф-06`,
+  // `MainCarousel.onSwipeStart`).
+  @include bp.small {
+    display: none;
+  }
 }
 
 .main-carousel__arrow--prev {
@@ -162,7 +248,7 @@ $transition-duration: 0.4s;
 // поверх фона карусели, alpha убывает); фон/индикатор — см. ниже.
 .main-carousel__segment {
   flex: 1;
-  height: 10px;
+  height: $timeline-height;
   background: rgba(255, 255, 255, 0.4);
   overflow: hidden;
 }

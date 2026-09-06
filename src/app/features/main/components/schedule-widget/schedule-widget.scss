@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 // margin-right компенсирует $content-offset (64px) слота mainCarouselSlide0BottomRight
 // в MainCarousel — по мокапу «Расписание» стоит впритык к правому краю слайда, в
 // отличие от остальных 3 углов (общий отступ там сохраняется под будущие Donators/Social).
@@ -20,4 +22,20 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+}
+
+// На компактной раскладке (`stream.Front#150`) виджет переезжает в бар на всю
+// ширину экрана (см. `MainCarousel`, `--compact-top`) — угловые компенсации
+// выше были нужны только для прижатия к правому краю широкого макета, в баре
+// они лишь сдвигали бы контент за пределы паддинга бара. Идёт ПОСЛЕ базовых
+// правил — та же специфичность, побеждает порядком объявления.
+@include bp.small {
+  .schedule-widget {
+    align-items: flex-start;
+    margin-right: 0;
+  }
+
+  .schedule-widget__title {
+    margin-right: 0;
+  }
 }
