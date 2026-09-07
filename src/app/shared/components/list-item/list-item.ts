@@ -379,6 +379,18 @@ export class ListItem {
   // симметричным выражением справа — см. firstSegmentShiftPx()/
   // lastSegmentShiftPx() ниже, тождество не требует отдельной поправки).
   // При N=1 границ нет — soloBox() выше.
+  //
+  // ИСКЛЮЧЕНИЕ для последнего бокса на компактной ширине (ниже, после
+  // цикла): endTextRight() стыкует его строго с началом декоративного
+  // наконечника (та же логика, что и на широкой раскладке) — но сам
+  // наконечник декоративный, ЗАЛИТ тем же фоном пилюли, и на узком баре
+  // после него остаётся заметная пустая полоса до реального правого края
+  // строки (по прямому запросу пользователя, скриншот реального рендера —
+  // "можно поставить посредине относительно области, которую я выделил").
+  // Поэтому именно текстовый бокс (не сама SVG-геометрия наконечника,
+  // firstSegmentShiftPx()/lastSegmentShiftPx() её не трогают) центруется в
+  // оставшемся месте до rowWidthPx() — разъезжается с формальной "стыковкой
+  // с подложкой" из комментария выше, но только для этого случая.
   protected readonly segmentBoxes = computed(() => {
     const segments = this.segments();
     if (segments.length === 1) {
@@ -391,6 +403,11 @@ export class ListItem {
       const boxWidth = width ?? 0;
       boxes.push({ x: cursor, width: boxWidth });
       cursor += boxWidth + this.boundaryGap();
+    }
+    if (this.isCompact()) {
+      const last = boxes[boxes.length - 1];
+      const trailingSpace = this.rowWidthPx() - last.x - last.width;
+      last.x += trailingSpace / 2;
     }
     return boxes;
   });

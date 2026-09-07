@@ -899,6 +899,53 @@ describe('ListItem', () => {
       expect(actualCenterX).toBeCloseTo(500 - rawDividerX, 5);
     });
 
+    it('последний сегмент на компактной ширине центруется в оставшемся месте до фактического правого края строки, не флаш к наконечнику — по прямому запросу пользователя (скриншот реального рендера)', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(500);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const segments = el.querySelectorAll<HTMLElement>('.day-row__segment');
+      const lastSegment = segments[segments.length - 1];
+      const actualX = Number(
+        /left:\s*([\d.]+)px/.exec(lastSegment.getAttribute('style') ?? '')?.[1],
+      );
+
+      const flushBoxes = computeSegmentBoxes(['60px', 1, '60px'], {
+        startTextLeft: START_TEXT_LEFT_COMPACT,
+        gap: BOUNDARY_GAP_COMPACT,
+        endTextRight: endTextRightAt(500),
+      });
+      const flushLast = flushBoxes[flushBoxes.length - 1];
+      const trailingSpace = 500 - flushLast.x - flushLast.width;
+      const expectedX = flushLast.x + trailingSpace / 2;
+
+      expect(actualX).toBeCloseTo(expectedX, 5);
+      // Ширина бокса не меняется — центрирование сдвигает только позицию.
+      const widthMatch = Number(
+        /width:\s*([\d.]+)px/.exec(lastSegment.getAttribute('style') ?? '')?.[1],
+      );
+      expect(widthMatch).toBeCloseTo(flushLast.width, 5);
+    });
+
+    it('ширина не изменилась относительно дефолтной (644) — последний сегмент остаётся флаш к наконечнику, центрирование не включается', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(644);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const segments = el.querySelectorAll<HTMLElement>('.day-row__segment');
+      const lastSegment = segments[segments.length - 1];
+      const actualX = Number(
+        /left:\s*([\d.]+)px/.exec(lastSegment.getAttribute('style') ?? '')?.[1],
+      );
+
+      const boxes = computeSegmentBoxes(['60px', 1, '60px']);
+      expect(actualX).toBeCloseTo(boxes[boxes.length - 1].x, 5);
+    });
+
     it('1 сегмент (соло-подложка скелетон-лоадера) на узкой измеренной ширине — зажимается в доступное пространство, не заезжает за фактический правый край', () => {
       const fixture = TestBed.createComponent(ListItemHost);
       fixture.componentInstance.segments.set([{ text: '' }]);
