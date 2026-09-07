@@ -1,17 +1,27 @@
-<div class="day-row" [class.day-row--mirrored]="direction() === 'right'">
+<div class="day-row" [class.day-row--mirrored]="direction() === 'right'" #rowEl>
   <svg
     class="day-row__svg"
-    width="644"
+    [attr.width]="rowWidthPx()"
     height="58"
-    viewBox="-2 0 648 58"
+    [attr.viewBox]="viewBox()"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     shape-rendering="geometricPrecision"
   >
     <g [attr.filter]="'url(#filter0_d-' + uid + ')'">
+      <!-- Главное тело пилюли (заливка) — 2-slice (list-item.ts, FILL_BODY_ANCHOR_X):
+           остриё слева (x<=26.7501) статично, прямая часть (x>=26.7501) растягивается
+           вправо анкором в 26.7501 до фактического правого края строки (fillBodyTransform()). -->
       <path
         d="M643.75 3H26.7501C23.6025 3 20.6386 4.48194 18.7501 7L6.00006 24C4.66675 25.7778 4.66675 28.2222 6.00006 30L18.7501 47C20.6386 49.5181 23.6025 51 26.7501 51H643.75V3Z"
         [attr.fill]="'url(#paint0_linear-' + uid + ')'"
+        [attr.clip-path]="'url(#clip-fill-tip-' + uid + ')'"
+      />
+      <path
+        d="M643.75 3H26.7501C23.6025 3 20.6386 4.48194 18.7501 7L6.00006 24C4.66675 25.7778 4.66675 28.2222 6.00006 30L18.7501 47C20.6386 49.5181 23.6025 51 26.7501 51H643.75V3Z"
+        [attr.fill]="'url(#paint0_linear-' + uid + ')'"
+        [attr.clip-path]="'url(#clip-fill-body-' + uid + ')'"
+        [attr.transform]="fillBodyTransform()"
       />
 
       <!-- Разделитель — после каждого сегмента, кроме последнего (dividerInstances(),
@@ -24,10 +34,21 @@
       @for (instance of dividerInstances(); track $index) {
         @if (instance.type === 'left') {
           <g opacity="0.35" [attr.filter]="'url(#filter2_d-' + uid + ')'">
-            <mask [attr.id]="'mask-left-' + uid + '-' + $index" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="115" y="4" width="39" height="46">
+            <mask
+              [attr.id]="'mask-left-' + uid + '-' + $index"
+              style="mask-type: alpha"
+              maskUnits="userSpaceOnUse"
+              x="115"
+              y="4"
+              width="39"
+              height="46"
+            >
               <rect x="115.75" y="4" width="38" height="46" fill="#D9D9D9" />
             </mask>
-            <g [attr.mask]="'url(#mask-left-' + uid + '-' + $index + ')'" [attr.transform]="leftOrnamentTransform(instance.x)">
+            <g
+              [attr.mask]="'url(#mask-left-' + uid + '-' + $index + ')'"
+              [attr.transform]="leftOrnamentTransform(instance.x)"
+            >
               <path
                 fill-rule="evenodd"
                 clip-rule="evenodd"
@@ -38,10 +59,21 @@
           </g>
         } @else if (instance.type === 'right') {
           <g opacity="0.35" [attr.filter]="'url(#filter1_d-' + uid + ')'">
-            <mask [attr.id]="'mask-right-' + uid + '-' + $index" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="505" y="4" width="39" height="46">
+            <mask
+              [attr.id]="'mask-right-' + uid + '-' + $index"
+              style="mask-type: alpha"
+              maskUnits="userSpaceOnUse"
+              x="505"
+              y="4"
+              width="39"
+              height="46"
+            >
               <rect width="38" height="46" transform="matrix(-1 0 0 1 543.75 4)" fill="#D9D9D9" />
             </mask>
-            <g [attr.mask]="'url(#mask-right-' + uid + '-' + $index + ')'" [attr.transform]="rightOrnamentTransform(instance.x)">
+            <g
+              [attr.mask]="'url(#mask-right-' + uid + '-' + $index + ')'"
+              [attr.transform]="rightOrnamentTransform(instance.x)"
+            >
               <path
                 fill-rule="evenodd"
                 clip-rule="evenodd"
@@ -71,10 +103,20 @@
         />
       }
 
+      <!-- Обводка главного тела — тот же 2-slice, что и заливка выше, свои
+           (чуть более узкие) якорь/правый край (STROKE_BODY_ANCHOR_X=26.75,
+           list-item.ts). -->
       <g [attr.filter]="'url(#filter3_d-' + uid + ')'">
         <path
           d="M26.75 3.5C23.7599 3.5 20.9445 4.90784 19.1504 7.2998L6.40039 24.2998C5.20041 25.8998 5.20041 28.1002 6.40039 29.7002L19.1504 46.7002C20.9445 49.0922 23.7599 50.5 26.75 50.5H643.25V3.5H26.75Z"
           [attr.stroke]="'url(#paint4_linear-' + uid + ')'"
+          [attr.clip-path]="'url(#clip-stroke-tip-' + uid + ')'"
+        />
+        <path
+          d="M26.75 3.5C23.7599 3.5 20.9445 4.90784 19.1504 7.2998L6.40039 24.2998C5.20041 25.8998 5.20041 28.1002 6.40039 29.7002L19.1504 46.7002C20.9445 49.0922 23.7599 50.5 26.75 50.5H643.25V3.5H26.75Z"
+          [attr.stroke]="'url(#paint4_linear-' + uid + ')'"
+          [attr.clip-path]="'url(#clip-stroke-body-' + uid + ')'"
+          [attr.transform]="strokeBodyTransform()"
         />
       </g>
 
@@ -158,13 +200,27 @@
     </g>
 
     <defs>
-      <!-- clip-subplate-*/clip-border-* — статично большие (не завязаны на firstSegmentShiftPx()),
-           разбивают подложку/границу на фиксированную и растягиваемую часть, см. list-item.ts. -->
+      <!-- clip-subplate-*/clip-border-*/clip-fill-*/clip-stroke-* — статично большие
+           (не завязаны на firstSegmentShiftPx()/rowWidthDeltaPx()), разбивают
+           подложку/границу/главное тело на фиксированную и растягиваемую часть,
+           см. list-item.ts. -->
       <clipPath [attr.id]="'clip-subplate-tip-' + uid">
         <rect x="-5000" y="-5000" width="5015" height="10000" />
       </clipPath>
       <clipPath [attr.id]="'clip-subplate-body-' + uid">
         <rect x="15" y="-5000" width="5000" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-fill-tip-' + uid">
+        <rect x="-5000" y="-5000" width="5026.7501" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-fill-body-' + uid">
+        <rect x="26.7501" y="-5000" width="5000" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-stroke-tip-' + uid">
+        <rect x="-5000" y="-5000" width="5026.75" height="10000" />
+      </clipPath>
+      <clipPath [attr.id]="'clip-stroke-body-' + uid">
+        <rect x="26.75" y="-5000" width="5000" height="10000" />
       </clipPath>
       <clipPath [attr.id]="'clip-border-straight-' + uid">
         <rect x="-5000" y="-5000" width="5105.75" height="10000" />
@@ -178,9 +234,26 @@
       <clipPath [attr.id]="'clip-right-border-hook-' + uid">
         <rect x="-5000" y="-5000" width="5552.75" height="10000" />
       </clipPath>
-      <filter [attr.id]="'filter0_d-' + uid" x="-1.25" y="0" width="650" height="58" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <!-- filter0_d region — статично увеличен (та же причина, что у filter1_d/2_d/5_d
+           ниже): оборачивает ВСЁ содержимое строки, включая главное тело (теперь тянется
+           под реальную ширину, не только 644, см. fillBodyTransform()/list-item.ts) —
+           исходный (узкий) регион обрезал бы его на широкой строке. -->
+      <filter
+        [attr.id]="'filter0_d-' + uid"
+        x="-2000"
+        y="0"
+        width="6000"
+        height="58"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
         <feFlood flood-opacity="0" result="BackgroundImageFix" />
-        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
         <feOffset dy="2" />
         <feGaussianBlur stdDeviation="2.5" />
         <feComposite in2="hardAlpha" operator="out" />
@@ -188,9 +261,22 @@
         <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
         <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
       </filter>
-      <filter [attr.id]="'filter1_d-' + uid" x="-2000" y="2" width="3000" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <filter
+        [attr.id]="'filter1_d-' + uid"
+        x="-2000"
+        y="2"
+        width="3000"
+        height="52"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
         <feFlood flood-opacity="0" result="BackgroundImageFix" />
-        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
         <feOffset dy="1" />
         <feGaussianBlur stdDeviation="1.5" />
         <feComposite in2="hardAlpha" operator="out" />
@@ -202,9 +288,22 @@
            содержимое сдвигается (разделители — по всей ширине строки через segmentBoxes(),
            filter5_d — вместе с подложкой через firstSegmentShiftPx()), исходный (узкий) регион
            обрезал бы декор при сдвиге. -->
-      <filter [attr.id]="'filter2_d-' + uid" x="-1000" y="2" width="3000" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <filter
+        [attr.id]="'filter2_d-' + uid"
+        x="-1000"
+        y="2"
+        width="3000"
+        height="52"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
         <feFlood flood-opacity="0" result="BackgroundImageFix" />
-        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
         <feOffset dy="1" />
         <feGaussianBlur stdDeviation="1.5" />
         <feComposite in2="hardAlpha" operator="out" />
@@ -212,9 +311,24 @@
         <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
         <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
       </filter>
-      <filter [attr.id]="'filter3_d-' + uid" x="2" y="1" width="644.75" height="54" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <!-- filter3_d region — та же причина, что filter0_d выше: оборачивает обводку
+           главного тела, теперь растягивающуюся под реальную ширину строки. -->
+      <filter
+        [attr.id]="'filter3_d-' + uid"
+        x="-2000"
+        y="1"
+        width="6000"
+        height="54"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
         <feFlood flood-opacity="0" result="BackgroundImageFix" />
-        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
         <feOffset dy="1" />
         <feGaussianBlur stdDeviation="1.5" />
         <feComposite in2="hardAlpha" operator="out" />
@@ -222,9 +336,22 @@
         <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
         <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
       </filter>
-      <filter [attr.id]="'filter4_d-' + uid" x="-2000" y="2" width="3000" height="52.0001" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <filter
+        [attr.id]="'filter4_d-' + uid"
+        x="-2000"
+        y="2"
+        width="3000"
+        height="52.0001"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
         <feFlood flood-opacity="0" result="BackgroundImageFix" />
-        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
         <feOffset dy="1" />
         <feGaussianBlur stdDeviation="1.5" />
         <feComposite in2="hardAlpha" operator="out" />
@@ -232,9 +359,22 @@
         <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
         <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
       </filter>
-      <filter [attr.id]="'filter5_d-' + uid" x="-1000" y="2" width="3000" height="52.0001" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <filter
+        [attr.id]="'filter5_d-' + uid"
+        x="-1000"
+        y="2"
+        width="3000"
+        height="52.0001"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
         <feFlood flood-opacity="0" result="BackgroundImageFix" />
-        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
         <feOffset dy="1" />
         <feGaussianBlur stdDeviation="1.5" />
         <feComposite in2="hardAlpha" operator="out" />
@@ -243,15 +383,36 @@
         <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
       </filter>
 
-      <linearGradient [attr.id]="'paint0_linear-' + uid" x1="3.75006" y1="27" x2="643.75" y2="27" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        [attr.id]="'paint0_linear-' + uid"
+        x1="3.75006"
+        y1="27"
+        x2="643.75"
+        y2="27"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop stop-color="#0048D7" stop-opacity="0.35" />
         <stop offset="1" stop-color="#0048D7" stop-opacity="0" />
       </linearGradient>
-      <linearGradient [attr.id]="'paint1_linear-' + uid" x1="543.75" y1="27" x2="506.75" y2="27" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        [attr.id]="'paint1_linear-' + uid"
+        x1="543.75"
+        y1="27"
+        x2="506.75"
+        y2="27"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop stop-color="#F8ECB2" />
         <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
       </linearGradient>
-      <linearGradient [attr.id]="'paint2_linear-' + uid" x1="115.75" y1="27" x2="152.75" y2="27" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        [attr.id]="'paint2_linear-' + uid"
+        x1="115.75"
+        y1="27"
+        x2="152.75"
+        y2="27"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop stop-color="#F8ECB2" />
         <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
       </linearGradient>
@@ -266,7 +427,14 @@
         <stop stop-opacity="0" />
         <stop offset="1" stop-opacity="0.25" />
       </radialGradient>
-      <linearGradient [attr.id]="'paint4_linear-' + uid" x1="3.75" y1="26.9998" x2="643.75" y2="26.9998" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        [attr.id]="'paint4_linear-' + uid"
+        x1="3.75"
+        y1="26.9998"
+        x2="643.75"
+        y2="26.9998"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop stop-color="#F7ECB2" />
         <stop offset="0.513912" stop-color="#F7ECB2" stop-opacity="0.25" />
         <stop offset="0.817708" stop-color="#F7ECB2" stop-opacity="0.38" />
@@ -296,11 +464,25 @@
           <stop offset="1" stop-opacity="0" />
         </radialGradient>
       }
-      <linearGradient [attr.id]="'paint7_linear-' + uid" x1="643.255" y1="46.5" x2="543.25" y2="46.5" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        [attr.id]="'paint7_linear-' + uid"
+        x1="643.255"
+        y1="46.5"
+        x2="543.25"
+        y2="46.5"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop stop-color="#F8ECB2" />
         <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
       </linearGradient>
-      <linearGradient [attr.id]="'paint8_linear-' + uid" x1="15.2451" y1="46.5" x2="115.25" y2="46.5" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        [attr.id]="'paint8_linear-' + uid"
+        x1="15.2451"
+        y1="46.5"
+        x2="115.25"
+        y2="46.5"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop stop-color="#F8ECB2" />
         <stop offset="1" stop-color="#F8ECB2" stop-opacity="0.1" />
       </linearGradient>
@@ -327,7 +509,8 @@
         [style.textAlign]="segment.align ?? 'left'"
         [style.justifyContent]="segmentJustifyContent(segment.align)"
         [style.color]="segment.color ?? '#F9F9F9'"
-      >{{ segment.text }}</span>
+        [appMarqueeText]="segment.text"
+      ></span>
     }
   </div>
 </div>

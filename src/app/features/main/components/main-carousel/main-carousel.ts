@@ -1,10 +1,29 @@
-import { Component, OnDestroy, OnInit, input, signal } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+
+import { SMALL_QUERY } from '@shared/utils/breakpoints';
 
 const SLIDE_COUNT = 2;
 const SLIDE_DURATION_MS = 10000;
 const TICK_MS = 50;
 
+/**
+ * Минимальное смещение указателя (в любую сторону), после которого жест
+ * классифицируется как горизонтальный свайп или вертикальный скролл —
+ * отличает намеренный жест от дрожания пальца/случайного касания
+ * (`СЛД-Ф-07`). Пока смещение меньше порога по обеим осям, направление не
+ * определено и `pointermove` ничего не делает.
+ */
+const SWIPE_DIRECTION_THRESHOLD_PX = 10;
+
+/** Минимальное горизонтальное смещение, переключающее слайд по `pointerup`. */
+const SWIPE_TRIGGER_PX = 50;
+
 export type MainCarouselImagePosition = 'left' | 'center' | 'right';
+
+type SwipeDirection = 'horizontal' | 'vertical';
 
 /**
  * Открытые вопросы (stream.Front#28): источник фоновых hero-изображений
@@ -20,6 +39,23 @@ export type MainCarouselImagePosition = 'left' | 'center' | 'right';
  * Автопрокрутка: 10 секунд на слайд (зациклена), таймлайн внизу показывает
  * прогресс текущего слайда в реальном времени; ручная навигация (стрелки/
  * `goTo`) сбрасывает отсчёт.
+ *
+ * **Компактная раскладка (`stream.Front#150`, `СЛД` в `specs/03-main/spec.md`)**
+ * — стрелки скрыты чисто CSS-ом (`main-carousel.scss`, `bp.small`), ручное
+ * переключение вместо них — горизонтальный свайп по всей области карусели.
+ * `isCompact` (`BreakpointObserver`/`SMALL_QUERY`, тот же приём, что
+ * `Shell`/`NewsPage`) гейтит обработчики свайпа: жест имеет смысл только на
+ * компактной раскладке (на широкой уже есть стрелки, `СЛД-Ф-05`/`СЛД-Ф-06`).
+ * Логика жеста — тот же паттерн, что `PinnedGridEditor.onPointerDown`:
+ * `pointerdown` на компоненте стартует отслеживание, `pointermove`/
+ * `pointerup`/`pointercancel` вешаются на `window` через `AbortController` (не
+ * теряют жест, если палец уходит за пределы карусели) и снимаются по
+ * завершении жеста или при уничтожении компонента. Направление определяется
+ * один раз за жест, как только смещение по одной из осей превышает
+ * `SWIPE_DIRECTION_THRESHOLD_PX` — только «horizontal» подавляет
+ * `preventDefault()`-ом дальнейшую нативную обработку, «vertical» жест
+ * оставляется браузеру нетронутым (`АДП-Ф-18`, вертикальный скролл, если он
+ * появится, не перехватывается).
  */
 @Component({
   selector: 'app-main-carousel',
@@ -37,8 +73,20 @@ export class MainCarousel implements OnInit, OnDestroy {
   /** Доля пройденного времени текущего слайда, 0..1. */
   readonly progress = signal(0);
 
+  private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly isCompact = toSignal(
+    this.breakpointObserver.observe(SMALL_QUERY).pipe(map((state) => state.matches)),
+    { initialValue: false },
+  );
+
   private elapsedMs = 0;
   private timerId: ReturnType<typeof setInterval> | undefined;
+
+  private activePointerId: number | null = null;
+  private swipeStartX = 0;
+  private swipeDirection: SwipeDirection | null = null;
 
   ngOnInit(): void {
     this.timerId = setInterval(() => this.tick(), TICK_MS);
@@ -61,6 +109,75 @@ export class MainCarousel implements OnInit, OnDestroy {
   goTo(index: number): void {
     this.activeIndex.set(index);
     this.resetTimer();
+  }
+
+  protected onSwipeStart(event: PointerEvent): void {
+    if (!this.isCompact() || this.activePointerId !== null) {
+      return;
+    }
+
+    this.activePointerId = event.pointerId;
+    this.swipeStartX = event.clientX;
+    this.swipeDirection = null;
+
+    const startY = event.clientY;
+    const controller = new AbortController();
+    window.addEventListener('pointermove', (moveEvent) => this.onSwipeMove(moveEvent, startY), {
+      signal: controller.signal,
+    });
+    window.addEventListener('pointerup', (upEvent) => this.onSwipeEnd(upEvent, controller), {
+      signal: controller.signal,
+    });
+    window.addEventListener('pointercancel', () => this.endSwipe(controller), {
+      signal: controller.signal,
+    });
+    this.destroyRef.onDestroy(() => controller.abort());
+  }
+
+  private onSwipeMove(event: PointerEvent, startY: number): void {
+    if (event.pointerId !== this.activePointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - this.swipeStartX;
+    const deltaY = event.clientY - startY;
+
+    if (this.swipeDirection === null) {
+      if (
+        Math.abs(deltaX) < SWIPE_DIRECTION_THRESHOLD_PX &&
+        Math.abs(deltaY) < SWIPE_DIRECTION_THRESHOLD_PX
+      ) {
+        return;
+      }
+      this.swipeDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
+    }
+
+    if (this.swipeDirection === 'horizontal') {
+      event.preventDefault();
+    }
+  }
+
+  private onSwipeEnd(event: PointerEvent, controller: AbortController): void {
+    if (event.pointerId !== this.activePointerId) {
+      return;
+    }
+
+    if (this.swipeDirection === 'horizontal') {
+      const deltaX = event.clientX - this.swipeStartX;
+      if (deltaX <= -SWIPE_TRIGGER_PX) {
+        this.next();
+      } else if (deltaX >= SWIPE_TRIGGER_PX) {
+        this.prev();
+      }
+    }
+
+    this.endSwipe(controller);
+  }
+
+  private endSwipe(controller: AbortController): void {
+    controller.abort();
+    this.activePointerId = null;
+    this.swipeDirection = null;
   }
 
   private tick(): void {

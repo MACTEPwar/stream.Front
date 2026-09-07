@@ -1,4 +1,4 @@
-<div class="main-carousel">
+<div class="main-carousel" (pointerdown)="onSwipeStart($event)">
   <div class="main-carousel__slide" [class.main-carousel__slide--active]="activeIndex() === 0">
     <div
       class="main-carousel__image-slot"
@@ -8,11 +8,21 @@
         <img class="main-carousel__image" [src]="imageUrl0()" alt="" />
       }
     </div>
-    <div class="main-carousel__content main-carousel__content--bottom-right">
-      <ng-content select="[mainCarouselSlide0BottomRight]" />
-    </div>
-    <div class="main-carousel__content main-carousel__content--bottom-left">
-      <ng-content select="[mainCarouselSlide0BottomLeft]" />
+    <!-- На компактной раскладке оба бара скроллятся ВМЕСТЕ как одна колонка
+         (main-carousel.scss, .main-carousel__compact-stack) — по прямому
+         запросу пользователя; на широкой обёртка не участвует в раскладке
+         (display: contents), бары остаются каждый в своём углу. -->
+    <div class="main-carousel__compact-stack">
+      <div
+        class="main-carousel__content main-carousel__content--bottom-right main-carousel__content--compact-top"
+      >
+        <ng-content select="[mainCarouselSlide0BottomRight]" />
+      </div>
+      <div
+        class="main-carousel__content main-carousel__content--bottom-left main-carousel__content--compact-bottom"
+      >
+        <ng-content select="[mainCarouselSlide0BottomLeft]" />
+      </div>
     </div>
   </div>
 
@@ -25,8 +35,12 @@
         <img class="main-carousel__image" [src]="imageUrl1()" alt="" />
       }
     </div>
-    <div class="main-carousel__content main-carousel__content--bottom-left">
-      <ng-content select="[mainCarouselSlide1BottomLeft]" />
+    <div class="main-carousel__compact-stack">
+      <div
+        class="main-carousel__content main-carousel__content--bottom-left main-carousel__content--compact-top"
+      >
+        <ng-content select="[mainCarouselSlide1BottomLeft]" />
+      </div>
     </div>
   </div>
 

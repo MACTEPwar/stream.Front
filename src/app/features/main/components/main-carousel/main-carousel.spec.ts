@@ -1,6 +1,9 @@
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Subject, startWith } from 'rxjs';
 
+import { SMALL_QUERY } from '@shared/utils/breakpoints';
 import { MainCarousel } from './main-carousel';
 
 @Component({
@@ -16,9 +19,35 @@ import { MainCarousel } from './main-carousel';
 })
 class MainCarouselHost {}
 
+function breakpointState(matches: boolean): BreakpointState {
+  return { matches, breakpoints: { [SMALL_QUERY]: matches } };
+}
+
+function pointerEvent(
+  type: string,
+  init: { pointerId?: number; clientX?: number; clientY?: number } = {},
+): PointerEvent {
+  return new PointerEvent(type, { pointerId: 1, clientX: 0, clientY: 0, ...init });
+}
+
 describe('MainCarousel', () => {
+  let breakpointState$: Subject<BreakpointState>;
+
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [MainCarouselHost] });
+    breakpointState$ = new Subject<BreakpointState>();
+    TestBed.configureTestingModule({
+      imports: [MainCarouselHost],
+      providers: [
+        // jsdom не реализует `matchMedia`, от которого зависит реальный
+        // `BreakpointObserver` (тот же приём, что `shell.spec.ts`) —
+        // начальное синхронное `false` (широкая раскладка), тесты свайпа
+        // переключают на компактную через `breakpointState$`.
+        {
+          provide: BreakpointObserver,
+          useValue: { observe: () => breakpointState$.pipe(startWith(breakpointState(false))) },
+        },
+      ],
+    });
     vi.useFakeTimers();
   });
 
@@ -153,5 +182,111 @@ describe('MainCarousel', () => {
     fixture.detectChanges();
     expect(fills[0].style.width).toBe('100%');
     expect(fills[1].style.width).toBe('0%');
+  });
+
+  describe('свайп на компактной раскладке (СЛД-Ф-06, СЛД-Ф-07, stream.Front#150)', () => {
+    it('горизонтальный свайп влево переключает на следующий слайд', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+      breakpointState$.next(breakpointState(true));
+      const carousel = fixture.debugElement.children[0].componentInstance as MainCarousel;
+      const el: HTMLElement = fixture.nativeElement;
+      const carouselEl = el.querySelector('.main-carousel')!;
+
+      carouselEl.dispatchEvent(pointerEvent('pointerdown', { clientX: 300 }));
+      window.dispatchEvent(pointerEvent('pointermove', { clientX: 240 }));
+      window.dispatchEvent(pointerEvent('pointerup', { clientX: 200 }));
+
+      expect(carousel.activeIndex()).toBe(1);
+    });
+
+    it('горизонтальный свайп вправо переключает на предыдущий слайд', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+      breakpointState$.next(breakpointState(true));
+      const carousel = fixture.debugElement.children[0].componentInstance as MainCarousel;
+      const el: HTMLElement = fixture.nativeElement;
+      const carouselEl = el.querySelector('.main-carousel')!;
+      carousel.goTo(1);
+
+      carouselEl.dispatchEvent(pointerEvent('pointerdown', { clientX: 100 }));
+      window.dispatchEvent(pointerEvent('pointermove', { clientX: 160 }));
+      window.dispatchEvent(pointerEvent('pointerup', { clientX: 200 }));
+
+      expect(carousel.activeIndex()).toBe(0);
+    });
+
+    it('смещение ниже порога переключения не меняет слайд', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+      breakpointState$.next(breakpointState(true));
+      const carousel = fixture.debugElement.children[0].componentInstance as MainCarousel;
+      const el: HTMLElement = fixture.nativeElement;
+      const carouselEl = el.querySelector('.main-carousel')!;
+
+      carouselEl.dispatchEvent(pointerEvent('pointerdown', { clientX: 300 }));
+      window.dispatchEvent(pointerEvent('pointermove', { clientX: 280 }));
+      window.dispatchEvent(pointerEvent('pointerup', { clientX: 270 }));
+
+      expect(carousel.activeIndex()).toBe(0);
+    });
+
+    it('вертикальный жест (скролл) не переключает слайд', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+      breakpointState$.next(breakpointState(true));
+      const carousel = fixture.debugElement.children[0].componentInstance as MainCarousel;
+      const el: HTMLElement = fixture.nativeElement;
+      const carouselEl = el.querySelector('.main-carousel')!;
+
+      carouselEl.dispatchEvent(pointerEvent('pointerdown', { clientX: 300, clientY: 300 }));
+      window.dispatchEvent(pointerEvent('pointermove', { clientX: 305, clientY: 380 }));
+      window.dispatchEvent(pointerEvent('pointerup', { clientX: 220, clientY: 400 }));
+
+      expect(carousel.activeIndex()).toBe(0);
+    });
+
+    it('на широкой раскладке горизонтальный жест игнорируется (навигация — стрелками)', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+      const carousel = fixture.debugElement.children[0].componentInstance as MainCarousel;
+      const el: HTMLElement = fixture.nativeElement;
+      const carouselEl = el.querySelector('.main-carousel')!;
+
+      carouselEl.dispatchEvent(pointerEvent('pointerdown', { clientX: 300 }));
+      window.dispatchEvent(pointerEvent('pointermove', { clientX: 240 }));
+      window.dispatchEvent(pointerEvent('pointerup', { clientX: 200 }));
+
+      expect(carousel.activeIndex()).toBe(0);
+    });
+  });
+
+  describe('компактная раскладка — оба бара скроллятся как одна колонка (stream.Front#150)', () => {
+    it('«Расписание» и «Соц. сети» (слайд 0) — общий предок .main-carousel__compact-stack, в порядке документа', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const stacks = el.querySelectorAll<HTMLElement>('.main-carousel__compact-stack');
+      expect(stacks).toHaveLength(2); // по одному на слайд
+
+      const slide0Stack = stacks[0];
+      const children = Array.from(slide0Stack.children);
+      expect(children).toHaveLength(2);
+      expect(children[0].classList).toContain('main-carousel__content--compact-top');
+      expect(children[1].classList).toContain('main-carousel__content--compact-bottom');
+    });
+
+    it('«Топ донатеров» (слайд 1) — тоже внутри .main-carousel__compact-stack (единственный бар)', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const stacks = el.querySelectorAll<HTMLElement>('.main-carousel__compact-stack');
+      const slide1Stack = stacks[1];
+      const children = Array.from(slide1Stack.children);
+      expect(children).toHaveLength(1);
+      expect(children[0].classList).toContain('main-carousel__content--compact-top');
+    });
   });
 });

@@ -22,10 +22,30 @@ const LAST_BASELINE = 56;
 // же принципу, что и anchoredScale() ниже: считать ожидаемые значения ТОЙ
 // ЖЕ формулой, не хардкодить округлённые вручную десятичные.
 const START_TEXT_LEFT = SUBPLATE_ANCHOR_X + SUBPLATE_BODY_WIDTH - FIRST_BASELINE;
+// Компактный левый край (list-item.ts, START_TEXT_LEFT_COMPACT) — включается
+// тем же признаком, что и BOUNDARY_GAP_COMPACT (реально измеренная ширина
+// строки меньше DEFAULT_ROW_WIDTH_PX).
+const START_TEXT_LEFT_COMPACT = 32;
 const END_TEXT_RIGHT = RIGHT_SUBPLATE_ANCHOR_X - RIGHT_SUBPLATE_WIDTH + LAST_BASELINE;
 const BOUNDARY_GAP = 54;
+// Компактный gap (list-item.ts, BOUNDARY_GAP_COMPACT) — включается, когда
+// реально измеренная ширина строки меньше DEFAULT_ROW_WIDTH_PX (644).
+const BOUNDARY_GAP_COMPACT = 40;
 const LEFT_ORNAMENT_CENTER_X = 115.75 + 38 / 2;
 const RIGHT_ORNAMENT_CENTER_X = 543.75 - 38 / 2;
+
+// Реально измеренная ширина строки (stream.Front#150) — те же якоря/формулы,
+// что FILL_BODY_ANCHOR_X/STROKE_BODY_ANCHOR_X/rowWidthDeltaPx() в list-item.ts.
+const DEFAULT_ROW_WIDTH_PX = 644;
+const FILL_BODY_ANCHOR_X = 26.7501;
+const FILL_BODY_STRAIGHT_WIDTH = RIGHT_SUBPLATE_ANCHOR_X - FILL_BODY_ANCHOR_X;
+const STROKE_BODY_ANCHOR_X = 26.75;
+const STROKE_BODY_STRAIGHT_WIDTH = 643.25 - STROKE_BODY_ANCHOR_X;
+
+function endTextRightAt(rowWidth: number): number {
+  const rightEdgeX = rowWidth - (DEFAULT_ROW_WIDTH_PX - RIGHT_SUBPLATE_ANCHOR_X);
+  return rightEdgeX - RIGHT_SUBPLATE_WIDTH + LAST_BASELINE;
+}
 
 function anchoredScale(anchor: number, scale: number): string {
   return `translate(${anchor} 0) scale(${scale} 1) translate(${-anchor} 0)`;
@@ -33,9 +53,13 @@ function anchoredScale(anchor: number, scale: number): string {
 
 function computeSegmentBoxes(
   widths: (number | string | undefined)[],
+  options: { startTextLeft?: number; gap?: number; endTextRight?: number } = {},
 ): { x: number; width: number }[] {
-  const gapTotal = (widths.length - 1) * BOUNDARY_GAP;
-  const available = END_TEXT_RIGHT - START_TEXT_LEFT - gapTotal;
+  const startTextLeft = options.startTextLeft ?? START_TEXT_LEFT;
+  const gap = options.gap ?? BOUNDARY_GAP;
+  const endTextRight = options.endTextRight ?? END_TEXT_RIGHT;
+  const gapTotal = (widths.length - 1) * gap;
+  const available = endTextRight - startTextLeft - gapTotal;
   let fixedTotal = 0;
   let flexTotal = 0;
   const parsed = widths.map((width) => {
@@ -57,11 +81,11 @@ function computeSegmentBoxes(
   );
 
   const boxes: { x: number; width: number }[] = [];
-  let cursor = START_TEXT_LEFT;
+  let cursor = startTextLeft;
   for (const width of logicalWidths) {
     const boxWidth = width ?? 0;
     boxes.push({ x: cursor, width: boxWidth });
-    cursor += boxWidth + BOUNDARY_GAP;
+    cursor += boxWidth + gap;
   }
   return boxes;
 }
@@ -73,6 +97,36 @@ function computeDividerPositions(widths: (number | string | undefined)[]): numbe
     positions.push(boxes[i].x + boxes[i].width + BOUNDARY_GAP / 2);
   }
   return positions;
+}
+
+// jsdom не реализует ResizeObserver — list-item.ts это учитывает
+// (typeof ResizeObserver === 'undefined' guard, rowWidthPx() остаётся на
+// DEFAULT_ROW_WIDTH_PX/644, тот же приём, что SectionTitle) — отсюда все
+// значения выше (RIGHT_SUBPLATE_ANCHOR_X=643.75 и т.п.), продублированные из
+// list-item.ts, справедливы только для ЭТОГО дефолтного состояния. Чтобы
+// проверить реактивную геометрию строки (stream.Front#150 — компакт-бар
+// MainCarousel), подменяем глобальный ResizeObserver фейком и триггерим его
+// коллбэк вручную — тот же общий приём, что и в section-title.spec.ts.
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  private readonly callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    FakeResizeObserver.instances.push(this);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  observe(): void {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  disconnect(): void {}
+
+  trigger(width: number): void {
+    this.callback(
+      [{ contentRect: { width } } as ResizeObserverEntry],
+      this as unknown as ResizeObserver,
+    );
+  }
 }
 
 @Component({
@@ -729,5 +783,190 @@ describe('ListItem', () => {
 
     document.body.removeChild(firstFixture.nativeElement);
     document.body.removeChild(secondFixture.nativeElement);
+  });
+
+  // Реальная ширина строки (stream.Front#150, компакт-бар MainCarousel) —
+  // ResizeObserver подменяется фейком только в ЭТОМ describe (beforeEach/
+  // afterEach save-restore, тот же приём, что section-title.spec.ts), тесты
+  // выше по-прежнему полагаются на его ОТСУТСТВИЕ в jsdom (дефолт 644).
+  describe('реально измеренная ширина (ResizeObserver, stream.Front#150)', () => {
+    let originalResizeObserver: typeof ResizeObserver | undefined;
+
+    beforeEach(() => {
+      originalResizeObserver = globalThis.ResizeObserver;
+      globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+      FakeResizeObserver.instances = [];
+    });
+
+    afterEach(() => {
+      globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+    });
+
+    it('SVG width/viewBox совпадают 1:1 с реально измеренной шириной, а не с 644 (без двойного масштабирования)', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(500);
+      fixture.detectChanges();
+
+      const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+      expect(svg.getAttribute('width')).toBe('500');
+      expect(svg.getAttribute('viewBox')).toBe('-2 0 500 58');
+    });
+
+    it('главное тело пилюли — 2-slice: остриё (заливка/обводка) не двигается, прямая часть растягивается под фактическую ширину', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(500);
+      fixture.detectChanges();
+
+      const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+      const [fillTip, fillBody] = Array.from(
+        svg.querySelectorAll('path[fill^="url(#paint0_linear"]'),
+      );
+      expect(fillTip.getAttribute('transform')).toBeNull();
+      const fillScale = (FILL_BODY_STRAIGHT_WIDTH - 144) / FILL_BODY_STRAIGHT_WIDTH;
+      expect(fillBody.getAttribute('transform')).toBe(anchoredScale(FILL_BODY_ANCHOR_X, fillScale));
+
+      const [strokeTip, strokeBody] = Array.from(
+        svg.querySelectorAll('path[stroke^="url(#paint4_linear"]'),
+      );
+      expect(strokeTip.getAttribute('transform')).toBeNull();
+      const strokeScale = (STROKE_BODY_STRAIGHT_WIDTH - 144) / STROKE_BODY_STRAIGHT_WIDTH;
+      expect(strokeBody.getAttribute('transform')).toBe(
+        anchoredScale(STROKE_BODY_ANCHOR_X, strokeScale),
+      );
+    });
+
+    it('декор-«колпачки» у правого края сдвигаются на разницу измеренной и исходной ширины, сохраняя собственное растяжение', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges(); // host default: 60px / flex(1) / 60px
+      FakeResizeObserver.instances[0]?.trigger(500);
+      fixture.detectChanges();
+
+      const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+      const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
+      const [, rightBorderHook] = Array.from(
+        svg.querySelectorAll('path[fill^="url(#paint7_linear"]'),
+      );
+
+      const delta = 500 - DEFAULT_ROW_WIDTH_PX; // -144
+      const lastShift = 60 - LAST_BASELINE; // 4 (сегмент шириной '60px', не зависит от ширины строки)
+      const expectedScale = (RIGHT_SUBPLATE_WIDTH + lastShift) / RIGHT_SUBPLATE_WIDTH;
+      expect(rightSubplate?.getAttribute('transform')).toBe(
+        `translate(${delta} 0) ${anchoredScale(RIGHT_SUBPLATE_ANCHOR_X, expectedScale)}`,
+      );
+      expect(rightBorderHook.getAttribute('transform')).toBe(`translate(${delta - lastShift} 0)`);
+    });
+
+    it('ширина не изменилась относительно дефолтной (644) — декор у правого края БЕЗ обёртки-переноса (буквально тот же вид, что и раньше)', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(644);
+      fixture.detectChanges();
+
+      const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+      const rightSubplate = svg.querySelector('path[fill^="url(#paint5_radial"]');
+      const lastShift = 60 - LAST_BASELINE;
+      expect(rightSubplate?.getAttribute('transform')).toBe(
+        anchoredScale(
+          RIGHT_SUBPLATE_ANCHOR_X,
+          (RIGHT_SUBPLATE_WIDTH + lastShift) / RIGHT_SUBPLATE_WIDTH,
+        ),
+      );
+    });
+
+    it("direction() = 'right' — ось зеркалирования разделителя берёт РЕАЛЬНО измеренную ширину, не 644", () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.componentInstance.direction.set('right');
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(500);
+      fixture.detectChanges();
+
+      const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+      const divider = svg.querySelector('g[opacity="0.35"] g[transform]');
+      const transform = divider?.getAttribute('transform') ?? '';
+      const match = /translate\(([-\d.]+) 0\)/.exec(transform);
+      const actualCenterX = Number(match?.[1]) + LEFT_ORNAMENT_CENTER_X;
+
+      // Ширина строки (500) < DEFAULT_ROW_WIDTH_PX — компонент переключается на
+      // BOUNDARY_GAP_COMPACT/START_TEXT_LEFT_COMPACT (list-item.ts, boundaryGap()/
+      // startTextLeft()), не на "широкие" значения.
+      const boxes = computeSegmentBoxes(['60px', 1, '60px'], {
+        startTextLeft: START_TEXT_LEFT_COMPACT,
+        gap: BOUNDARY_GAP_COMPACT,
+      });
+      const rawDividerX = boxes[0].x + boxes[0].width + BOUNDARY_GAP_COMPACT / 2;
+      expect(actualCenterX).toBeCloseTo(500 - rawDividerX, 5);
+    });
+
+    it('последний сегмент на компактной ширине центруется в оставшемся месте до фактического правого края строки, не флаш к наконечнику — по прямому запросу пользователя (скриншот реального рендера)', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(500);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const segments = el.querySelectorAll<HTMLElement>('.day-row__segment');
+      const lastSegment = segments[segments.length - 1];
+      const actualX = Number(
+        /left:\s*([\d.]+)px/.exec(lastSegment.getAttribute('style') ?? '')?.[1],
+      );
+
+      const flushBoxes = computeSegmentBoxes(['60px', 1, '60px'], {
+        startTextLeft: START_TEXT_LEFT_COMPACT,
+        gap: BOUNDARY_GAP_COMPACT,
+        endTextRight: endTextRightAt(500),
+      });
+      const flushLast = flushBoxes[flushBoxes.length - 1];
+      const trailingSpace = 500 - flushLast.x - flushLast.width;
+      const expectedX = flushLast.x + trailingSpace / 2;
+
+      expect(actualX).toBeCloseTo(expectedX, 5);
+      // Ширина бокса не меняется — центрирование сдвигает только позицию.
+      const widthMatch = Number(
+        /width:\s*([\d.]+)px/.exec(lastSegment.getAttribute('style') ?? '')?.[1],
+      );
+      expect(widthMatch).toBeCloseTo(flushLast.width, 5);
+    });
+
+    it('ширина не изменилась относительно дефолтной (644) — последний сегмент остаётся флаш к наконечнику, центрирование не включается', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(644);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const segments = el.querySelectorAll<HTMLElement>('.day-row__segment');
+      const lastSegment = segments[segments.length - 1];
+      const actualX = Number(
+        /left:\s*([\d.]+)px/.exec(lastSegment.getAttribute('style') ?? '')?.[1],
+      );
+
+      const boxes = computeSegmentBoxes(['60px', 1, '60px']);
+      expect(actualX).toBeCloseTo(boxes[boxes.length - 1].x, 5);
+    });
+
+    it('1 сегмент (соло-подложка скелетон-лоадера) на узкой измеренной ширине — зажимается в доступное пространство, не заезжает за фактический правый край', () => {
+      const fixture = TestBed.createComponent(ListItemHost);
+      fixture.componentInstance.segments.set([{ text: '' }]);
+      fixture.detectChanges();
+      FakeResizeObserver.instances[0]?.trigger(300);
+      fixture.detectChanges();
+
+      const svg: SVGSVGElement = fixture.nativeElement.querySelector('.day-row__svg');
+      const centerRect = svg.querySelector('rect[fill^="url(#paint6_radial"]');
+      const x = Number(centerRect?.getAttribute('x'));
+      const width = Number(centerRect?.getAttribute('width'));
+
+      // Ширина строки (300) < DEFAULT_ROW_WIDTH_PX — soloBox() зажимается в
+      // startTextLeft() компактного значения (32), не широкого (56.75).
+      expect(width).toBeGreaterThan(0);
+      expect(x).toBeGreaterThanOrEqual(START_TEXT_LEFT_COMPACT);
+      expect(x + width).toBeLessThanOrEqual(endTextRightAt(300) + 1e-9);
+      // Реально уже "натуральных" 169.75/320 — клэмп подействовал (регрессия:
+      // раньше подложка стояла на этих координатах безусловно и заезжала за
+      // фактический правый край строки на узком компактном баре).
+      expect(width).toBeLessThan(320);
+    });
   });
 });

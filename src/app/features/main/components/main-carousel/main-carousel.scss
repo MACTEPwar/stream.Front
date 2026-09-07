@@ -1,9 +1,38 @@
 @use 'variables' as vars;
+@use 'breakpoints' as bp;
 
 // Оценочно по скриншотам реального макета — точных значений отступов
 // в Figma-экспорте нет (абсолютные координаты экспортером не отдаются).
 $content-offset: 64px;
 $transition-duration: 0.4s;
+
+// Высота таймлайна внизу экрана (`.main-carousel__segment` ниже) — вынесена
+// в переменную, чтобы нижний компактный бар (`--compact-bottom`) не наезжал
+// на него, не задваивая магическое число.
+$timeline-height: 10px;
+
+// Высота компактной шапки (`Shell`, `bp.small`) — НЕ измеряется в рантайме,
+// а взята из `shell.scss`/`decorative-button.scss` (`stream.Front#150`):
+// `.shell__header` даёт `padding: 12px 6px` (12px сверху/снизу), а самый
+// высокий ребёнок `.shell__header-row` в компактном виде — декоративная
+// кнопка (`decorative-button.scss`, `$svg-height: 48px`, высота не зависит
+// от `iconSize`/текстового варианта). 12 + 48 + 12 = 72px. Держится
+// синхронной с `shell.scss` вручную, тем же приёмом, что и
+// `_breakpoints.scss`/`breakpoints.ts`.
+$compact-header-height: 72px;
+
+// Зазор между компактным баром виджета и соседом (шапкой сверху/таймлайном
+// снизу) — решение этой задачи, не Figma-величина (макетов компактной
+// главной нет, см. JSDoc `MainCarousel`).
+$compact-bar-gap: 16px;
+
+// Горизонтальный padding компактного бара — вынесен в переменную, т.к.
+// списки-пилюли внутри бара (`ScheduleWidget`, `DonatorsWidget`) должны
+// визуально начинаться прямо от края экрана (по прямому запросу
+// пользователя), а не от края бара: их `__list` компенсирует этот padding
+// отрицательным margin. Значение синхронизируется вручную, тем же приёмом,
+// что и `$compact-header-height`.
+$compact-bar-padding-x: 24px;
 
 .main-carousel {
   position: fixed;
@@ -11,6 +40,12 @@ $transition-duration: 0.4s;
   z-index: 0;
   overflow: hidden;
   background: radial-gradient(circle, vars.$color-1e00b2 0%, vars.$color-0d004d 100%);
+  // Позволяет браузеру нативно обрабатывать вертикальный скролл (если он
+  // появится, `АДП-Ф-18`) на touch-устройствах, оставляя горизонтальный жест
+  // JS-обработчикам свайпа (`onSwipeStart`, main-carousel.ts) — без этого
+  // touch-браузер мог бы попытаться сам проскроллить/отбросить жест ещё до
+  // того, как JS успеет определить его направление.
+  touch-action: pan-y;
 }
 
 .main-carousel__slide {
@@ -124,6 +159,88 @@ $transition-duration: 0.4s;
   transform: translateX(-100%);
 }
 
+// Обёртка обоих компактных баров одного слайда — на широкой раскладке НЕ
+// участвует в разметке (`display: contents`), бары остаются каждый в своём
+// углу (`--bottom-left`/`--bottom-right` выше) буквально как раньше. На
+// компактной становится их общим скролл-контейнером (см. `bp.small` ниже) —
+// по прямому запросу пользователя: «Расписание»/«Топ донатеров» и «Соц.
+// сети» должны скроллиться КАК ОДНО ЦЕЛОЕ, не независимо друг от друга.
+.main-carousel__compact-stack {
+  display: contents;
+}
+
+// Компактная раскладка (`СЛД-Ф-10`, `СЛД-Ф-11`) — бары растянуты на всю
+// ширину экрана и уложены КОЛОНКОЙ между шапкой и таймлайном вместо углов.
+// «Расписание» (bottom-right на широкой) и «Топ донатеров» (bottom-left на
+// широкой) оба переезжают на первое место в колонке, «Соц. сети»
+// (bottom-left) — на второе/последнее — угловые классы не могут выразить
+// это сами по себе, поэтому `--compact-top`/`--compact-bottom` (порядок в
+// разметке уже соответствует нужному порядку колонки, см. main-carousel.html)
+// остаются просто МЕТКАМИ роли для читаемости, а не позиционируют элемент
+// индивидуально — этим занимается сам `.main-carousel__compact-stack`.
+@include bp.small {
+  .main-carousel__compact-stack {
+    position: absolute;
+    top: $compact-header-height + $compact-bar-gap;
+    bottom: $timeline-height + $compact-bar-gap;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $compact-bar-gap;
+    // Место под оба бара вместе — то, что не поместилось, скроллится ВНУТРИ
+    // этой колонки (не выталкивает в скролл всю страницу, по прямому
+    // запросу пользователя — на главной должна скроллиться карусель).
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    // `touch-action` НЕ наследуется от `.main-carousel` (CSS-свойство не
+    // наследуемое) — без явного значения здесь этот, теперь скроллящийся
+    // сам по себе, элемент получал бы браузерный дефолт `auto` (все
+    // направления нативно), и горизонтальный свайп-жест (`onSwipeStart`)
+    // никогда не долетал бы до `preventDefault()`: браузер перехватывал бы
+    // его сам как попытку скролла контейнера. `pan-y` — тот же приём и то
+    // же значение, что и на `.main-carousel`, повторить здесь обязательно
+    // (по прямому запросу пользователя — свайп между слайдами перестал
+    // работать после того, как этот элемент стал скролл-контейнером).
+    touch-action: pan-y;
+  }
+
+  // Без собственной подложки (`background`) — по прямому запросу
+  // пользователя: на HD-версии баров без подложки нет вовсе, компактная
+  // раскладка должна визуально совпадать, а не заводить отдельное решение
+  // только для себя (`СЛД-Ф-08` отменена этим же запросом).
+  .main-carousel__content--compact-top,
+  .main-carousel__content--compact-bottom {
+    position: static;
+    flex: none;
+    width: 100%;
+    padding: 12px $compact-bar-padding-x;
+    box-sizing: border-box;
+  }
+
+  // Уезжает по горизонтали ВСЕЙ колонкой целиком (тот же приём, что и на
+  // широкой раскладке — `.main-carousel__slide:not(.active) …` выше, просто
+  // на уровне общей обёртки, не каждого бара по отдельности). Направление —
+  // как у прежнего --compact-top (единое для колонки, второй бар больше не
+  // едет отдельно в противоположную сторону).
+  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__compact-stack {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  // Гасит унаследованные от `.main-carousel__content--bottom-left`/
+  // `--bottom-right` (широкие угловые правила выше) индивидуальные
+  // opacity/transform у каждого бара — теперь уезжает только обёртка целиком
+  // (правило выше), сами бары в компактной раскладке — обычные flex-item'ы
+  // без собственной анимации ухода.
+  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--compact-top,
+  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--compact-bottom {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .main-carousel__arrow {
   position: absolute;
   top: 50%;
@@ -135,6 +252,12 @@ $transition-duration: 0.4s;
   background: transparent;
   cursor: pointer;
   z-index: 1;
+
+  // На компактной раскладке навигация — свайп, не стрелки (`СЛД-Ф-06`,
+  // `MainCarousel.onSwipeStart`).
+  @include bp.small {
+    display: none;
+  }
 }
 
 .main-carousel__arrow--prev {
@@ -162,7 +285,7 @@ $transition-duration: 0.4s;
 // поверх фона карусели, alpha убывает); фон/индикатор — см. ниже.
 .main-carousel__segment {
   flex: 1;
-  height: 10px;
+  height: $timeline-height;
   background: rgba(255, 255, 255, 0.4);
   overflow: hidden;
 }
