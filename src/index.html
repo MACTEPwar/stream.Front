@@ -8,6 +8,12 @@
     <title>StreamFront</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Говорит браузеру, что страница уже осознанно тёмная (тот же фиксированный
+         тёмный визуал, что p-dark выше) — без этого мобильный Chrome/Android
+         (авто-тёмная тема ОС) применяет СВОЙ доп. проход затемнения поверх уже
+         тёмных цветов сайта: пользователь на телефоне с системной тёмной темой
+         видел те же цвета, но темнее, чем на десктопе со светлой темой ОС. -->
+    <meta name="color-scheme" content="dark" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
 
     <!-- $font-family-montserrat/$font-family-nunito-sans (src/styles/_variables.scss) без этого
