@@ -191,7 +191,19 @@ $compact-bar-blur: 12px;
 
   .main-carousel__content--compact-top {
     top: $compact-header-height + $compact-bar-gap;
-    bottom: auto;
+    // Раньше bottom: auto (высота по контенту) — при длинном контенте
+    // (напр. расписание на 7 строк) бар физически наезжал на «Соц. сети»
+    // под ним (--compact-bottom, зазор между ними никак не гарантировался).
+    // `--compact-bottom-reserve` — реально измеренная высота этого бара
+    // (main-carousel.ts, ResizeObserver) — держит между ними всегда ровно
+    // столько места, сколько «Соц. сети» реально занимает; то, что не
+    // поместилось само, скроллится ВНУТРИ этого бара (overflow-y), а не
+    // выталкивает в скролл всю страницу — по прямому запросу пользователя,
+    // на главной должна скроллиться карусель, а не страница целиком.
+    bottom: var(--compact-bottom-reserve, 0px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   .main-carousel__content--compact-bottom {

@@ -1,4 +1,8 @@
-<div class="main-carousel" (pointerdown)="onSwipeStart($event)">
+<div
+  class="main-carousel"
+  (pointerdown)="onSwipeStart($event)"
+  [style.--compact-bottom-reserve.px]="compactBottomReservePx()"
+>
   <div class="main-carousel__slide" [class.main-carousel__slide--active]="activeIndex() === 0">
     <div
       class="main-carousel__image-slot"
@@ -15,6 +19,7 @@
     </div>
     <div
       class="main-carousel__content main-carousel__content--bottom-left main-carousel__content--compact-bottom"
+      #compactBottomEl
     >
       <ng-content select="[mainCarouselSlide0BottomLeft]" />
     </div>

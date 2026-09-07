@@ -1,5 +1,17 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, DestroyRef, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
@@ -8,6 +20,16 @@ import { SMALL_QUERY } from '@shared/utils/breakpoints';
 const SLIDE_COUNT = 2;
 const SLIDE_DURATION_MS = 10000;
 const TICK_MS = 50;
+
+/**
+ * Зазор между баром «Соц. сети» (`--compact-bottom`) и таймлайном/нижним
+ * краем экрана + зазор между ним и баром «Расписание»/«Топ донатеров»
+ * (`--compact-top`) над ним — те же `$timeline-height`/`$compact-bar-gap`
+ * (main-carousel.scss), продублированы здесь тем же приёмом, что и
+ * `$compact-header-height` там же (вручную синхронизируемое магическое
+ * число), т.к. reserve считается в TS, а не в SCSS.
+ */
+const COMPACT_BOTTOM_OWN_RESERVE_PX = 10 + 16 + 16; // timeline-height + gap*2 (над и под баром)
 
 /**
  * Минимальное смещение указателя (в любую сторону), после которого жест
@@ -81,12 +103,46 @@ export class MainCarousel implements OnInit, OnDestroy {
     { initialValue: false },
   );
 
+  // Реально измеренная высота бара «Соц. сети» (`ResizeObserver`, тот же
+  // приём, что `ListItem.rowWidthPx`/`SectionTitle`) — бар «Расписание»/«Топ
+  // донатеров» над ним (`--compact-top`) резервирует под него РОВНО столько
+  // места, сколько тот реально занимает (не константу), иначе при длинном
+  // контенте они физически накладывались друг на друга (найдено на
+  // компактной раскладке при контенте расписания на 7 строк). Оставшееся
+  // место `--compact-top` не помещает — скроллится ВНУТРИ себя
+  // (`overflow-y: auto`, main-carousel.scss), а не выталкивает страницу в
+  // скролл (по прямому запросу пользователя — на главной должна скроллиться
+  // именно карусель, не сама страница).
+  private readonly compactBottomEl = viewChild<ElementRef<HTMLDivElement>>('compactBottomEl');
+  private readonly compactBottomHeightPx = signal(0);
+  protected readonly compactBottomReservePx = computed(
+    () => this.compactBottomHeightPx() + COMPACT_BOTTOM_OWN_RESERVE_PX,
+  );
+
   private elapsedMs = 0;
   private timerId: ReturnType<typeof setInterval> | undefined;
 
   private activePointerId: number | null = null;
   private swipeStartX = 0;
   private swipeDirection: SwipeDirection | null = null;
+
+  constructor() {
+    effect((onCleanup) => {
+      const el = this.compactBottomEl()?.nativeElement;
+      if (!el || typeof ResizeObserver === 'undefined') return;
+      // `getBoundingClientRect()` в колбэке, не `entry.contentRect` — тому
+      // нужна ПОЛНАЯ (border-box, с паддингом бара 12px сверху/снизу)
+      // высота, т.к. резерв ниже освобождает место под весь визуальный
+      // футпринт бара, а `contentRect` паддинг не учитывает (без этого
+      // резерва не хватало ровно на паддинг — бар «Расписание»/«Топ
+      // донатеров» над ним всё равно на пару px наезжал на «Соц. сети»).
+      const observer = new ResizeObserver(() =>
+        this.compactBottomHeightPx.set(el.getBoundingClientRect().height),
+      );
+      observer.observe(el);
+      onCleanup(() => observer.disconnect());
+    });
+  }
 
   ngOnInit(): void {
     this.timerId = setInterval(() => this.tick(), TICK_MS);

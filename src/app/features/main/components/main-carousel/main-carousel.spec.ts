@@ -260,4 +260,58 @@ describe('MainCarousel', () => {
       expect(carousel.activeIndex()).toBe(0);
     });
   });
+
+  describe('резерв места под «Соц. сети» на компактной раскладке (наложение баров, stream.Front#150)', () => {
+    let originalResizeObserver: typeof ResizeObserver | undefined;
+
+    class FakeResizeObserver {
+      static instances: FakeResizeObserver[] = [];
+      private readonly callback: ResizeObserverCallback;
+
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+        FakeResizeObserver.instances.push(this);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      observe(): void {}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      disconnect(): void {}
+
+      trigger(): void {
+        this.callback([] as unknown as ResizeObserverEntry[], this as unknown as ResizeObserver);
+      }
+    }
+
+    beforeEach(() => {
+      originalResizeObserver = globalThis.ResizeObserver;
+      globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+      FakeResizeObserver.instances = [];
+    });
+
+    afterEach(() => {
+      globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+    });
+
+    it('бар «Расписание»/«Топ донатеров» резервирует РЕАЛЬНО измеренную высоту бара «Соц. сети» + зазоры — не даёт им физически наложиться', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const compactBottomEl = el.querySelector<HTMLElement>(
+        '.main-carousel__content--compact-bottom',
+      )!;
+      vi.spyOn(compactBottomEl, 'getBoundingClientRect').mockReturnValue({
+        height: 200,
+      } as DOMRect);
+
+      FakeResizeObserver.instances[0]?.trigger();
+      fixture.detectChanges();
+
+      const carouselEl = el.querySelector<HTMLElement>('.main-carousel')!;
+      // timeline-height(10) + gap(16)*2 = 42 — та же арифметика, что
+      // COMPACT_BOTTOM_OWN_RESERVE_PX в main-carousel.ts.
+      expect(carouselEl.style.getPropertyValue('--compact-bottom-reserve')).toBe('242px');
+    });
+  });
 });
