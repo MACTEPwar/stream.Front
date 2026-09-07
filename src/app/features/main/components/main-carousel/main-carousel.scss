@@ -26,6 +26,14 @@ $compact-header-height: 72px;
 // главной нет, см. JSDoc `MainCarousel`).
 $compact-bar-gap: 16px;
 
+// Горизонтальный padding компактного бара — вынесен в переменную, т.к.
+// списки-пилюли внутри бара (`ScheduleWidget`, `DonatorsWidget`) должны
+// визуально начинаться прямо от края экрана (по прямому запросу
+// пользователя), а не от края бара: их `__list` компенсирует этот padding
+// отрицательным margin. Значение синхронизируется вручную, тем же приёмом,
+// что и `$compact-header-height`.
+$compact-bar-padding-x: 24px;
+
 // Подложка компактного бара (`СЛД-Ф-08`) — единственное место в проекте, где
 // она реализована: на широкой раскладке бар остаётся без подложки (как и
 // сейчас), добавление её сюда — только компактный случай, чтобы не создавать
@@ -174,7 +182,7 @@ $compact-bar-blur: 12px;
     left: 0;
     right: 0;
     width: 100%;
-    padding: 12px 24px;
+    padding: 12px $compact-bar-padding-x;
     background: $compact-bar-background;
     backdrop-filter: blur($compact-bar-blur);
     -webkit-backdrop-filter: blur($compact-bar-blur);

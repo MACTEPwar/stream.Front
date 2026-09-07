@@ -1,5 +1,12 @@
 @use 'breakpoints' as bp;
 
+// Горизонтальный padding компактного бара (`$compact-bar-padding-x`,
+// main-carousel.scss) — список-пилюля должен визуально начинаться прямо от
+// края экрана (по прямому запросу пользователя), а не от края бара, поэтому
+// компенсируется отрицательным margin ниже. Значение синхронизируется
+// вручную, тем же приёмом, что и `$compact-header-height` там же.
+$compact-bar-padding-x: 24px;
+
 // margin-right компенсирует $content-offset (64px) слота mainCarouselSlide0BottomRight
 // в MainCarousel — по мокапу «Расписание» стоит впритык к правому краю слайда, в
 // отличие от остальных 3 углов (общий отступ там сохраняется под будущие Donators/Social).
@@ -37,5 +44,14 @@
 
   .schedule-widget__title {
     margin-right: 0;
+  }
+
+  // Список пробивает padding бара с обеих сторон, чтобы пилюли начинались
+  // прямо от края экрана (а не от края бара) и использовали освободившееся
+  // место — заголовок при этом остаётся с отступом бара (см. комментарий
+  // к `$compact-bar-padding-x` выше).
+  .schedule-widget__list {
+    width: calc(100% + #{$compact-bar-padding-x * 2});
+    margin: 0 (-$compact-bar-padding-x);
   }
 }
