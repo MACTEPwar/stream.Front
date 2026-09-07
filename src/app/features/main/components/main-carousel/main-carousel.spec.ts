@@ -261,57 +261,32 @@ describe('MainCarousel', () => {
     });
   });
 
-  describe('резерв места под «Соц. сети» на компактной раскладке (наложение баров, stream.Front#150)', () => {
-    let originalResizeObserver: typeof ResizeObserver | undefined;
-
-    class FakeResizeObserver {
-      static instances: FakeResizeObserver[] = [];
-      private readonly callback: ResizeObserverCallback;
-
-      constructor(callback: ResizeObserverCallback) {
-        this.callback = callback;
-        FakeResizeObserver.instances.push(this);
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      observe(): void {}
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      disconnect(): void {}
-
-      trigger(): void {
-        this.callback([] as unknown as ResizeObserverEntry[], this as unknown as ResizeObserver);
-      }
-    }
-
-    beforeEach(() => {
-      originalResizeObserver = globalThis.ResizeObserver;
-      globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
-      FakeResizeObserver.instances = [];
-    });
-
-    afterEach(() => {
-      globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
-    });
-
-    it('бар «Расписание»/«Топ донатеров» резервирует РЕАЛЬНО измеренную высоту бара «Соц. сети» + зазоры — не даёт им физически наложиться', () => {
+  describe('компактная раскладка — оба бара скроллятся как одна колонка (stream.Front#150)', () => {
+    it('«Расписание» и «Соц. сети» (слайд 0) — общий предок .main-carousel__compact-stack, в порядке документа', () => {
       const fixture = TestBed.createComponent(MainCarouselHost);
       fixture.detectChanges();
 
       const el: HTMLElement = fixture.nativeElement;
-      const compactBottomEl = el.querySelector<HTMLElement>(
-        '.main-carousel__content--compact-bottom',
-      )!;
-      vi.spyOn(compactBottomEl, 'getBoundingClientRect').mockReturnValue({
-        height: 200,
-      } as DOMRect);
+      const stacks = el.querySelectorAll<HTMLElement>('.main-carousel__compact-stack');
+      expect(stacks).toHaveLength(2); // по одному на слайд
 
-      FakeResizeObserver.instances[0]?.trigger();
+      const slide0Stack = stacks[0];
+      const children = Array.from(slide0Stack.children);
+      expect(children).toHaveLength(2);
+      expect(children[0].classList).toContain('main-carousel__content--compact-top');
+      expect(children[1].classList).toContain('main-carousel__content--compact-bottom');
+    });
+
+    it('«Топ донатеров» (слайд 1) — тоже внутри .main-carousel__compact-stack (единственный бар)', () => {
+      const fixture = TestBed.createComponent(MainCarouselHost);
       fixture.detectChanges();
 
-      const carouselEl = el.querySelector<HTMLElement>('.main-carousel')!;
-      // timeline-height(10) + gap(16)*2 = 42 — та же арифметика, что
-      // COMPACT_BOTTOM_OWN_RESERVE_PX в main-carousel.ts.
-      expect(carouselEl.style.getPropertyValue('--compact-bottom-reserve')).toBe('242px');
+      const el: HTMLElement = fixture.nativeElement;
+      const stacks = el.querySelectorAll<HTMLElement>('.main-carousel__compact-stack');
+      const slide1Stack = stacks[1];
+      const children = Array.from(slide1Stack.children);
+      expect(children).toHaveLength(1);
+      expect(children[0].classList).toContain('main-carousel__content--compact-top');
     });
   });
 });

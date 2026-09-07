@@ -37,9 +37,11 @@ $compact-bar-padding-x: 24px;
 // Подложка компактного бара (`СЛД-Ф-08`) — единственное место в проекте, где
 // она реализована: на широкой раскладке бар остаётся без подложки (как и
 // сейчас), добавление её сюда — только компактный случай, чтобы не создавать
-// визуальную регрессию на `large` (`Г-1`).
+// визуальную регрессию на `large` (`Г-1`). Без блюра (`backdrop-filter`) — по
+// прямому запросу пользователя: на HD-версии подложки/блюра нет вовсе, блюр
+// только на компактной раскладке читался как расхождение с HD, не как
+// целенаправленное решение.
 $compact-bar-background: rgba(vars.$color-0d004d, 0.55);
-$compact-bar-blur: 12px;
 
 .main-carousel {
   position: fixed;
@@ -166,61 +168,72 @@ $compact-bar-blur: 12px;
   transform: translateX(-100%);
 }
 
-// Компактная раскладка (`СЛД-Ф-10`, `СЛД-Ф-11`) — бар растянут на всю ширину
-// экрана и прижат к верхнему/нижнему краю вместо угла. `--compact-top`/
-// `--compact-bottom` — модификаторы, ОТДЕЛЬНЫЕ от угловых (`--bottom-left`/
-// `--bottom-right` выше): позиция в компактной раскладке не соответствует
-// исходному углу 1:1 (см. таблицу позиций, `specs/03-main/spec.md`) —
+// Обёртка обоих компактных баров одного слайда — на широкой раскладке НЕ
+// участвует в разметке (`display: contents`), бары остаются каждый в своём
+// углу (`--bottom-left`/`--bottom-right` выше) буквально как раньше. На
+// компактной становится их общим скролл-контейнером (см. `bp.small` ниже) —
+// по прямому запросу пользователя: «Расписание»/«Топ донатеров» и «Соц.
+// сети» должны скроллиться КАК ОДНО ЦЕЛОЕ, не независимо друг от друга.
+.main-carousel__compact-stack {
+  display: contents;
+}
+
+// Компактная раскладка (`СЛД-Ф-10`, `СЛД-Ф-11`) — бары растянуты на всю
+// ширину экрана и уложены КОЛОНКОЙ между шапкой и таймлайном вместо углов.
 // «Расписание» (bottom-right на широкой) и «Топ донатеров» (bottom-left на
-// широкой) оба переезжают в ОДНУ и ту же верхнюю позицию, а «Соц. сети»
-// (bottom-left) остаётся внизу — угловые классы не могут выразить это сами
-// по себе. Идут ПОСЛЕ угловых правил выше в исходном коде — та же
-// специфичность, побеждают порядком объявления.
+// широкой) оба переезжают на первое место в колонке, «Соц. сети»
+// (bottom-left) — на второе/последнее — угловые классы не могут выразить
+// это сами по себе, поэтому `--compact-top`/`--compact-bottom` (порядок в
+// разметке уже соответствует нужному порядку колонки, см. main-carousel.html)
+// остаются просто МЕТКАМИ роли для читаемости, а не позиционируют элемент
+// индивидуально — этим занимается сам `.main-carousel__compact-stack`.
 @include bp.small {
-  .main-carousel__content--compact-top,
-  .main-carousel__content--compact-bottom {
+  .main-carousel__compact-stack {
+    position: absolute;
+    top: $compact-header-height + $compact-bar-gap;
+    bottom: $timeline-height + $compact-bar-gap;
     left: 0;
     right: 0;
-    width: 100%;
-    padding: 12px $compact-bar-padding-x;
-    background: $compact-bar-background;
-    backdrop-filter: blur($compact-bar-blur);
-    -webkit-backdrop-filter: blur($compact-bar-blur);
-    box-sizing: border-box;
-  }
-
-  .main-carousel__content--compact-top {
-    top: $compact-header-height + $compact-bar-gap;
-    // Раньше bottom: auto (высота по контенту) — при длинном контенте
-    // (напр. расписание на 7 строк) бар физически наезжал на «Соц. сети»
-    // под ним (--compact-bottom, зазор между ними никак не гарантировался).
-    // `--compact-bottom-reserve` — реально измеренная высота этого бара
-    // (main-carousel.ts, ResizeObserver) — держит между ними всегда ровно
-    // столько места, сколько «Соц. сети» реально занимает; то, что не
-    // поместилось само, скроллится ВНУТРИ этого бара (overflow-y), а не
-    // выталкивает в скролл всю страницу — по прямому запросу пользователя,
-    // на главной должна скроллиться карусель, а не страница целиком.
-    bottom: var(--compact-bottom-reserve, 0px);
+    display: flex;
+    flex-direction: column;
+    gap: $compact-bar-gap;
+    // Место под оба бара вместе — то, что не поместилось, скроллится ВНУТРИ
+    // этой колонки (не выталкивает в скролл всю страницу, по прямому
+    // запросу пользователя — на главной должна скроллиться карусель).
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
   }
 
+  .main-carousel__content--compact-top,
   .main-carousel__content--compact-bottom {
-    bottom: $timeline-height + $compact-bar-gap;
-    top: auto;
+    position: static;
+    flex: none;
+    width: 100%;
+    padding: 12px $compact-bar-padding-x;
+    background: $compact-bar-background;
+    box-sizing: border-box;
   }
 
-  // Уезжает по горизонтали в сторону своего компактного края собственной
-  // (уже full-width) ширины — тот же приём, что и на широкой раскладке
-  // (`.main-carousel__slide:not(.main-carousel__slide--active) …` выше),
-  // просто с полной шириной экрана вместо ширины по содержимому.
-  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--compact-top {
+  // Уезжает по горизонтали ВСЕЙ колонкой целиком (тот же приём, что и на
+  // широкой раскладке — `.main-carousel__slide:not(.active) …` выше, просто
+  // на уровне общей обёртки, не каждого бара по отдельности). Направление —
+  // как у прежнего --compact-top (единое для колонки, второй бар больше не
+  // едет отдельно в противоположную сторону).
+  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__compact-stack {
+    opacity: 0;
     transform: translateX(-100%);
   }
 
+  // Гасит унаследованные от `.main-carousel__content--bottom-left`/
+  // `--bottom-right` (широкие угловые правила выше) индивидуальные
+  // opacity/transform у каждого бара — теперь уезжает только обёртка целиком
+  // (правило выше), сами бары в компактной раскладке — обычные flex-item'ы
+  // без собственной анимации ухода.
+  .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--compact-top,
   .main-carousel__slide:not(.main-carousel__slide--active) .main-carousel__content--compact-bottom {
-    transform: translateX(100%);
+    opacity: 1;
+    transform: none;
   }
 }
 
