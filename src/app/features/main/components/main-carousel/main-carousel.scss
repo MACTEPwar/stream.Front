@@ -34,15 +34,6 @@ $compact-bar-gap: 16px;
 // что и `$compact-header-height`.
 $compact-bar-padding-x: 24px;
 
-// Подложка компактного бара (`СЛД-Ф-08`) — единственное место в проекте, где
-// она реализована: на широкой раскладке бар остаётся без подложки (как и
-// сейчас), добавление её сюда — только компактный случай, чтобы не создавать
-// визуальную регрессию на `large` (`Г-1`). Без блюра (`backdrop-filter`) — по
-// прямому запросу пользователя: на HD-версии подложки/блюра нет вовсе, блюр
-// только на компактной раскладке читался как расхождение с HD, не как
-// целенаправленное решение.
-$compact-bar-background: rgba(vars.$color-0d004d, 0.55);
-
 .main-carousel {
   position: fixed;
   inset: 0;
@@ -215,13 +206,16 @@ $compact-bar-background: rgba(vars.$color-0d004d, 0.55);
     touch-action: pan-y;
   }
 
+  // Без собственной подложки (`background`) — по прямому запросу
+  // пользователя: на HD-версии баров без подложки нет вовсе, компактная
+  // раскладка должна визуально совпадать, а не заводить отдельное решение
+  // только для себя (`СЛД-Ф-08` отменена этим же запросом).
   .main-carousel__content--compact-top,
   .main-carousel__content--compact-bottom {
     position: static;
     flex: none;
     width: 100%;
     padding: 12px $compact-bar-padding-x;
-    background: $compact-bar-background;
     box-sizing: border-box;
   }
 
